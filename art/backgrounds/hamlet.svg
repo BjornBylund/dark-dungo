@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#120e16"/>
+      <stop offset="0.45" stop-color="#2c2030"/>
+      <stop offset="0.7" stop-color="#4a3330"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb060" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffb060" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a201e"/>
+      <stop offset="1" stop-color="#0a0807"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.45" cy="0.45" r="0.75">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.85"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+
+  <!-- the ruined manor on its cliff -->
+  <path d="M1180 520 L1260 300 L1420 280 L1560 340 L1640 520 Z" fill="#1c1520"/>
+  <path d="M1300 300 L1300 180 L1330 150 L1360 180 L1360 290 Z M1400 290 L1400 210 L1440 170 L1470 205 L1470 300 Z M1330 150 L1334 110 L1338 150 Z" fill="#17111a"/>
+  <rect x="1316" y="200" width="10" height="18" fill="#c88040" opacity="0.6"/>
+
+  <!-- hills -->
+  <path d="M0 560 Q240 470 520 530 Q760 470 1000 540 Q1260 480 1500 545 Q1720 500 1920 560 L1920 760 L0 760 Z" fill="#221922"/>
+
+  <!-- ground and the high street -->
+  <rect y="640" width="1920" height="440" fill="url(#ground)"/>
+  <path d="M0 790 Q760 760 1920 800 L1920 880 Q760 840 0 880 Z" fill="#33281f"/>
+
+  <g stroke="#0c0909" stroke-width="5" stroke-linejoin="round">
+    <!-- Stagecoach: a coach by a signpost -->
+    <path d="M60 700 L60 560 L180 500 L300 560 L300 700 Z" fill="#3a2c26"/>
+    <path d="M40 566 L180 492 L320 566" fill="none" stroke="#2a1e18" stroke-width="16"/>
+    <rect x="150" y="610" width="60" height="90" fill="#1a1210"/>
+    <rect x="86" y="600" width="40" height="34" fill="#e0a050" opacity="0.8"/>
+    <path d="M200 760 L200 690 L330 690 L330 760 Z" fill="#4a3426"/>
+    <circle cx="220" cy="772" r="22" fill="#2a1e18"/><circle cx="310" cy="772" r="22" fill="#2a1e18"/>
+    <path d="M350 790 L350 640 M330 660 L400 660 L392 676 L330 676" fill="#6a4a30" stroke-width="5"/>
+
+    <!-- Blacksmith: forge with chimney and an anvil -->
+    <path d="M400 710 L400 560 L540 520 L680 560 L680 710 Z" fill="#33292a"/>
+    <path d="M384 564 L540 512 L696 564" fill="none" stroke="#231a1a" stroke-width="16"/>
+    <rect x="600" y="440" width="44" height="110" fill="#2a2222"/>
+    <path d="M440 710 L440 620 Q470 590 500 620 L500 710 Z" fill="#ff8a30" opacity="0.9"/>
+    <path d="M560 700 L640 700 L630 680 L570 680 Z" fill="#555c66"/>
+    <path d="M622 430 Q610 400 630 380 Q650 360 640 330" fill="none" stroke="#5a5050" stroke-width="10" opacity="0.6"/>
+
+    <!-- Guild: a tall hall with a banner -->
+    <path d="M740 720 L740 480 L860 400 L980 480 L980 720 Z" fill="#3a3040"/>
+    <path d="M724 486 L860 392 L996 486" fill="none" stroke="#28202e" stroke-width="16"/>
+    <path d="M820 720 L820 620 Q860 580 900 620 L900 720 Z" fill="#1a1416"/>
+    <rect x="770" y="520" width="34" height="50" fill="#e0a050" opacity="0.75"/>
+    <rect x="916" y="520" width="34" height="50" fill="#e0a050" opacity="0.75"/>
+    <path d="M860 400 L860 330 L910 344 L860 358" fill="#7a2420"/>
+
+    <!-- Abbey: a chapel with a spire and rose window -->
+    <path d="M1050 730 L1050 500 L1170 430 L1290 500 L1290 730 Z" fill="#3a3436"/>
+    <path d="M1150 440 L1170 300 L1190 440 Z" fill="#2c2628"/>
+    <path d="M1164 300 L1164 270 M1152 282 L1176 282" fill="none" stroke="#c9a24a" stroke-width="5"/>
+    <circle cx="1170" cy="540" r="34" fill="#c9a24a" opacity="0.85"/>
+    <path d="M1170 506 L1170 574 M1136 540 L1204 540" fill="none" stroke="#2c2628" stroke-width="5"/>
+    <path d="M1130 730 L1130 640 Q1170 600 1210 640 L1210 730 Z" fill="#1a1416"/>
+
+    <!-- the gate out of town, with the mission board -->
+    <path d="M1340 800 L1340 600 L1370 580 L1400 600 L1400 800 Z M1500 800 L1500 600 L1530 580 L1560 600 L1560 800 Z" fill="#2a2426"/>
+    <path d="M1340 620 Q1450 540 1560 620" fill="none" stroke="#2a2426" stroke-width="22"/>
+    <rect x="1410" y="690" width="80" height="60" fill="#6a4a30"/>
+    <path d="M1420 704 L1480 704 M1420 720 L1470 720 M1420 736 L1476 736" fill="none" stroke="#d8c8a0" stroke-width="4"/>
+    <path d="M1430 750 L1430 800 M1470 750 L1470 800" fill="none" stroke="#4a3426" stroke-width="8"/>
+  </g>
+
+  <!-- lit windows glow -->
+  <circle cx="470" cy="660" r="90" fill="url(#glow)"/>
+  <circle cx="1170" cy="540" r="80" fill="url(#glow)" opacity="0.6"/>
+
+  <!-- foreground -->
+  <g fill="#070505">
+    <path d="M0 1080 L0 930 Q60 900 90 950 Q120 890 160 940 Q200 910 240 960 L280 1080 Z"/>
+    <path d="M1920 1080 L1920 920 Q1860 900 1840 950 Q1800 890 1770 940 L1720 1080 Z"/>
+  </g>
+  <rect width="1920" height="1080" fill="url(#vignette)"/>
+</svg>

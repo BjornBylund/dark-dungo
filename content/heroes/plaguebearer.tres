@@ -1,0 +1,114 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_5hqwy"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_gryt8"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_y0m3y"]
+[ext_resource type="Texture2D" path="res://art/skills/blight_bomb.svg" id="4_kyob1"]
+[ext_resource type="Texture2D" path="res://art/skills/stun_gas.svg" id="5_bwwx6"]
+[ext_resource type="Texture2D" path="res://art/skills/toxic_lance.svg" id="6_jovxs"]
+[ext_resource type="Texture2D" path="res://art/skills/remedy.svg" id="7_16wwu"]
+[ext_resource type="Texture2D" path="res://art/skills/scalpel.svg" id="8_manem"]
+[ext_resource type="Texture2D" path="res://art/units/plaguebearer.png" id="9_0vc0v"]
+
+[sub_resource type="Resource" id="Resource_ge6by"]
+script = ExtResource("3_y0m3y")
+kind = 1
+dot = &"blight"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_7g73p"]
+script = ExtResource("2_gryt8")
+id = &"blight_bomb"
+display_name = "Blight Bomb"
+icon = ExtResource("4_kyob1")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 1
+damage_max = 2
+crit_chance = 0.05
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_ge6by")])
+
+[sub_resource type="Resource" id="Resource_vpa55"]
+script = ExtResource("3_y0m3y")
+token = &"stun"
+
+[sub_resource type="Resource" id="Resource_0qw0v"]
+script = ExtResource("2_gryt8")
+id = &"stun_gas"
+display_name = "Stun Gas"
+icon = ExtResource("5_bwwx6")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_vpa55")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_qxpys"]
+script = ExtResource("3_y0m3y")
+kind = 1
+dot = &"blight"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_xctei"]
+script = ExtResource("2_gryt8")
+id = &"toxic_lance"
+display_name = "Toxic Lance"
+icon = ExtResource("6_jovxs")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 3
+damage_max = 5
+crit_chance = 0.05
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_qxpys")])
+
+[sub_resource type="Resource" id="Resource_gff7a"]
+script = ExtResource("3_y0m3y")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_5wh2p"]
+script = ExtResource("2_gryt8")
+id = &"remedy"
+display_name = "Remedy"
+icon = ExtResource("7_16wwu")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+heal_min = 3
+heal_max = 3
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_gff7a")])
+
+[sub_resource type="Resource" id="Resource_yuwjr"]
+script = ExtResource("3_y0m3y")
+kind = 1
+dot = &"bleed"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_ma84s"]
+script = ExtResource("2_gryt8")
+id = &"scalpel"
+display_name = "Scalpel"
+icon = ExtResource("8_manem")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.1
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_yuwjr")])
+
+[resource]
+script = ExtResource("1_5hqwy")
+id = &"plaguebearer"
+display_name = "Plaguebearer"
+role = "Alchemist"
+color = Color(0.43137255, 0.47843137, 0.1882353, 1)
+max_hp = 26
+speed = 5
+corpse_hp = 14
+resist_stun = 0.2
+resist_bleed = 0.2
+resist_blight = 0.6
+resist_burn = 0.2
+resist_move = 0.2
+resist_debuff = 0.3
+skills = Array[ExtResource("2_gryt8")]([SubResource("Resource_7g73p"), SubResource("Resource_0qw0v"), SubResource("Resource_xctei"), SubResource("Resource_5wh2p"), SubResource("Resource_ma84s")])
+sprite = ExtResource("9_0vc0v")

@@ -1,0 +1,103 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_t46oa"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_tmaee"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_sqyoy"]
+[ext_resource type="Texture2D" path="res://art/skills/rousing_song.svg" id="4_f1fn4"]
+[ext_resource type="Texture2D" path="res://art/skills/battle_hymn.svg" id="5_mtmil"]
+[ext_resource type="Texture2D" path="res://art/skills/mocking_verse.svg" id="6_1ged6"]
+[ext_resource type="Texture2D" path="res://art/skills/dance_step.svg" id="7_juvq8"]
+[ext_resource type="Texture2D" path="res://art/skills/finale.svg" id="8_6tkaq"]
+[ext_resource type="Texture2D" path="res://art/units/minstrel.png" id="9_gb7rb"]
+
+[sub_resource type="Resource" id="Resource_5ghx7"]
+script = ExtResource("2_tmaee")
+id = &"rousing_song"
+display_name = "Rousing Song"
+icon = ExtResource("4_f1fn4")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+multi_target = true
+stress = -1
+cooldown = 2
+
+[sub_resource type="Resource" id="Resource_2fx16"]
+script = ExtResource("3_sqyoy")
+token = &"crit"
+
+[sub_resource type="Resource" id="Resource_smws5"]
+script = ExtResource("3_sqyoy")
+token = &"speed"
+
+[sub_resource type="Resource" id="Resource_1uqnj"]
+script = ExtResource("2_tmaee")
+id = &"battle_hymn"
+display_name = "Battle Hymn"
+icon = ExtResource("5_mtmil")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+can_target_self = false
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_2fx16"), SubResource("Resource_smws5")])
+
+[sub_resource type="Resource" id="Resource_qgntd"]
+script = ExtResource("3_sqyoy")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_5i6yh"]
+script = ExtResource("3_sqyoy")
+token = &"dodge"
+
+[sub_resource type="Resource" id="Resource_i454e"]
+script = ExtResource("2_tmaee")
+id = &"mocking_verse"
+display_name = "Mocking Verse"
+icon = ExtResource("6_1ged6")
+launch_ranks = Array[int]([2, 3, 4])
+damage_min = 2
+damage_max = 3
+crit_chance = 0.05
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_qgntd")])
+self_effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_5i6yh")])
+
+[sub_resource type="Resource" id="Resource_x54v5"]
+script = ExtResource("2_tmaee")
+id = &"dance_step"
+display_name = "Dance Step"
+icon = ExtResource("7_juvq8")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+self_move = 1
+
+[sub_resource type="Resource" id="Resource_4enkl"]
+script = ExtResource("2_tmaee")
+id = &"finale"
+display_name = "Finale"
+icon = ExtResource("8_6tkaq")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 6
+damage_max = 11
+crit_chance = 0.1
+self_move = -3
+
+[resource]
+script = ExtResource("1_t46oa")
+id = &"minstrel"
+display_name = "Minstrel"
+role = "Morale and tempo"
+color = Color(0.42352942, 0.29803923, 0.5568628, 1)
+max_hp = 28
+speed = 6
+corpse_hp = 15
+resist_stun = 0.3
+resist_bleed = 0.2
+resist_blight = 0.2
+resist_burn = 0.2
+resist_move = 0.3
+resist_debuff = 0.4
+skills = Array[ExtResource("2_tmaee")]([SubResource("Resource_5ghx7"), SubResource("Resource_1uqnj"), SubResource("Resource_i454e"), SubResource("Resource_x54v5"), SubResource("Resource_4enkl")])
+swap_offsets = Array[int]([-3, -2, -1, 1, 2, 3])
+sprite = ExtResource("9_gb7rb")

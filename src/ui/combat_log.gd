@@ -83,7 +83,7 @@ static func describe(event: Dictionary, name_of: Callable) -> String:
 		&"death_armor":
 			return "  %s's Death Armor holds (%d left)." % [who, event.remaining]
 		&"death":
-			return "  [color=#e0533f]%s dies%s.[/color]" % [who, " and leaves a corpse" if event.corpse else ""]
+			return "  [color=#e0533f]%s falls%s.[/color]" % [who, " and leaves a corpse" if event.corpse else ""]
 		&"removed":
 			match event.reason:
 				&"decayed":

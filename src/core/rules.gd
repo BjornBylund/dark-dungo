@@ -71,3 +71,11 @@ const RECOVER_COOLDOWN := 3
 
 # After a won battle heroes are healed up to at least this fraction of max HP.
 const BATTLE_END_MIN_HP := 0.2
+
+# Skill ranks 2-5 (Guild upgrades): each rank above 1 adds these.
+const SKILL_RANK_POWER := 0.1   # damage or healing
+const SKILL_RANK_CRIT := 0.01
+const SKILL_RANK_PIERCE := 0.1  # resistance pierce on the skill's effects
+
+## Resistances raised by hero levels (DD1: not deathblow or stress).
+const LEVELED_RESISTS: Array[StringName] = [&"stun", &"bleed", &"blight", &"burn", &"move", &"debuff"]

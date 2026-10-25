@@ -38,6 +38,10 @@ enum TargetPreference { RANDOM, LOWEST_HP, HIGHEST_STRESS, HAS_COMBO }
 @export var can_be_riposted: bool = true
 ## Extra attacker-side damage against a target with Combo. Using it consumes the Combo.
 @export var combo_damage_bonus: float = 0.0
+## Extra attacker-side damage while the user is below half HP.
+@export var low_hp_bonus: float = 0.0
+## HP the user loses after using the skill. It never drops them below 1 HP.
+@export var self_damage: int = 0
 
 @export_group("Healing and stress")
 @export var heal_min: int = 0

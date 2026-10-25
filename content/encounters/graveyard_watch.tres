@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_f1770"]
+[ext_resource type="Resource" path="res://content/enemies/bone_spearman.tres" id="2_wylag"]
+[ext_resource type="Resource" path="res://content/enemies/cultist.tres" id="3_21ljv"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="4_v6jix"]
+
+[resource]
+script = ExtResource("4_v6jix")
+display_name = "Graveyard Watch"
+enemies = Array[ExtResource("1_f1770")]([ExtResource("2_wylag"), ExtResource("2_wylag"), ExtResource("3_21ljv"), ExtResource("3_21ljv")])

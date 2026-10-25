@@ -41,13 +41,25 @@ var death_armor := 0
 var guarded_by: Combatant
 var speed_bonus_next_round := false
 
+# Lasting modifiers from outside the battle: hero gear, levels and skill ranks,
+# or an enemy's difficulty tier. They are set when the combatant is created.
+var bonus_max_hp := 0
+## Attacker-side damage bonus, added to the other attack modifiers (0.1 = +10%).
+var damage_bonus := 0.0
+var crit_bonus := 0.0
+var speed_bonus := 0
+## Added to the stun, bleed, blight, burn, move and debuff resistances.
+var resist_bonus := 0.0
+## Skill id -> rank 1-5; a missing skill is rank 1.
+var skill_ranks: Dictionary[StringName, int] = {}
+
 var display_name: String:
 	get:
 		return def.display_name
 
 var max_hp: int:
 	get:
-		return def.max_hp
+		return def.max_hp + bonus_max_hp
 
 var size: int:
 	get:
@@ -80,12 +92,23 @@ func stat(name: StringName) -> float:
 	return total
 
 
+## Raises max HP and fills HP to match. Meant for setting up a new combatant.
+func set_bonus_max_hp(bonus: int) -> void:
+	bonus_max_hp = bonus
+	hp = max_hp
+
+
 func speed() -> int:
-	return def.speed + roundi(stat(&"speed"))
+	return def.speed + roundi(stat(&"speed")) + speed_bonus
 
 
 func resist(kind: StringName) -> float:
-	return def.base_resist(kind) + stat(StringName("resist_%s" % kind))
+	var bonus := resist_bonus if kind in Rules.LEVELED_RESISTS else 0.0
+	return def.base_resist(kind) + stat(StringName("resist_%s" % kind)) + bonus
+
+
+func skill_rank(skill: SkillDef) -> int:
+	return skill_ranks.get(skill.id, 1)
 
 
 func add_buff(name: StringName, amount: float, expiry: BuffExpiry, rounds: int = 0) -> void:

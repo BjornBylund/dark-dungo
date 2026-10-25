@@ -1,0 +1,59 @@
+## Autoload: the running campaign, its save file, and moving between screens.
+extends Node
+
+const CAMPAIGN: CampaignDef = preload("res://content/campaign.tres")
+const SAVE_PATH := "user://campaign.json"
+const MAIN_MENU := "res://src/ui/main_menu.tscn"
+const TOWN := "res://src/ui/town_screen.tscn"
+const BATTLE := "res://src/ui/combat_screen.tscn"
+
+## Null in the main menu and the combat sandbox.
+var campaign: Campaign
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+func new_campaign() -> void:
+	campaign = Campaign.create(CAMPAIGN, randi())
+	save()
+	go_to_town()
+
+
+## Loads the save and goes back to where it left off. False if there is no usable save.
+func continue_campaign() -> bool:
+	campaign = Campaign.load_from(SAVE_PATH, CAMPAIGN)
+	if campaign == null:
+		return false
+	if campaign.run:
+		go_to_battle()
+	else:
+		go_to_town()
+	return true
+
+
+func save() -> void:
+	if campaign:
+		var error := campaign.save(SAVE_PATH)
+		if error != OK:
+			push_error("Could not save the campaign: %s" % error_string(error))
+
+
+func go_to_town() -> void:
+	get_tree().change_scene_to_file(TOWN)
+
+
+func go_to_battle() -> void:
+	get_tree().change_scene_to_file(BATTLE)
+
+
+func go_to_menu() -> void:
+	campaign = null
+	get_tree().change_scene_to_file(MAIN_MENU)
+
+
+## Opens the combat sandbox (a fixed party against three waves) instead of the campaign.
+func play_sandbox() -> void:
+	campaign = null
+	get_tree().change_scene_to_file(BATTLE)

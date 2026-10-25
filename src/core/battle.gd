@@ -201,10 +201,10 @@ func preview(actor: Combatant, skill: SkillDef, target: Combatant) -> Dictionary
 		elif target.has_token(Tokens.DODGE):
 			result.hit_chance *= 1.0 - Rules.DODGE_CHANCE
 	var can_crit := skill.deals_damage() or skill.heals()
-	result.crit_chance = 1.0 if can_crit and actor.has_token(Tokens.CRIT) else _crit_chance(skill)
+	result.crit_chance = 1.0 if can_crit and actor.has_token(Tokens.CRIT) else _crit_chance(actor, skill)
 	if skill.deals_damage():
 		var combo := skill.combo_damage_bonus if target.has_token(Tokens.COMBO) else 0.0
-		var scale := _attack_mod(actor.has_token(Tokens.STRENGTH), combo) \
+		var scale := _attack_mod(actor, skill, actor.has_token(Tokens.STRENGTH), combo) \
 				* maxf(_defense_mod(target, false), 0.0) \
 				* (Rules.WEAK_MULTIPLIER if actor.has_token(Tokens.WEAK) else 1.0)
 		result.damage_min = maxi(1, roundi(skill.damage_min * scale))
@@ -212,8 +212,9 @@ func preview(actor: Combatant, skill: SkillDef, target: Combatant) -> Dictionary
 		result.crit_damage = maxi(1, roundi(skill.damage_max * Rules.CRIT_DAMAGE_MULTIPLIER * scale))
 	if skill.heals():
 		var bonus := skill.heal_fraction * target.max_hp
-		result.heal_min = roundi(skill.heal_min + bonus)
-		result.heal_max = roundi(skill.heal_max + bonus)
+		var power := _skill_power(actor, skill)
+		result.heal_min = roundi((skill.heal_min + bonus) * power)
+		result.heal_max = roundi((skill.heal_max + bonus) * power)
 	return result
 
 
@@ -373,7 +374,8 @@ func _resolve(actor: Combatant, skill: SkillDef, primary: Combatant, is_riposte:
 	# A Crit token guarantees a crit on the next attack or heal.
 	var crit := false
 	var crit_roll := -1.0
-	var crit_chance := _crit_chance(skill)
+	var crit_chance := _crit_chance(actor, skill)
+	var pierce := Rules.SKILL_RANK_PIERCE * (actor.skill_rank(skill) - 1)
 	if (damaging or skill.heals()) and actor.consume_token(Tokens.CRIT):
 		crit = true
 		crit_chance = 1.0
@@ -411,13 +413,13 @@ func _resolve(actor: Combatant, skill: SkillDef, primary: Combatant, is_riposte:
 			if skill.combo_damage_bonus > 0.0 and target.consume_token(Tokens.COMBO):
 				combo = skill.combo_damage_bonus
 				consumed_combo = true
-			_damage(target, _roll_damage(skill, target, crit, strength, weak, combo))
+			_damage(target, _roll_damage(actor, skill, target, crit, strength, weak, combo))
 		if skill.heals() and target.is_active():
-			_heal(target, _roll_heal(skill, target, crit), crit)
+			_heal(target, _roll_heal(actor, skill, target, crit), crit)
 		if skill.stress != 0:
 			_add_stress(target, skill.stress)
 		for effect in skill.effects:
-			_apply_effect(actor, target, effect, crit, consumed_combo)
+			_apply_effect(actor, target, effect, crit, consumed_combo, pierce)
 		if crit and attack and target.is_hero and target.is_active():
 			crit_victims.append(target)
 		if riposter == null and not is_riposte and attack and damaging and skill.can_be_riposted \
@@ -433,6 +435,7 @@ func _resolve(actor: Combatant, skill: SkillDef, primary: Combatant, is_riposte:
 			_move(actor, skill.self_move)
 		if skill.self_stress != 0:
 			_add_stress(actor, skill.self_stress)
+		_hurt_self(actor, skill.self_damage)
 	if crit and hit_living:
 		_crit_stress(actor, crit_victims)
 	if riposter and actor.is_active() and riposter.is_active() and state == State.RUNNING:
@@ -453,10 +456,18 @@ func _affected(actor: Combatant, skill: SkillDef, primary: Combatant) -> Array[C
 	return result
 
 
-func _crit_chance(skill: SkillDef) -> float:
+func _crit_chance(actor: Combatant, skill: SkillDef) -> float:
+	var rank_bonus := Rules.SKILL_RANK_CRIT * (actor.skill_rank(skill) - 1)
 	if skill.heals() and not skill.deals_damage():
-		return Rules.HEAL_CRIT_CHANCE
-	return skill.crit_chance
+		return Rules.HEAL_CRIT_CHANCE + rank_bonus
+	if not skill.deals_damage() and skill.crit_chance <= 0.0:
+		return 0.0
+	return skill.crit_chance + actor.crit_bonus + rank_bonus
+
+
+## Damage or healing multiplier from the skill's rank.
+func _skill_power(actor: Combatant, skill: SkillDef) -> float:
+	return 1.0 + Rules.SKILL_RANK_POWER * (actor.skill_rank(skill) - 1)
 
 
 func _redirect_guard(target: Combatant) -> Combatant:
@@ -488,14 +499,14 @@ func _misses(target: Combatant, blind_roll: float) -> bool:
 
 ## DD2 damage: base roll (max x1.5 on a crit) x attacker mods x defender mods,
 ## then Weak halves it last. Block/Block+ and Vulnerable are spent on the hit.
-func _roll_damage(skill: SkillDef, target: Combatant, crit: bool, strength: bool, weak: bool,
-		combo: float) -> Dictionary:
+func _roll_damage(actor: Combatant, skill: SkillDef, target: Combatant, crit: bool, strength: bool,
+		weak: bool, combo: float) -> Dictionary:
 	var base: float
 	if crit:
 		base = skill.damage_max * Rules.CRIT_DAMAGE_MULTIPLIER
 	else:
 		base = rng.randi_range(skill.damage_min, skill.damage_max)
-	var attack_mod := _attack_mod(strength, combo)
+	var attack_mod := _attack_mod(actor, skill, strength, combo)
 	var defense_mod := _defense_mod(target, true)
 	var amount := base * attack_mod * maxf(defense_mod, 0.0)
 	if weak:
@@ -506,8 +517,11 @@ func _roll_damage(skill: SkillDef, target: Combatant, crit: bool, strength: bool
 	}
 
 
-func _attack_mod(strength: bool, combo: float) -> float:
-	return 1.0 + combo + (Rules.STRENGTH_BONUS if strength else 0.0)
+## Sum of the attacker's damage modifiers: tokens, Combo bonus, low-HP bonus, gear or tier, and skill rank.
+func _attack_mod(actor: Combatant, skill: SkillDef, strength: bool, combo: float) -> float:
+	var desperate := skill.low_hp_bonus if actor.hp_fraction() < 0.5 else 0.0
+	return combo + desperate + (Rules.STRENGTH_BONUS if strength else 0.0) + actor.damage_bonus \
+			+ _skill_power(actor, skill)
 
 
 ## Sum of the defender's damage-received modifiers. `spend` consumes the tokens.
@@ -528,8 +542,9 @@ func _defense_mod(target: Combatant, spend: bool) -> float:
 	return mod
 
 
-func _roll_heal(skill: SkillDef, target: Combatant, crit: bool) -> int:
-	var amount := rng.randi_range(skill.heal_min, skill.heal_max) + skill.heal_fraction * target.max_hp
+func _roll_heal(actor: Combatant, skill: SkillDef, target: Combatant, crit: bool) -> int:
+	var amount := (rng.randi_range(skill.heal_min, skill.heal_max) + skill.heal_fraction * target.max_hp) \
+			* _skill_power(actor, skill)
 	if crit:
 		amount *= Rules.HEAL_CRIT_MULTIPLIER
 	return roundi(amount)
@@ -574,6 +589,16 @@ func _damage(target: Combatant, info: Dictionary) -> void:
 		_enter_deaths_door(target)
 	else:
 		_kill(target)
+
+
+## Self-inflicted damage from a skill's cost. Stops at 1 HP, so it never brings
+## the user to Death's Door, and ignores tokens.
+func _hurt_self(unit: Combatant, amount: int) -> void:
+	amount = mini(amount, unit.hp - 1)
+	if amount <= 0:
+		return
+	unit.hp -= amount
+	_emit(&"damage", unit, {amount = amount, hp = unit.hp, cause = &"self"})
 
 
 func _deathblow_check(hero: Combatant) -> void:
@@ -697,8 +722,9 @@ func _overstress(hero: Combatant) -> void:
 
 # --- Effects, tokens and movement ---
 
+## pierce lowers the target's resistance, from the source skill's rank.
 func _apply_effect(source: Combatant, target: Combatant, effect: EffectDef, crit: bool,
-		consumed_combo: bool) -> void:
+		consumed_combo: bool, pierce: float = 0.0) -> void:
 	if not target.is_active():
 		return
 	if effect.chance < 1.0 and rng.randf() >= effect.chance:
@@ -713,11 +739,11 @@ func _apply_effect(source: Combatant, target: Combatant, effect: EffectDef, crit
 				return
 			if token == Tokens.RIPOSTE and target.def.riposte_skill == null:
 				return
-			if _resisted(source, target, Tokens.resist_of(token), crit, effect.ignore_resist, token):
+			if _resisted(source, target, Tokens.resist_of(token), crit, effect.ignore_resist, token, pierce):
 				return
 			_give_token(target, token, effect.stacks)
 		EffectDef.Kind.DOT:
-			if _resisted(source, target, effect.dot, crit, effect.ignore_resist, effect.dot):
+			if _resisted(source, target, effect.dot, crit, effect.ignore_resist, effect.dot, pierce):
 				return
 			target.dots.append({type = effect.dot, amount = effect.amount, turns = effect.duration})
 			_emit(&"dot_applied", target, {dot = effect.dot, amount = effect.amount, turns = effect.duration})
@@ -725,7 +751,7 @@ func _apply_effect(source: Combatant, target: Combatant, effect: EffectDef, crit
 			if target.has_token(Tokens.IMMOBILIZE):
 				_emit(&"immobile", target)
 				return
-			if _resisted(source, target, &"move", crit, effect.ignore_resist, &"move"):
+			if _resisted(source, target, &"move", crit, effect.ignore_resist, &"move", pierce):
 				return
 			_move(target, effect.amount)
 		EffectDef.Kind.CLEANSE_DOTS:
@@ -750,12 +776,12 @@ func _apply_effect(source: Combatant, target: Combatant, effect: EffectDef, crit
 
 
 ## Resistance roll for something an opponent inflicts. Self- and ally-applied
-## effects are never resisted. A crit pierces 20% resistance.
+## effects are never resisted. A crit pierces 20% resistance, skill ranks pierce more.
 func _resisted(source: Combatant, target: Combatant, kind: StringName, crit: bool, ignore: bool,
-		what: StringName) -> bool:
+		what: StringName, pierce: float = 0.0) -> bool:
 	if kind == &"" or ignore or source.is_hero == target.is_hero:
 		return false
-	var chance := target.resist(kind) - (Rules.CRIT_RESIST_PIERCE if crit else 0.0)
+	var chance := target.resist(kind) - pierce - (Rules.CRIT_RESIST_PIERCE if crit else 0.0)
 	if chance <= 0.0:
 		return false
 	var roll := rng.randf()

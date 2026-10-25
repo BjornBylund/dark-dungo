@@ -83,6 +83,57 @@ const GREYSCALE_SHADER: Shader = preload("res://src/ui/greyscale.gdshader")
 static var _token_icons := {}
 
 
+## The shared theme: Gelasio text, dark panels, quiet text buttons, and an
+## "ActionButton" variation with a frame for town actions.
+static func make_theme() -> Theme:
+	var result := Theme.new()
+	result.default_font = BODY_FONT
+	result.default_font_size = 18
+
+	var panel := box(Color("0e0b0cee"), Color("3a3430"), 1, 4)
+	panel.set_content_margin_all(12)
+	result.set_stylebox("panel", "PanelContainer", panel)
+	result.set_stylebox("panel", "TooltipPanel", box(Color("0b0e14f0"), Color("4a4a52"), 1, 3))
+	result.set_color("font_color", "TooltipLabel", TEXT)
+	result.set_font_size("font_size", "TooltipLabel", 15)
+
+	# Small, quiet buttons: text only, gold on hover.
+	var flat := StyleBoxEmpty.new()
+	flat.set_content_margin_all(4)
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		result.set_stylebox(state, "Button", flat)
+	result.set_font_size("font_size", "Button", 15)
+	result.set_color("font_color", "Button", GREY)
+	result.set_color("font_hover_color", "Button", GOLD)
+	result.set_color("font_pressed_color", "Button", TEXT)
+	result.set_color("font_hover_pressed_color", "Button", GOLD)
+	result.set_color("font_disabled_color", "Button", Color(GREY, 0.45))
+
+	result.set_type_variation(&"ActionButton", &"Button")
+	result.set_stylebox("normal", "ActionButton", box(Color("1c1517"), Color("4a3e34"), 1, 3))
+	result.set_stylebox("hover", "ActionButton", box(Color("251b1c"), GOLD.darkened(0.25), 1, 3))
+	result.set_stylebox("pressed", "ActionButton", box(Color("3a2c22"), GOLD, 2, 3))
+	result.set_stylebox("hover_pressed", "ActionButton", box(Color("3a2c22"), GOLD, 2, 3))
+	result.set_stylebox("disabled", "ActionButton", box(Color("120e0f"), Color("2a2420"), 1, 3))
+	result.set_font_size("font_size", "ActionButton", 17)
+	result.set_color("font_color", "ActionButton", TEXT)
+	result.set_color("font_hover_color", "ActionButton", GOLD)
+
+	result.set_color("font_color", "Label", TEXT)
+	result.set_color("default_color", "RichTextLabel", TEXT)
+	return result
+
+
+static func box(background: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = background
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(radius)
+	style.set_content_margin_all(8)
+	return style
+
+
 static func skill_icon(skill: SkillDef) -> Texture2D:
 	return skill.icon if skill.icon else BASIC_SKILL_ICONS.get(skill.id)
 
@@ -208,6 +259,8 @@ static func skill_bbcode(skill: SkillDef) -> String:
 		self_parts.append(("Forward %d" if skill.self_move > 0 else "Back %d") % absi(skill.self_move))
 	if skill.self_stress != 0:
 		self_parts.append("Stress %+d" % skill.self_stress)
+	if skill.self_damage > 0:
+		self_parts.append("[color=#%s]-%d HP[/color]" % [DAMAGE.to_html(false), skill.self_damage])
 	if skill.kind == SkillDef.Kind.SWAP:
 		self_parts.append("Trade places with a nearby ally")
 	if skill.kind == SkillDef.Kind.PASS:
@@ -219,6 +272,9 @@ static func skill_bbcode(skill: SkillDef) -> String:
 	if skill.combo_damage_bonus > 0.0:
 		lines.append("[color=#%s]+%s DMG when Target has %s Combo[/color]" % [PALE_GREEN.to_html(false),
 				percent(skill.combo_damage_bonus), icon_bbcode(Tokens.COMBO)])
+	if skill.low_hp_bonus > 0.0:
+		lines.append("[color=#%s]+%s DMG below half HP[/color]" % [PALE_GREEN.to_html(false),
+				percent(skill.low_hp_bonus)])
 	if skill.multi_target:
 		lines.append("[color=#%s]Hits every target in range[/color]" % PALE_GREEN.to_html(false))
 	return "\n".join(lines)

@@ -11,7 +11,9 @@ class ErrorRecorder extends Logger:
 	var errors: Array[String] = []
 
 	func _log_error(function: String, file: String, line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type == Logger.ERROR_TYPE_WARNING:
+			return
 		errors.append("%s (%s:%d in %s)" % [rationale if rationale != "" else code, file, line, function])
 
 	func _log_message(_message: String, _error: bool) -> void:

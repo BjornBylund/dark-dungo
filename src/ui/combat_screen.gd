@@ -1,7 +1,8 @@
-## The combat sandbox screen, laid out like Darkest Dungeon 2: the battlefield in
-## the top ~70% fading to black, a frameless HUD below it, the turn queue at the
-## top right, and a letterboxed close-up for every attack.
-## Drives a SandboxRun and plays its events back as short animations.
+## The combat screen, laid out like Darkest Dungeon 2: the battlefield in the top
+## ~70% fading to black, a frameless HUD below it, the turn queue at the top right,
+## and a letterboxed close-up for every attack. Plays the campaign's mission in
+## progress (Game.campaign.run), or the combat sandbox when there is none, and
+## plays the battle's events back as short animations.
 ## Authored for 1920x1080 on a centred stage; measurements come from
 ## docs/research/darkest-dungeon-ui.md.
 extends Control
@@ -21,7 +22,10 @@ const CLOSEUP_ENEMY_X := 1300.0
 const CLOSEUP_SCALES := [1.5, 1.25, 1.0]
 const CLOSEUP_TINT := Color(0.3, 0.1, 0.08, 0.6)
 
+## Sandbox mode: the fixed party against three waves.
 var _run: SandboxRun
+## Campaign mode: the mission in progress.
+var _mission_run: MissionRun
 var _battle: Battle
 ## Every unit of the current wave by uid, including ones that have left the field.
 var _units: Dictionary[int, Combatant] = {}
@@ -71,6 +75,7 @@ var _end_title: Label
 var _end_text: Label
 var _end_button: Button
 var _end_action: Callable
+var _end_retreat: Button
 
 
 func _ready() -> void:
@@ -79,19 +84,25 @@ func _ready() -> void:
 			_speed = maxf(float(arg.trim_prefix("--speed=")), 0.1)
 		elif arg.begins_with("--start-wave="):
 			_start_wave_number = int(arg.trim_prefix("--start-wave="))
-	theme = _make_theme()
+	theme = UiStyle.make_theme()
+	if Game.campaign and Game.campaign.run:
+		_mission_run = Game.campaign.run
 	_build()
 	resized.connect(_center_stage)
 	_center_stage()
-	_new_run()
+	if _mission_run:
+		_start_fight()
+	else:
+		_new_run()
 
 
 ## Background scene and the fade to black under the battlefield.
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("0b0809"))
 	var offset := _stage.position if _stage else Vector2.ZERO
-	if SANDBOX.background:
-		draw_texture_rect(SANDBOX.background, Rect2(offset, STAGE_SIZE), false)
+	var background: Texture2D = Game.campaign.def.battle_background if _mission_run else SANDBOX.background
+	if background:
+		draw_texture_rect(background, Rect2(offset, STAGE_SIZE), false)
 	var clear := Color(0, 0, 0, 0)
 	var fade_top := offset.y + FADE_TOP
 	var fade_bottom := offset.y + FADE_BOTTOM
@@ -166,10 +177,16 @@ func _pump() -> void:
 		Battle.State.VICTORY:
 			_on_victory()
 		Battle.State.DEFEAT:
-			_show_end("Defeat", "The party has fallen on wave %d." % (_run.wave_index + 1), "Try again", _new_run)
+			if _mission_run:
+				_on_fight_over()
+			else:
+				_show_end("Defeat", "The party has fallen on wave %d." % (_run.wave_index + 1), "Try again", _new_run)
 
 
 func _on_victory() -> void:
+	if _mission_run:
+		_on_fight_over()
+		return
 	var survivors := "\n".join(_battle.heroes.map(func(h: Combatant) -> String:
 		return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
 	if _run.has_next_wave():
@@ -185,12 +202,80 @@ func _show_end(title: String, text: String, button: String, action: Callable) ->
 	_end_text.text = text
 	_end_button.text = button + "  (Enter)"
 	_end_action = action
+	_end_retreat.hide()
 	_end_panel.show()
 	if _autoplay:
 		var generation := _generation
 		await get_tree().create_timer(2.0).timeout
 		if generation == _generation and _end_panel.visible:
 			_end_action.call()
+
+
+# --- Campaign missions ---
+
+func _start_fight() -> void:
+	var generation := _generation
+	_end_panel.hide()
+	_hud.hide()
+	var mission := _mission_run.mission
+	_battle = _mission_run.start_next_fight()
+	_units.clear()
+	for unit in _battle.all_units():
+		_units[unit.uid] = unit
+	_rebuild_views()
+	var encounter := mission.encounters[_mission_run.fight_index]
+	_wave_label.text = "Week %d   %s   Fight %d/%d" % [Game.campaign.week, mission.title(),
+			_mission_run.fight_index + 1, mission.fights()]
+	_round_label.text = ""
+	_queue.show_units([])
+	_log_line("[color=#d9b45a]== Fight %d: %s ==[/color]" % [_mission_run.fight_index + 1, encounter.display_name])
+	_show_wave_title(encounter.display_name + "!")
+	await _wait(1.6)
+	if generation == _generation:
+		_pump()
+
+
+## After a fight: settle it, save, and either offer Continue / Retreat or show the results.
+func _on_fight_over() -> void:
+	_mission_run.finish_fight()
+	Game.save()
+	if _mission_run.outcome != MissionRun.Outcome.IN_PROGRESS:
+		_show_results()
+		return
+	var survivors := "\n".join(_mission_run.formation.map(func(h: Combatant) -> String:
+		return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
+	_show_end("Fight won", "Gold so far: %d\n%s" % [_mission_run.gold_earned, survivors], "Continue", _start_fight)
+	_end_retreat.show()
+
+
+func _retreat() -> void:
+	_mission_run.retreat()
+	_show_results()
+
+
+## Ends the mission in the campaign (which also ends the week) and shows what it earned.
+func _show_results() -> void:
+	var summary := Game.campaign.finish_mission()
+	Game.save()
+	var lines: Array[String] = []
+	var title := "Mission complete"
+	match summary.outcome:
+		MissionRun.Outcome.RETREATED:
+			title = "Retreated"
+		MissionRun.Outcome.FAILED:
+			title = "Mission failed"
+			lines.append("The whole party fell. No rewards.")
+	if summary.gold > 0:
+		lines.append("Gold +%d" % summary.gold)
+	if summary.heirlooms > 0:
+		lines.append("%s +%d" % [CampaignRules.HEIRLOOM_NAMES[summary.heirloom], summary.heirlooms])
+	if summary.xp > 0:
+		lines.append("XP +%d" % summary.xp)
+	for hero: HeroRecord in summary.level_ups:
+		lines.append("%s reaches level %d!" % [hero.display_name, hero.level()])
+	for hero: HeroRecord in summary.wounded:
+		lines.append("%s is wounded and sits out next week." % hero.display_name)
+	_show_end(title, "\n".join(lines), "Return to town", Game.go_to_town)
 
 
 # --- Player turn ---
@@ -410,7 +495,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_S:
 			_toggle_speed()
 		KEY_R:
-			_new_run()
+			if _mission_run == null:
+				_new_run()
 		KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
 			if _end_panel.visible:
 				_end_button.pressed.emit()
@@ -566,7 +652,8 @@ func _apply_event(event: Dictionary) -> float:
 		&"death":
 			if view:
 				view.refresh()
-			_float(view, "Slain", UiStyle.DAMAGE, 52)
+			var fallen_hero := view != null and view.unit.is_hero and _mission_run != null
+			_float(view, "Defeated" if fallen_hero else "Slain", UiStyle.DAMAGE, 52)
 			return 0.7
 		&"removed":
 			if view:
@@ -877,8 +964,10 @@ func _build() -> void:
 	_log_button = _button("Log (L)", _toggle_log)
 	_log_button.toggle_mode = true
 	_speed_button = _button("Speed %dx (S)" % roundi(_speed), _toggle_speed)
-	for node: Control in [_wave_label, _log_button, _speed_button, _button("Restart (R)", _new_run)]:
+	for node: Control in [_wave_label, _log_button, _speed_button]:
 		top_left.add_child(node)
+	if _mission_run == null:
+		top_left.add_child(_button("Restart (R)", _new_run))
 	_round_label = _label(28, UiStyle.GREY, UiStyle.DISPLAY_FONT)
 	_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_round_label.position = Vector2(1240, 14)
@@ -977,21 +1066,33 @@ func _build() -> void:
 	backdrop.color = Color(0, 0, 0, 0.72)
 	backdrop.size = STAGE_SIZE
 	_end_panel.add_child(backdrop)
+	var center := CenterContainer.new()
+	center.size = STAGE_SIZE
+	_end_panel.add_child(center)
+	var frame := PanelContainer.new()
+	var frame_style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
+	frame_style.set_content_margin_all(36)
+	frame.add_theme_stylebox_override("panel", frame_style)
+	frame.custom_minimum_size = Vector2(620, 0)
+	center.add_child(frame)
 	var end_box := VBoxContainer.new()
-	end_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	end_box.position = Vector2(STAGE_SIZE.x / 2.0 - 400, 280)
-	end_box.size = Vector2(800, 400)
 	end_box.add_theme_constant_override("separation", 22)
-	_end_panel.add_child(end_box)
+	frame.add_child(end_box)
 	_end_title = _label(64, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_text = _label(20, UiStyle.TEXT)
 	_end_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_button = _button("", func() -> void: _end_action.call())
+	_end_button.theme_type_variation = &"ActionButton"
 	_end_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_end_button.custom_minimum_size = Vector2(280, 52)
 	_end_button.add_theme_font_size_override("font_size", 22)
-	for node: Control in [_end_title, _end_text, _end_button]:
+	_end_retreat = _button("Retreat with what you have", _retreat)
+	_end_retreat.theme_type_variation = &"ActionButton"
+	_end_retreat.custom_minimum_size = Vector2(280, 44)
+	_end_retreat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_end_retreat.hide()
+	for node: Control in [_end_title, _end_text, _end_button, _end_retreat]:
 		end_box.add_child(node)
 	_end_panel.hide()
 
@@ -1053,40 +1154,3 @@ func _button(text: String, action: Callable) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(action)
 	return button
-
-
-func _make_theme() -> Theme:
-	var result := Theme.new()
-	result.default_font = UiStyle.BODY_FONT
-	result.default_font_size = 18
-
-	var panel := _box(Color("0e0b0cee"), Color("3a3430"), 1, 4)
-	panel.set_content_margin_all(12)
-	result.set_stylebox("panel", "PanelContainer", panel)
-	result.set_stylebox("panel", "TooltipPanel", _box(Color("0b0e14f0"), Color("4a4a52"), 1, 3))
-	result.set_color("font_color", "TooltipLabel", UiStyle.TEXT)
-	result.set_font_size("font_size", "TooltipLabel", 15)
-
-	# Small, quiet buttons: text only, gold on hover.
-	var flat := StyleBoxEmpty.new()
-	flat.set_content_margin_all(4)
-	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
-		result.set_stylebox(state, "Button", flat)
-	result.set_font_size("font_size", "Button", 15)
-	result.set_color("font_color", "Button", UiStyle.GREY)
-	result.set_color("font_hover_color", "Button", UiStyle.GOLD)
-	result.set_color("font_pressed_color", "Button", UiStyle.TEXT)
-	result.set_color("font_hover_pressed_color", "Button", UiStyle.GOLD)
-	result.set_color("font_color", "Label", UiStyle.TEXT)
-	result.set_color("default_color", "RichTextLabel", UiStyle.TEXT)
-	return result
-
-
-func _box(background: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = background
-	box.border_color = border
-	box.set_border_width_all(border_width)
-	box.set_corner_radius_all(radius)
-	box.set_content_margin_all(8)
-	return box
