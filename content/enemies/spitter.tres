@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_tkdb7"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_1rnu3"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_kb0nm"]
+
+[sub_resource type="Resource" id="Resource_a6l5p"]
+script = ExtResource("3_kb0nm")
+kind = 1
+dot = &"blight"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_ijb54"]
+script = ExtResource("2_1rnu3")
+id = &"spit"
+display_name = "Spit"
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 1
+damage_max = 2
+crit_chance = 0.05
+effects = Array[ExtResource("3_kb0nm")]([SubResource("Resource_a6l5p")])
+
+[sub_resource type="Resource" id="Resource_l2la3"]
+script = ExtResource("3_kb0nm")
+token = &"dodge"
+
+[sub_resource type="Resource" id="Resource_vh01o"]
+script = ExtResource("2_1rnu3")
+id = &"skitter"
+display_name = "Skitter"
+launch_ranks = Array[int]([2, 3])
+side = 2
+effects = Array[ExtResource("3_kb0nm")]([SubResource("Resource_l2la3")])
+self_move = -1
+
+[resource]
+script = ExtResource("1_tkdb7")
+id = &"spitter"
+display_name = "Spitter"
+role = "Blight"
+color = Color(0.43529412, 0.49803922, 0.16470589, 1)
+max_hp = 15
+speed = 6
+corpse_hp = 6
+resist_stun = 0.1
+resist_bleed = 0.1
+resist_blight = 0.6
+resist_burn = 0.1
+resist_move = 0.1
+resist_debuff = 0.2
+skills = Array[ExtResource("2_1rnu3")]([SubResource("Resource_ijb54"), SubResource("Resource_vh01o")])

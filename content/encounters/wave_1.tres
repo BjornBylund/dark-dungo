@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_gqwd5"]
+[ext_resource type="Resource" path="res://content/enemies/ghoul.tres" id="2_syato"]
+[ext_resource type="Resource" path="res://content/enemies/spitter.tres" id="3_5xrwq"]
+[ext_resource type="Resource" path="res://content/enemies/cultist.tres" id="4_c8n7u"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="5_367av"]
+
+[resource]
+script = ExtResource("5_367av")
+display_name = "Ghoul Pack"
+enemies = Array[ExtResource("1_gqwd5")]([ExtResource("2_syato"), ExtResource("2_syato"), ExtResource("3_5xrwq"), ExtResource("4_c8n7u")])

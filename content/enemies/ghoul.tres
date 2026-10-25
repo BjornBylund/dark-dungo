@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_ksmfu"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_i4k0q"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_r2say"]
+
+[sub_resource type="Resource" id="Resource_xg7hc"]
+script = ExtResource("3_r2say")
+kind = 1
+dot = &"bleed"
+amount = 1
+
+[sub_resource type="Resource" id="Resource_pwqkh"]
+script = ExtResource("2_i4k0q")
+id = &"claw"
+display_name = "Claw"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 4
+damage_max = 7
+crit_chance = 0.05
+effects = Array[ExtResource("3_r2say")]([SubResource("Resource_xg7hc")])
+
+[sub_resource type="Resource" id="Resource_jojq0"]
+script = ExtResource("2_i4k0q")
+id = &"gnaw"
+display_name = "Gnaw"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1])
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+stress = 1
+
+[resource]
+script = ExtResource("1_ksmfu")
+id = &"ghoul"
+display_name = "Ghoul"
+role = "Melee"
+color = Color(0.36862746, 0.41960785, 0.32156864, 1)
+max_hp = 26
+corpse_hp = 12
+resist_stun = 0.2
+resist_bleed = 0.2
+resist_blight = 0.4
+resist_burn = 0.2
+resist_move = 0.2
+resist_debuff = 0.2
+skills = Array[ExtResource("2_i4k0q")]([SubResource("Resource_pwqkh"), SubResource("Resource_jojq0")])

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_a33lh"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_nduks"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_v7daq"]
+
+[sub_resource type="Resource" id="Resource_rwchw"]
+script = ExtResource("2_nduks")
+id = &"whisper"
+display_name = "Whisper"
+launch_ranks = Array[int]([3, 4])
+stress = 2
+
+[sub_resource type="Resource" id="Resource_oec5t"]
+script = ExtResource("3_v7daq")
+token_pool = Array[StringName]([&"blind", &"weak"])
+
+[sub_resource type="Resource" id="Resource_y8jlx"]
+script = ExtResource("2_nduks")
+id = &"curse"
+display_name = "Curse"
+launch_ranks = Array[int]([3, 4])
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+effects = Array[ExtResource("3_v7daq")]([SubResource("Resource_oec5t")])
+
+[resource]
+script = ExtResource("1_a33lh")
+id = &"cultist"
+display_name = "Cultist"
+role = "Stress and debuffs"
+color = Color(0.29411766, 0.22745098, 0.41960785, 1)
+max_hp = 18
+speed = 5
+corpse_hp = 8
+resist_stun = 0.2
+resist_bleed = 0.2
+resist_blight = 0.2
+resist_burn = 0.2
+resist_move = 0.2
+resist_debuff = 0.4
+skills = Array[ExtResource("2_nduks")]([SubResource("Resource_rwchw"), SubResource("Resource_y8jlx")])

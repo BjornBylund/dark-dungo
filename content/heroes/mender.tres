@@ -1,0 +1,93 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_k35l2"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_ga4xx"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ejcji"]
+
+[sub_resource type="Resource" id="Resource_dmbhf"]
+script = ExtResource("2_ga4xx")
+id = &"mend"
+display_name = "Mend"
+description = "Close an ally's wounds."
+launch_ranks = Array[int]([3, 4])
+side = 1
+heal_min = 4
+heal_max = 6
+
+[sub_resource type="Resource" id="Resource_m2orr"]
+script = ExtResource("3_ejcji")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_8dh43"]
+script = ExtResource("3_ejcji")
+kind = 4
+
+[sub_resource type="Resource" id="Resource_qacnk"]
+script = ExtResource("2_ga4xx")
+id = &"purge"
+display_name = "Purge"
+description = "Draw out poison, bleeding and curses."
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+heal_min = 2
+heal_max = 2
+effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_m2orr"), SubResource("Resource_8dh43")])
+
+[sub_resource type="Resource" id="Resource_a85gm"]
+script = ExtResource("3_ejcji")
+token = &"block"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_a1rxl"]
+script = ExtResource("2_ga4xx")
+id = &"ward"
+display_name = "Ward"
+description = "A protective blessing."
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_a85gm")])
+
+[sub_resource type="Resource" id="Resource_h30im"]
+script = ExtResource("2_ga4xx")
+id = &"soothe"
+display_name = "Soothe"
+description = "Calm a frayed mind."
+launch_ranks = Array[int]([3, 4])
+side = 1
+stress = -2
+
+[sub_resource type="Resource" id="Resource_hrv8o"]
+script = ExtResource("3_ejcji")
+kind = 1
+dot = &"blight"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_bcmwp"]
+script = ExtResource("3_ejcji")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_bxsfd"]
+script = ExtResource("2_ga4xx")
+id = &"hex"
+display_name = "Hex"
+description = "A withering curse: blight and Weakness."
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_hrv8o"), SubResource("Resource_bcmwp")])
+
+[resource]
+script = ExtResource("1_k35l2")
+id = &"mender"
+display_name = "Mender"
+role = "Healer and support"
+color = Color(0.7882353, 0.7176471, 0.47843137, 1)
+max_hp = 28
+corpse_hp = 14
+resist_stun = 0.2
+resist_bleed = 0.2
+resist_blight = 0.4
+resist_burn = 0.2
+resist_move = 0.2
+resist_debuff = 0.4
+skills = Array[ExtResource("2_ga4xx")]([SubResource("Resource_dmbhf"), SubResource("Resource_qacnk"), SubResource("Resource_a1rxl"), SubResource("Resource_h30im"), SubResource("Resource_bxsfd")])

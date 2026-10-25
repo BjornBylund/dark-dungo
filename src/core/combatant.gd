@@ -1,0 +1,236 @@
+## Runtime state of one unit in combat. Heroes keep their Combatant across
+## waves, so HP, stress and long-lasting buffs carry over; enemies get a fresh one.
+class_name Combatant
+extends RefCounted
+
+enum BuffExpiry {
+	TURN_START,    ## Removed at the holder's next turn start (stun recovery).
+	ROUNDS,        ## Lasts `rounds` round ends, then removed.
+	COMBAT,        ## Removed when the battle ends.
+	RUN,           ## Kept until the run restarts ("until next Inn" in DD2).
+	DEATHS_DOOR,   ## Removed when the unit leaves Death's Door.
+}
+
+static var _next_uid := 1
+
+var uid: int
+var def: UnitDef
+var is_hero: bool
+var hp: int
+var stress := 0
+## Token id -> stacks.
+var tokens: Dictionary[StringName, int] = {}
+## Token id -> holder turns left. One shared timer per token type, started by
+## the first stack and not refreshed by later ones.
+var token_turns: Dictionary[StringName, int] = {}
+## Bleed, blight and burn instances: {type: StringName, amount: int, turns: int}.
+var dots: Array[Dictionary] = []
+## Stat modifiers: {stat: StringName, amount: float, expiry: BuffExpiry, rounds: int}.
+## Stats are "speed" and "resist_<kind>".
+var buffs: Array[Dictionary] = []
+## Skill id -> turns until usable again.
+var cooldowns: Dictionary[StringName, int] = {}
+## Skill id -> uses this battle.
+var uses: Dictionary[StringName, int] = {}
+var deaths_door := false
+var dead := false
+var is_corpse := false
+var corpse_rounds := 0
+var death_armor := 0
+## The unit that takes attacks aimed at this one while it has Guard tokens.
+var guarded_by: Combatant
+var speed_bonus_next_round := false
+
+var display_name: String:
+	get:
+		return def.display_name
+
+var max_hp: int:
+	get:
+		return def.max_hp
+
+var size: int:
+	get:
+		return def.size
+
+
+func _init(unit_def: UnitDef, hero: bool) -> void:
+	uid = _next_uid
+	_next_uid += 1
+	def = unit_def
+	is_hero = hero
+	hp = unit_def.max_hp
+	death_armor = unit_def.death_armor
+
+
+## Alive and standing: not dead and not a corpse.
+func is_active() -> bool:
+	return not dead
+
+
+func hp_fraction() -> float:
+	return float(hp) / float(max_hp)
+
+
+func stat(name: StringName) -> float:
+	var total := 0.0
+	for buff in buffs:
+		if buff.stat == name:
+			total += buff.amount
+	return total
+
+
+func speed() -> int:
+	return def.speed + roundi(stat(&"speed"))
+
+
+func resist(kind: StringName) -> float:
+	return def.base_resist(kind) + stat(StringName("resist_%s" % kind))
+
+
+func add_buff(name: StringName, amount: float, expiry: BuffExpiry, rounds: int = 0) -> void:
+	buffs.append({stat = name, amount = amount, expiry = expiry, rounds = rounds})
+
+
+func remove_buffs(expiry: BuffExpiry) -> void:
+	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool: return buff.expiry != expiry))
+
+
+## Counts down round-based buffs at round end.
+func tick_round_buffs() -> void:
+	for buff in buffs:
+		if buff.expiry == BuffExpiry.ROUNDS:
+			buff.rounds -= 1
+	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool:
+		return buff.expiry != BuffExpiry.ROUNDS or buff.rounds > 0))
+
+
+# --- Tokens ---
+
+func has_token(token: StringName) -> bool:
+	return tokens.get(token, 0) > 0
+
+
+func token_count(token: StringName) -> int:
+	return tokens.get(token, 0)
+
+
+## Adds up to `stacks` tokens. Each stack first cancels one opposing token
+## (Block vs Vulnerable, Strength vs Weak, Speed vs Daze) instead of being added,
+## and stacks beyond the limit are dropped.
+## Returns {added: int, negated: Array[StringName]}.
+func add_token(token: StringName, stacks: int = 1) -> Dictionary:
+	var added := 0
+	var negated: Array[StringName] = []
+	for i in stacks:
+		var opposite := _present_opposite(token)
+		if opposite != &"":
+			remove_token(opposite)
+			negated.append(opposite)
+			continue
+		if token_count(token) >= Tokens.limit(token):
+			break
+		if not has_token(token):
+			token_turns[token] = Rules.TOKEN_DURATION
+		tokens[token] = token_count(token) + 1
+		added += 1
+	return {added = added, negated = negated}
+
+
+func remove_token(token: StringName, stacks: int = 1) -> void:
+	var left := token_count(token) - stacks
+	if left > 0:
+		tokens[token] = left
+		return
+	tokens.erase(token)
+	token_turns.erase(token)
+	if token == Tokens.GUARD:
+		guarded_by = null
+
+
+## Removes one stack if present. Returns whether there was one.
+func consume_token(token: StringName) -> bool:
+	if not has_token(token):
+		return false
+	remove_token(token)
+	return true
+
+
+func clear_tokens() -> void:
+	tokens.clear()
+	token_turns.clear()
+	guarded_by = null
+
+
+## Turn-end token upkeep. Returns the token ids that ran out completely.
+func tick_tokens_turn_end() -> Array[StringName]:
+	var expired: Array[StringName] = []
+	for token in tokens.keys():
+		match Tokens.expiry(token):
+			Tokens.Expiry.TURNS:
+				token_turns[token] -= 1
+				if token_turns[token] <= 0:
+					remove_token(token, token_count(token))
+					expired.append(token)
+			Tokens.Expiry.SINGLE_REMOVE:
+				remove_token(token)
+				if not has_token(token):
+					expired.append(token)
+	return expired
+
+
+func _present_opposite(token: StringName) -> StringName:
+	for opposite: StringName in Tokens.negates(token):
+		if has_token(opposite):
+			return opposite
+	return &""
+
+
+# --- Damage over time ---
+
+func dot_total(type: StringName = &"") -> int:
+	var total := 0
+	for dot in dots:
+		if type == &"" or dot.type == type:
+			total += dot.amount
+	return total
+
+
+## Counts every instance down by one turn and drops the finished ones.
+func tick_dots() -> void:
+	for dot in dots:
+		dot.turns -= 1
+	dots.assign(dots.filter(func(dot: Dictionary) -> bool: return dot.turns > 0))
+
+
+# --- Skills ---
+
+func cooldown_left(skill: SkillDef) -> int:
+	return cooldowns.get(skill.id, 0)
+
+
+func uses_left(skill: SkillDef) -> int:
+	if skill.uses_per_battle <= 0:
+		return 1 << 30
+	return skill.uses_per_battle - uses.get(skill.id, 0)
+
+
+## Turn-end cooldown upkeep. The skill used this turn keeps its full cooldown.
+func tick_cooldowns(used_this_turn: StringName) -> void:
+	for id in cooldowns.keys():
+		if id == used_this_turn:
+			continue
+		cooldowns[id] -= 1
+		if cooldowns[id] <= 0:
+			cooldowns.erase(id)
+
+
+## Clears everything that only lasts one battle. Long-lasting buffs, HP and stress stay.
+func clear_battle_state() -> void:
+	clear_tokens()
+	dots.clear()
+	cooldowns.clear()
+	uses.clear()
+	speed_bonus_next_round = false
+	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool:
+		return buff.expiry == BuffExpiry.RUN or buff.expiry == BuffExpiry.DEATHS_DOOR))

@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_iwlvb"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_mp4kj"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_cpwpb"]
+
+[sub_resource type="Resource" id="Resource_10o3w"]
+script = ExtResource("3_cpwpb")
+kind = 2
+amount = -1
+
+[sub_resource type="Resource" id="Resource_fo4hl"]
+script = ExtResource("2_mp4kj")
+id = &"smash"
+display_name = "Smash"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1])
+damage_min = 8
+damage_max = 12
+crit_chance = 0.1
+effects = Array[ExtResource("3_cpwpb")]([SubResource("Resource_10o3w")])
+
+[sub_resource type="Resource" id="Resource_cbkvo"]
+script = ExtResource("2_mp4kj")
+id = &"sweep"
+display_name = "Sweep"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 4
+damage_max = 7
+crit_chance = 0.05
+
+[sub_resource type="Resource" id="Resource_qvga6"]
+script = ExtResource("3_cpwpb")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_x585l"]
+script = ExtResource("2_mp4kj")
+id = &"roar"
+display_name = "Roar"
+multi_target = true
+stress = 1
+self_effects = Array[ExtResource("3_cpwpb")]([SubResource("Resource_qvga6")])
+condition = 2
+condition_token = &"strength"
+
+[resource]
+script = ExtResource("1_iwlvb")
+id = &"brute"
+display_name = "Brute"
+role = "Large, big hits"
+color = Color(0.41960785, 0.2901961, 0.22745098, 1)
+size = 2
+max_hp = 75
+speed = 2
+corpse_hp = 24
+death_armor = 1
+resist_stun = 0.6
+resist_bleed = 0.3
+resist_blight = 0.3
+resist_burn = 0.3
+resist_move = 0.8
+resist_debuff = 0.4
+skills = Array[ExtResource("2_mp4kj")]([SubResource("Resource_fo4hl"), SubResource("Resource_cbkvo"), SubResource("Resource_x585l")])

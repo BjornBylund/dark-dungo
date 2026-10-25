@@ -1,0 +1,88 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_gw7sh"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_x03ae"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_yewb2"]
+
+[sub_resource type="Resource" id="Resource_bx3iw"]
+script = ExtResource("2_x03ae")
+id = &"aimed_shot"
+display_name = "Aimed Shot"
+description = "A careful shot with a high crit chance."
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 5
+damage_max = 9
+crit_chance = 0.15
+
+[sub_resource type="Resource" id="Resource_758ij"]
+script = ExtResource("2_x03ae")
+id = &"volley"
+display_name = "Volley"
+description = "Rain arrows on the back two ranks."
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+
+[sub_resource type="Resource" id="Resource_4k77a"]
+script = ExtResource("3_yewb2")
+token = &"blind"
+
+[sub_resource type="Resource" id="Resource_236uf"]
+script = ExtResource("2_x03ae")
+id = &"blinding_shot"
+display_name = "Blinding Shot"
+description = "A flash-powder arrow. Blinds."
+launch_ranks = Array[int]([2, 3, 4])
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_4k77a")])
+
+[sub_resource type="Resource" id="Resource_fu307"]
+script = ExtResource("3_yewb2")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_j3m5c"]
+script = ExtResource("3_yewb2")
+token = &"combo"
+
+[sub_resource type="Resource" id="Resource_0berm"]
+script = ExtResource("2_x03ae")
+id = &"expose"
+display_name = "Expose"
+description = "Mark a weakness: Vulnerable and Combo."
+launch_ranks = Array[int]([2, 3, 4])
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_fu307"), SubResource("Resource_j3m5c")])
+
+[sub_resource type="Resource" id="Resource_ricmk"]
+script = ExtResource("2_x03ae")
+id = &"point_blank"
+display_name = "Point Blank"
+description = "Fire into the front foe's face and step back."
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1])
+damage_min = 6
+damage_max = 10
+crit_chance = 0.1
+self_move = -1
+
+[resource]
+script = ExtResource("1_gw7sh")
+id = &"marksman"
+display_name = "Marksman"
+role = "Back-row ranged"
+color = Color(0.24705882, 0.41960785, 0.2901961, 1)
+max_hp = 30
+speed = 4
+corpse_hp = 16
+resist_stun = 0.2
+resist_bleed = 0.2
+resist_blight = 0.3
+resist_burn = 0.2
+resist_move = 0.2
+resist_debuff = 0.3
+skills = Array[ExtResource("2_x03ae")]([SubResource("Resource_bx3iw"), SubResource("Resource_758ij"), SubResource("Resource_236uf"), SubResource("Resource_0berm"), SubResource("Resource_ricmk")])

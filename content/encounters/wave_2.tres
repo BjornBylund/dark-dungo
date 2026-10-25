@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_bl5p3"]
+[ext_resource type="Resource" path="res://content/enemies/bone_spearman.tres" id="2_jjmfg"]
+[ext_resource type="Resource" path="res://content/enemies/ghoul.tres" id="3_0qfcp"]
+[ext_resource type="Resource" path="res://content/enemies/spitter.tres" id="4_ckywv"]
+[ext_resource type="Resource" path="res://content/enemies/cultist.tres" id="5_7ki0m"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="6_m705v"]
+
+[resource]
+script = ExtResource("6_m705v")
+display_name = "Bone Line"
+enemies = Array[ExtResource("1_bl5p3")]([ExtResource("2_jjmfg"), ExtResource("3_0qfcp"), ExtResource("4_ckywv"), ExtResource("5_7ki0m")])
