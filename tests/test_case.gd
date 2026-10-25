@@ -26,6 +26,11 @@ func assert_ne(actual: Variant, unexpected: Variant, message: String = "") -> vo
 		failures.append("%sdid not expect %s" % [_prefix(message), str(unexpected)])
 
 
+func assert_almost_eq(actual: float, expected: float, message: String = "") -> void:
+	if not is_equal_approx(actual, expected):
+		failures.append("%sexpected %s, got %s" % [_prefix(message), str(expected), str(actual)])
+
+
 func assert_between(actual: float, low: float, high: float, message: String = "") -> void:
 	if actual < low or actual > high:
 		failures.append("%sexpected %s in [%s, %s]" % [_prefix(message), str(actual), str(low), str(high)])

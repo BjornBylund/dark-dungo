@@ -22,6 +22,8 @@ var _quest_panel: PanelContainer
 var _quest: VBoxContainer
 var _roster: BoxContainer
 var _lineup: HBoxContainer
+## The bonds within the chosen party, under the lineup.
+var _bonds: Label
 var _embark: Button
 var _reason: Label
 var _party_button: Button
@@ -200,6 +202,14 @@ func _refresh_lineup() -> void:
 		# Deferred so the lineup isn't rebuilt while the viewport is still finishing the drop.
 		slot.dropped.connect(_place_in_lineup, CONNECT_DEFERRED)
 		_lineup.add_child(slot)
+	var bonds := _campaign().bonds
+	var pairs: Array[String] = []
+	for i in _party.size():
+		for j in range(i + 1, _party.size()):
+			var level := bonds.level(_party[i], _party[j])
+			if level > Bonds.Level.STRANGERS:
+				pairs.append("%s & %s %s" % [_party[i].display_name, _party[j].display_name, Bonds.level_name(level)])
+	_bonds.text = "Bonds: " + ", ".join(pairs) if not pairs.is_empty() else "No bonds in this party yet."
 
 
 ## With a mouse, clicking a hero takes them out. On a touch screen the first
@@ -346,6 +356,8 @@ func _build() -> void:
 	_lineup = HBoxContainer.new()
 	_lineup.add_theme_constant_override("separation", 16)
 	lineup_box.add_child(_lineup)
+	_bonds = _label("", 16, UiStyle.TEXT_DIM)
+	lineup_box.add_child(_bonds)
 
 	var embark_box := VBoxContainer.new()
 	embark_box.position = Vector2(950, 940)
@@ -425,6 +437,10 @@ func _build_phone() -> void:
 	_lineup.alignment = BoxContainer.ALIGNMENT_CENTER
 	_lineup.add_theme_constant_override("separation", 10)
 	_sheet_box.add_child(_lineup)
+	_bonds = _label("", 15, UiStyle.TEXT_DIM)
+	_bonds.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bonds.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sheet_box.add_child(_bonds)
 	var strip := ScrollContainer.new()
 	strip.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	strip.custom_minimum_size = Vector2(0, HeroBadge.SIZE.y + 14)

@@ -38,10 +38,15 @@ var room_done := true
 var gold_earned := 0
 var heirlooms_earned: Dictionary[StringName, int] = {}
 var defeated: Array[HeroRecord] = []
-## Lines about heroes who set out at max stress and melted down or turned
-## resolute, for the map screen to show once. Not saved; the first save comes
-## after the first fight.
+## The campaign's bonds between heroes; points earned on the way go straight in.
+var bonds := Bonds.new()
+## What happened as the party set out (bond boosts, heroes at max stress
+## melting down or turning resolute), for the map screen to show once. Not
+## saved; the first save comes after the first fight.
 var setting_out: Array[String] = []
+## Bond level-ups since the screen last showed them, like "Vanguard and Mender
+## are now Friendly!". Not saved; the screens show them right away.
+var new_bonds: Array[String] = []
 var outcome := Outcome.IN_PROGRESS
 ## The fight waiting to start, from a fight room or an event, and how it pays.
 var pending: EncounterDef
@@ -132,6 +137,7 @@ func finish_fight() -> void:
 		if combatants[i].dead and party[i] not in defeated:
 			defeated.append(party[i])
 	formation.assign(battle.heroes)
+	var helps := battle.helps
 	var won_finale := false
 	if battle.state == Battle.State.VICTORY:
 		match pending_kind:
@@ -151,6 +157,8 @@ func finish_fight() -> void:
 			_next_map()
 		else:
 			outcome = Outcome.COMPLETED
+	_bond_over(helps)
+	apply_bonds()
 
 
 ## The party moves on to a freshly drawn map, back at full HP as between Slay
@@ -323,20 +331,6 @@ func _apply(effect: EventOutcomeDef, chosen: Combatant) -> Array[String]:
 	return lines
 
 
-## Heroes at max stress outside a fight melt down or turn resolute there and
-## then, as they would in one. Returns a line for each, for the screen.
-func resolve_max_stress() -> Array[String]:
-	var lines: Array[String] = []
-	for unit in formation:
-		if unit.stress < Rules.STRESS_MAX:
-			continue
-		if unit.overstress(rng):
-			lines.append("%s melts down! HP drops to %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
-		else:
-			lines.append("%s is resolute! Stress clears, HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
-	return lines
-
-
 func _targets(effect: EventOutcomeDef, chosen: Combatant) -> Array[Combatant]:
 	var result: Array[Combatant] = []
 	match effect.target:
@@ -367,6 +361,88 @@ func _event_heirlooms(effect: EventOutcomeDef) -> int:
 
 func _heirloom_type(effect: EventOutcomeDef) -> StringName:
 	return effect.heirloom if effect.heirloom != &"" else mission.heirloom
+
+
+# --- Bonds and max stress ---
+
+## Called once as the party leaves town: bond bonuses, boosts waiting from bonds
+## that levelled up as an earlier mission ended, then heroes at max stress
+## melting down or turning resolute. Fills `setting_out`.
+func set_out() -> void:
+	apply_bonds()
+	for i in party.size():
+		for j in range(i + 1, party.size()):
+			var pair := Bonds.key(party[i], party[j])
+			if pair not in bonds.boosts_waiting:
+				continue
+			bonds.boosts_waiting.erase(pair)
+			_boost(combatants[i])
+			_boost(combatants[j])
+			setting_out.append("%s and %s set out newly %s: -%d stress each and +%d%% damage this mission." % [
+				party[i].display_name, party[j].display_name, Bonds.level_name(bonds.level(party[i], party[j])),
+				CampaignRules.BOND_BOOST_STRESS, roundi(CampaignRules.BOND_BOOST_DAMAGE * 100)])
+	setting_out.append_array(resolve_max_stress())
+
+
+## Bonuses for each hero from the partners standing with them, by level: stress
+## resist from Friendly, crit from Respected, a better chance of Resolute from
+## Partners. Set as the party sets out and after each fight, as it changes.
+func apply_bonds() -> void:
+	for unit in formation:
+		unit.remove_buffs(Combatant.BuffExpiry.BOND)
+		for other in formation:
+			if other == unit:
+				continue
+			var level := bonds.level(record_of(unit), record_of(other))
+			if level >= Bonds.Level.FRIENDLY:
+				unit.add_buff(&"resist_stress", CampaignRules.BOND_STRESS_RESIST, Combatant.BuffExpiry.BOND)
+			if level >= Bonds.Level.RESPECTED:
+				unit.add_buff(&"crit", CampaignRules.BOND_CRIT, Combatant.BuffExpiry.BOND)
+			if level >= Bonds.Level.PARTNERS:
+				unit.add_buff(&"resolute", CampaignRules.BOND_RESOLUTE, Combatant.BuffExpiry.BOND)
+
+
+## Each pair where one helped the other in the fight has a chance at a point.
+## A pair reaching a new level gets its boost now, or on its next mission
+## together if this fight ended the mission.
+func _bond_over(helps: Array[Array]) -> void:
+	var seen := {}
+	for help in helps:
+		var a := record_of(help[0])
+		var b := record_of(help[1])
+		var pair := Bonds.key(a, b)
+		if seen.has(pair):
+			continue
+		seen[pair] = true
+		if rng.randf() >= CampaignRules.BOND_HELP_CHANCE or not bonds.add(a, b, 1):
+			continue
+		new_bonds.append(Bonds.level_up_line(a, b, bonds.level(a, b)))
+		if outcome != Outcome.IN_PROGRESS:
+			if pair not in bonds.boosts_waiting:
+				bonds.boosts_waiting.append(pair)
+			continue
+		_boost(help[0])
+		_boost(help[1])
+
+
+## A new bond level: stress off, and more damage for the rest of the mission.
+func _boost(unit: Combatant) -> void:
+	unit.stress = maxi(0, unit.stress - CampaignRules.BOND_BOOST_STRESS)
+	unit.add_buff(&"damage", CampaignRules.BOND_BOOST_DAMAGE, Combatant.BuffExpiry.RUN)
+
+
+## Heroes at max stress outside a fight melt down or turn resolute there and
+## then, as they would in one. Returns a line for each, for the screen.
+func resolve_max_stress() -> Array[String]:
+	var lines: Array[String] = []
+	for unit in formation:
+		if unit.stress < Rules.STRESS_MAX:
+			continue
+		if unit.overstress(rng):
+			lines.append("%s melts down! HP drops to %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+		else:
+			lines.append("%s is resolute! Stress clears, HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+	return lines
 
 
 # --- Saving ---

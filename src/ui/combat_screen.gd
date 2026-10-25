@@ -258,6 +258,10 @@ func _on_fight_over() -> void:
 		return
 	var survivors := "\n".join(_mission_run.formation.map(func(h: Combatant) -> String:
 		return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
+	if not _mission_run.new_bonds.is_empty():
+		survivors += "\n\n%s\nBoth heroes of a new bond: -%d stress, +%d%% damage this mission." % ["\n".join(_mission_run.new_bonds),
+				CampaignRules.BOND_BOOST_STRESS, roundi(CampaignRules.BOND_BOOST_DAMAGE * 100)]
+		_mission_run.new_bonds.clear()
 	if _mission_run.new_map:
 		_show_end("Map %d of %d cleared" % [_mission_run.layer, _mission_run.layers],
 				"Gold so far: %d\nThe party rests before the next map: HP restored.\n%s" % [_mission_run.gold_earned,

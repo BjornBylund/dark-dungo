@@ -65,6 +65,23 @@ const RETREAT_STRESS := 2
 const IDLE_STRESS_RELIEF := 1
 const LEVEL_RESIST_BONUS := 0.1
 
+# Bonds between heroes, after DD2's relationships, indexed by Bonds.Level.
+const BOND_NAMES := ["Strangers", "Friendly", "Respected", "Partners"]
+const BOND_POINTS := [0, 5, 12, 20]
+## Points for every pair in the party when a mission ends: completed, or any other ending.
+const BOND_COMPLETED_POINTS := 2
+const BOND_MISSION_POINTS := 1
+## Chance that a skill used on an ally earns the pair a point, at most once per pair per fight.
+const BOND_HELP_CHANCE := 0.5
+## While both partners are in the party: Friendly and up, Respected and up, Partners.
+const BOND_STRESS_RESIST := 0.1
+const BOND_CRIT := 0.05
+## Added to the chance of Resolute instead of Meltdown at max stress.
+const BOND_RESOLUTE := 0.15
+## On reaching a new level: stress off both heroes, and a damage bonus for the rest of the mission.
+const BOND_BOOST_STRESS := 2
+const BOND_BOOST_DAMAGE := 0.1
+
 # Weapon, armour and skill ranks 2-5, indexed [rank - 2].
 const MAX_RANK := 5
 const GEAR_COST := [750, 1750, 3000, 6000]

@@ -9,6 +9,7 @@ enum BuffExpiry {
 	COMBAT,        ## Removed when the battle ends.
 	RUN,           ## Kept until the run restarts ("until next Inn" in DD2).
 	DEATHS_DOOR,   ## Removed when the unit leaves Death's Door.
+	BOND,          ## From the hero's bonds with the party; the campaign sets them between fights.
 }
 
 static var _next_uid := 1
@@ -26,7 +27,9 @@ var token_turns: Dictionary[StringName, int] = {}
 ## Bleed, blight and burn instances: {type: StringName, amount: int, turns: int}.
 var dots: Array[Dictionary] = []
 ## Stat modifiers: {stat: StringName, amount: float, expiry: BuffExpiry, rounds: int}.
-## Stats are "speed" and "resist_<kind>".
+## Stats are "speed", "resist_<kind>", "crit" and "damage" (added to the
+## attacker's chance and modifier), and "resolute" (added to the chance of
+## Resolute instead of Meltdown).
 var buffs: Array[Dictionary] = []
 ## Skill id -> turns until usable again.
 var cooldowns: Dictionary[StringName, int] = {}
@@ -141,11 +144,11 @@ func heal(amount: int) -> bool:
 	return left_deaths_door
 
 
-## At max stress, one of DD2's one-off events: a Meltdown (MELTDOWN_CHANCE) cuts
-## HP and leaves the hero easier to kill; a Resolute heals and steadies them.
-## Both reset stress. Returns true for a Meltdown.
+## At max stress, one of DD2's one-off events: a Meltdown (MELTDOWN_CHANCE, less
+## the "resolute" stat) cuts HP and leaves the hero easier to kill; a Resolute
+## heals and steadies them. Both reset stress. Returns true for a Meltdown.
 func overstress(rng: RandomNumberGenerator) -> bool:
-	if rng.randf() < Rules.MELTDOWN_CHANCE:
+	if rng.randf() < Rules.MELTDOWN_CHANCE - stat(&"resolute"):
 		stress = Rules.MELTDOWN_STRESS
 		if hp > 0:
 			hp = mini(hp, maxi(1, roundi(max_hp * Rules.MELTDOWN_HP_FRACTION)))
@@ -288,4 +291,4 @@ func clear_battle_state() -> void:
 	uses.clear()
 	speed_bonus_next_round = false
 	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool:
-		return buff.expiry == BuffExpiry.RUN or buff.expiry == BuffExpiry.DEATHS_DOOR))
+		return buff.expiry in [BuffExpiry.RUN, BuffExpiry.DEATHS_DOOR, BuffExpiry.BOND]))

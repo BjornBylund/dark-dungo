@@ -18,6 +18,7 @@ var buildings: Dictionary[StringName, int] = {}
 ## The whole cast: starting heroes, then arrivals in order.
 var heroes: Array[HeroRecord] = []
 var board: Array[Mission] = []
+var bonds := Bonds.new()
 ## The mission in progress, or null when the party is in town.
 var run: MissionRun
 var rng := RandomNumberGenerator.new()
@@ -292,7 +293,8 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
 	run = MissionRun.new(mission, _draw_map(mission), party, rng)
 	run.events = _events_for(mission)
-	run.setting_out = run.resolve_max_stress()
+	run.bonds = bonds
+	run.set_out()
 	return run
 
 
@@ -312,13 +314,26 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 
 
 ## Settles a finished mission and ends the week. Returns a summary for the
-## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups, wounded}.
-## Completing pays everything; retreating keeps what was earned on the way.
+## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups,
+## bonds (level-up lines), wounded}. Completing pays everything; retreating
+## keeps what was earned on the way. Every pair in the party bonds a little,
+## more for completing.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
 		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
+		bonds = run.new_bonds.duplicate(),
 	}
+	var bond_points := CampaignRules.BOND_COMPLETED_POINTS if run.outcome == MissionRun.Outcome.COMPLETED \
+			else CampaignRules.BOND_MISSION_POINTS
+	for i in run.party.size():
+		for j in range(i + 1, run.party.size()):
+			var a := run.party[i]
+			var b := run.party[j]
+			if bonds.add(a, b, bond_points):
+				summary.bonds.append(Bonds.level_up_line(a, b, bonds.level(a, b)))
+				if Bonds.key(a, b) not in bonds.boosts_waiting:
+					bonds.boosts_waiting.append(Bonds.key(a, b))
 	for i in run.party.size():
 		run.party[i].stress = clampi(run.combatants[i].stress, 0, Rules.STRESS_MAX)
 	if run.outcome != MissionRun.Outcome.FAILED:
@@ -417,6 +432,7 @@ func to_dict() -> Dictionary:
 		seed = str(rng.seed), rng_state = str(rng.state),
 		heroes = heroes.map(func(h: HeroRecord) -> Dictionary: return h.to_dict()),
 		board = board.map(func(m: Mission) -> Dictionary: return m.to_dict()),
+		bonds = bonds.to_dict(),
 		run = null,
 	}
 	if run:
@@ -445,6 +461,7 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	else:
 		for mission_data: Dictionary in data.board:
 			campaign.board.append(Mission.from_dict(mission_data))
+	campaign.bonds = Bonds.from_dict(data.get("bonds", {}))
 	if data.run != null:
 		var party: Array[HeroRecord] = []
 		for index in data.run.party:
@@ -454,6 +471,8 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 			run_data = campaign._run_before_maps(run_data)
 		campaign.run = MissionRun.from_dict(run_data, party, campaign.rng)
 		campaign.run.events = campaign._events_for(campaign.run.mission)
+		campaign.run.bonds = campaign.bonds
+		campaign.run.apply_bonds()
 	return campaign
 
 

@@ -146,6 +146,22 @@ Tuned with `tools/balance_probe.gd` so that a fresh level-0 party loses about 50
   - Each armour rank above 1: +20% of base HP.
 - **Guild:** skill ranks 2–5 for 250 / 750 / 1,250 / 2,500 gold, same level gates, needing the matching Guild upgrade. Each rank above 1: +10% damage or healing, +1% crit, +10% resistance pierce on its effects.
 
+### Bonds
+
+After DD2's relationships, but long-term and only positive: every pair of heroes has bond points that only go up and last the whole campaign.
+
+- **Earning points:**
+  - Every pair in the party gains +2 for completing a mission together, or +1 for any other ending.
+  - When a hero's skill reaches another hero (a heal, a good token, stress relief, a guard), the pair has a 50% chance of +1, at most once per pair per fight.
+- **Levels:** Strangers (0) → Friendly (5) → Respected (12) → Partners (20, the maximum).
+- **Level bonuses**, for both partners while they stand in the same party. Each level keeps the ones below, and each pair counts separately:
+  - Friendly: +10% stress resist.
+  - Respected: also +5% crit.
+  - Partners: also +15% chance of Resolute instead of Meltdown at max stress (20% → 35%), on the map as well as in fights.
+- **Level-up boost:** reaching a new level gives both heroes −2 stress and +10% damage for the rest of the mission. Levels from helping are checked when each fight ends, and the fight-won panel announces them. A level reached as a mission ends (its points, or the last fight) holds the boost for the pair's next mission together, announced as they set out.
+- **Where it shows:** each hero's sheet in town lists their bonds with level and progress, the expedition lineup lists the bonds within the chosen party, the fight stat sheet shows a hero's bond bonuses and boost, and the fight-won panel and mission results announce new levels.
+- **Not yet:** losing points, negative relationships, and DD2's relationship act-outs.
+
 ### Buildings
 
 | Building | Service (gold) | Upgrades (heirlooms) |

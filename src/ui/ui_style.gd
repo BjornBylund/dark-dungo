@@ -187,9 +187,34 @@ static func mission_summary(summary: Dictionary) -> Array:
 		lines.append("XP +%d" % summary.xp)
 	for hero: HeroRecord in summary.level_ups:
 		lines.append("%s reaches level %d!" % [hero.display_name, hero.level()])
+	for line: String in summary.bonds:
+		lines.append(line)
+	if not summary.bonds.is_empty():
+		lines.append("New bonds give both heroes -%d stress and +%d%% damage on their next mission together." % [
+				CampaignRules.BOND_BOOST_STRESS, roundi(CampaignRules.BOND_BOOST_DAMAGE * 100)])
 	for hero: HeroRecord in summary.wounded:
 		lines.append("%s is wounded and sits out next week." % hero.display_name)
 	return [title, "\n".join(lines)]
+
+
+const _BOND_STATS := {&"resist_stress": "stress resist", &"crit": "crit", &"resolute": "Resolute chance"}
+
+
+## "Bonds: +20% stress resist, +5% crit. Bond boost: +10% damage", or "" without any.
+static func _bond_bonuses(unit: Combatant) -> String:
+	var totals := {}
+	for buff in unit.buffs:
+		if buff.expiry == Combatant.BuffExpiry.BOND:
+			totals[buff.stat] = totals.get(buff.stat, 0.0) + buff.amount
+	var parts: Array[String] = []
+	for stat: StringName in _BOND_STATS:
+		if totals.has(stat):
+			parts.append("+%s %s" % [percent(totals[stat]), _BOND_STATS[stat]])
+	var text := "Bonds: " + ", ".join(parts) + "." if not parts.is_empty() else ""
+	var boost := unit.stat(&"damage")
+	if boost > 0.0:
+		text += (" " if text != "" else "") + "Bond boost: +%s damage." % percent(boost)
+	return text
 
 
 ## Gold with thousands separators: 12,500.
@@ -332,6 +357,9 @@ static func describe_unit(unit: Combatant) -> String:
 	lines.append(hp_line)
 	if unit.deaths_door:
 		lines.append("On Death's Door")
+	var bond_lines := _bond_bonuses(unit)
+	if bond_lines != "":
+		lines.append(bond_lines)
 	for token: StringName in unit.tokens:
 		lines.append("%s x%d: %s" % [token_name(token), unit.token_count(token), TOKEN_HELP.get(token, "")])
 	for dot in unit.dots:

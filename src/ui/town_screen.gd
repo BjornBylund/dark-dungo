@@ -314,6 +314,9 @@ func _build_hero_sheet() -> void:
 		resists.append("%s %s" % [String(kind).capitalize(),
 				UiStyle.percent(hero.def.base_resist(kind) + CampaignRules.LEVEL_RESIST_BONUS * level)])
 	info.add_child(_label("Resist: " + ", ".join(resists), 16, UiStyle.TEXT_DIM))
+	info.add_child(_label("Bonds", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	for line in _bond_lines(hero):
+		info.add_child(_label(line, 18))
 	info.add_child(_label("Skills", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	for skill in hero.def.skills:
 		var skill_row := HBoxContainer.new()
@@ -324,6 +327,24 @@ func _build_hero_sheet() -> void:
 		skill_row.add_child(icon)
 		skill_row.add_child(_label("  %s, rank %d" % [skill.display_name, hero.skill_rank(skill)], 18))
 		info.add_child(skill_row)
+
+
+## "Mender: Friendly, 7 / 12" for each hero this one has bonded with, closest first.
+func _bond_lines(hero: HeroRecord) -> Array[String]:
+	var bonds := Game.campaign.bonds
+	var others := Game.campaign.roster().filter(func(other: HeroRecord) -> bool:
+		return other != hero and bonds.points_of(hero, other) > 0)
+	others.sort_custom(func(a: HeroRecord, b: HeroRecord) -> bool:
+		return bonds.points_of(hero, a) > bonds.points_of(hero, b))
+	var lines: Array[String] = []
+	for other: HeroRecord in others:
+		var points := bonds.points_of(hero, other)
+		var level := bonds.level(hero, other)
+		var next := "" if level == Bonds.Level.PARTNERS else ", %d / %d" % [points, CampaignRules.BOND_POINTS[level + 1]]
+		lines.append("%s: %s%s" % [other.display_name, Bonds.level_name(level), next])
+	if lines.is_empty():
+		lines.append("None yet. Heroes bond on missions together and by helping each other in fights.")
+	return lines
 
 
 # --- Window pieces ---

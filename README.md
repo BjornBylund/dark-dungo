@@ -1,6 +1,6 @@
 # Darko Dungo
 
-A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across one to three maps of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. A combat sandbox (four heroes against three waves) is still there for testing fights.
+A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across one to three maps of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
 
 - Design decisions: [docs/design.md](docs/design.md)
 - DD2 combat research: [docs/research/darkest-dungeon-combat.md](docs/research/darkest-dungeon-combat.md)
@@ -95,7 +95,7 @@ Other art, all replaceable:
 - **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. Each region offers two missions a week.
 - **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**.
 - **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
-- **Campaign numbers** (rewards, prices, XP, upgrade costs, map size and room odds) are constants in `src/campaign/campaign_rules.gd`.
+- **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
 - **Balance checks:**
   - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, maps cleared, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size.
   - `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
@@ -114,7 +114,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 |---|---|
 | `src/core/` | Combat rules: `battle.gd` (turns, hits, death, stress), `combatant.gd` (unit state), `tokens.gd` and `rules.gd` (DD2 numbers), `enemy_ai.gd`, `sandbox_run.gd` |
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
-| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
+| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, the campaign and the sandbox as `.tres` files |

@@ -31,6 +31,9 @@ var enemies: Array[Combatant] = []
 ## The unit whose turn it is, or null between turns.
 var current: Combatant
 var rng: RandomNumberGenerator
+## [helper, helped] for each skill a hero used on another hero, in order. The
+## campaign turns them into bond points.
+var helps: Array[Array] = []
 
 ## Remaining turns this round: {unit: Combatant, delayed: bool}.
 var _queue: Array[Dictionary] = []
@@ -391,6 +394,10 @@ func _resolve(actor: Combatant, skill: SkillDef, primary: Combatant, is_riposte:
 		skill = skill, targets = targets.map(func(t: Combatant) -> int: return t.uid),
 		crit = crit, crit_roll = crit_roll, crit_chance = crit_chance, riposte = is_riposte,
 	})
+	if actor.is_hero:
+		for target in targets:
+			if target.is_hero and target != actor:
+				helps.append([actor, target])
 
 	var hit_living := false
 	var crit_victims: Array[Combatant] = []
@@ -462,7 +469,7 @@ func _crit_chance(actor: Combatant, skill: SkillDef) -> float:
 		return Rules.HEAL_CRIT_CHANCE + rank_bonus
 	if not skill.deals_damage() and skill.crit_chance <= 0.0:
 		return 0.0
-	return skill.crit_chance + actor.crit_bonus + rank_bonus
+	return skill.crit_chance + actor.crit_bonus + actor.stat(&"crit") + rank_bonus
 
 
 ## Damage or healing multiplier from the skill's rank.
@@ -517,11 +524,12 @@ func _roll_damage(actor: Combatant, skill: SkillDef, target: Combatant, crit: bo
 	}
 
 
-## Sum of the attacker's damage modifiers: tokens, Combo bonus, low-HP bonus, gear or tier, and skill rank.
+## Sum of the attacker's damage modifiers: tokens, Combo bonus, low-HP bonus,
+## gear or tier, buffs, and skill rank.
 func _attack_mod(actor: Combatant, skill: SkillDef, strength: bool, combo: float) -> float:
 	var desperate := skill.low_hp_bonus if actor.hp_fraction() < 0.5 else 0.0
 	return combo + desperate + (Rules.STRENGTH_BONUS if strength else 0.0) + actor.damage_bonus \
-			+ _skill_power(actor, skill)
+			+ actor.stat(&"damage") + _skill_power(actor, skill)
 
 
 ## Sum of the defender's damage-received modifiers. `spend` consumes the tokens.
