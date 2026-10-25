@@ -175,8 +175,8 @@ static func effect_bbcode(effect: EffectDef) -> String:
 	return ""
 
 
-## Skill details in DD2's order: numbers, Target lines, Self lines, conditional
-## bonuses, then the description. Cooldowns and uses are shown on the icon.
+## Skill details in DD2's order: numbers, Target lines, Self lines, then
+## conditional bonuses. Cooldowns and uses are shown on the icon.
 static func skill_bbcode(skill: SkillDef) -> String:
 	var lines: Array[String] = []
 	var numbers: Array[String] = []
@@ -210,6 +210,8 @@ static func skill_bbcode(skill: SkillDef) -> String:
 		self_parts.append("Stress %+d" % skill.self_stress)
 	if skill.kind == SkillDef.Kind.SWAP:
 		self_parts.append("Trade places with a nearby ally")
+	if skill.kind == SkillDef.Kind.PASS:
+		self_parts.append("Stress %+d" % Rules.PASS_STRESS)
 	if not target_parts.is_empty():
 		lines.append("[color=#%s]Target:[/color] %s" % [BLUE.lightened(0.25).to_html(false), ", ".join(target_parts)])
 	if not self_parts.is_empty():
@@ -219,8 +221,6 @@ static func skill_bbcode(skill: SkillDef) -> String:
 				percent(skill.combo_damage_bonus), icon_bbcode(Tokens.COMBO)])
 	if skill.multi_target:
 		lines.append("[color=#%s]Hits every target in range[/color]" % PALE_GREEN.to_html(false))
-	if skill.description != "":
-		lines.append("[i][color=#%s]%s[/color][/i]" % [TEXT_DIM.to_html(false), skill.description])
 	return "\n".join(lines)
 
 
