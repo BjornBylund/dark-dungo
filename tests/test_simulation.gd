@@ -7,13 +7,13 @@ const MAX_ROUNDS := 60
 
 
 func test_random_player_runs_always_finish() -> void:
-	var stats := _simulate(_random_choice)
+	var stats := _simulate(AutoPlayer.random)
 	print("        random player:   %s" % _summary(stats))
 	assert_eq(stats.stalled, 0, "battles that hit %d rounds" % MAX_ROUNDS)
 
 
 func test_sensible_player_runs_always_finish() -> void:
-	var stats := _simulate(_sensible_choice)
+	var stats := _simulate(AutoPlayer.sensible)
 	print("        sensible player: %s" % _summary(stats))
 	assert_eq(stats.stalled, 0, "battles that hit %d rounds" % MAX_ROUNDS)
 
@@ -57,56 +57,3 @@ func _lineup(battle: Battle) -> String:
 	var describe := func(unit: Combatant) -> String:
 		return "%s@%d%s" % [unit.display_name, battle.rank_of(unit), " (corpse)" if unit.is_corpse else ""]
 	return "%s vs %s" % [battle.heroes.map(describe), battle.enemies.map(describe)]
-
-
-func _usable(battle: Battle) -> Array[SkillDef]:
-	var actor := battle.current
-	var usable: Array[SkillDef] = []
-	for skill in battle.actions_for(actor):
-		if battle.can_use(actor, skill):
-			usable.append(skill)
-	return usable
-
-
-func _random_choice(battle: Battle) -> Array:
-	var options := _usable(battle).filter(func(s: SkillDef) -> bool: return s.kind == SkillDef.Kind.ACTION)
-	if options.is_empty():
-		options = _usable(battle)
-	var skill: SkillDef = options[battle.rng.randi_range(0, options.size() - 1)]
-	var targets := battle.targets_for(battle.current, skill)
-	return [skill, targets[battle.rng.randi_range(0, targets.size() - 1)]]
-
-
-## Heal the badly hurt, calm the badly stressed, otherwise hit hardest on the weakest foe.
-func _sensible_choice(battle: Battle) -> Array:
-	var actor := battle.current
-	var usable := _usable(battle)
-	for skill in usable:
-		if skill.heals() and skill.side == SkillDef.TargetSide.ALLY:
-			var hurt := battle.targets_for(actor, skill).filter(func(h: Combatant) -> bool: return h.hp_fraction() < 0.5)
-			if not hurt.is_empty():
-				hurt.sort_custom(func(a: Combatant, b: Combatant) -> bool: return a.hp_fraction() < b.hp_fraction())
-				return [skill, hurt[0]]
-	for skill in usable:
-		if skill.stress < 0:
-			var stressed := battle.targets_for(actor, skill).filter(func(h: Combatant) -> bool: return h.stress >= 5)
-			if not stressed.is_empty():
-				return [skill, stressed[0]]
-	var best: Array = []
-	var best_value := 0.0
-	for skill in usable:
-		if not skill.deals_damage():
-			continue
-		for target in battle.targets_for(actor, skill):
-			if not target.is_active():
-				continue
-			var preview := battle.preview(actor, skill, target)
-			var value: float = preview.hit_chance * (preview.damage_min + preview.damage_max) / 2.0
-			value *= 1.5 if skill.multi_target else 1.0
-			value *= 2.0 if target.hp <= preview.damage_max else 1.0
-			if value > best_value:
-				best_value = value
-				best = [skill, target]
-	if not best.is_empty():
-		return best
-	return _random_choice(battle)

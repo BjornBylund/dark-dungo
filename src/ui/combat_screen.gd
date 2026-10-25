@@ -175,9 +175,17 @@ func _begin_player_turn() -> void:
 	_select_skill(preferred)
 	if _autoplay:
 		var generation := _generation
-		await _wait(0.6)
-		if generation == _generation and _focused_target():
-			_confirm(_focused_target())
+		var choice := AutoPlayer.sensible(_battle)
+		await _wait(0.4)
+		if generation != _generation:
+			return
+		_select_skill(choice[0])
+		_focus_index = maxi(_targets.find(choice[1]), 0)
+		_update_highlights()
+		_show_info(choice[0])
+		await _wait(0.9)
+		if generation == _generation:
+			_confirm(choice[1])
 
 
 func _select_skill(skill: SkillDef) -> void:
