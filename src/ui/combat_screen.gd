@@ -4,6 +4,9 @@
 extends Control
 
 const SANDBOX: SandboxDef = preload("res://content/sandbox.tres")
+## Bundled rather than a system font so desktop and web builds look the same.
+## Gelasio is metrically compatible with Georgia (SIL Open Font License).
+const UI_FONT: FontFile = preload("res://art/fonts/gelasio/Gelasio.ttf")
 const STAGE_SIZE := Vector2(1920, 1080)
 const FIELD_CENTER_X := 960.0
 const CENTER_GAP := 70.0
@@ -648,6 +651,9 @@ func _log_line(line: String) -> void:
 func _center_stage() -> void:
 	if _stage:
 		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+		# The close-up dimmer covers the whole window, including any letterbox bands.
+		_overlay.position = -_stage.position
+		_overlay.size = size
 	queue_redraw()
 
 
@@ -782,9 +788,7 @@ func _rich_text(minimum: Vector2) -> RichTextLabel:
 
 func _make_theme() -> Theme:
 	var result := Theme.new()
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "serif"])
-	result.default_font = font
+	result.default_font = UI_FONT
 	result.default_font_size = 18
 
 	var panel := _box(UiStyle.PANEL, UiStyle.PANEL_BORDER, 2, 8)

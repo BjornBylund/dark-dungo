@@ -17,6 +17,31 @@ Controls: click a skill, then a highlighted target. Keys: `1`–`8` skills, `Lef
 
 Watch it play itself: `godot --path . -- --autoplay --speed=2`.
 
+## Play in a browser
+
+The project exports to the web (HTML5) without threads, so any static host works without special headers.
+
+1. Install export templates once: in the Godot editor, Editor > Manage Export Templates > Download and Install.
+2. Export with Project > Export > Web > Export Project, or from a terminal:
+
+   ```bash
+   godot --headless --path . --export-release "Web" build/web/index.html
+   ```
+
+3. Test it locally (browsers can't run it from `file://`), then open http://localhost:8060:
+
+   ```bash
+   powershell -File scripts/serve_web.ps1
+   ```
+
+### Publish on GitHub Pages
+
+`.github/workflows/pages.yml` runs the tests, exports the game and deploys it on every push to `main`.
+
+1. Create a GitHub repository and push this one to it. Pages on a free GitHub plan needs a public repository.
+2. In the repository, open Settings > Pages and set **Source** to **GitHub Actions**.
+3. Push to `main` (or run the workflow from the Actions tab). The game appears at `https://<user>.github.io/<repo>/`.
+
 ## Add art
 
 Units draw a coloured placeholder until they have a sprite.
@@ -42,5 +67,9 @@ Runs every `tests/test_*.gd` headless, including 200 simulated full runs that pr
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `SandboxDef` |
 | `src/ui/` | The combat screen and its placeholder drawing |
 | `content/` | Heroes, enemies, waves and the sandbox as `.tres` files |
+| `art/` | Unit sprites and the UI font (Gelasio, SIL Open Font License) |
+| `export_presets.cfg` | The Web export preset |
+| `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |
+| `scripts/` | `test.ps1` runs the tests, `serve_web.ps1` serves the web export locally |
 | `tests/` | Headless tests and the runner |
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
