@@ -20,6 +20,7 @@ func _ready() -> void:
 		return
 	theme = UiStyle.make_theme()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	resized.connect(queue_redraw)
 	var shade := ColorRect.new()
 	shade.color = Color(0, 0, 0, 0.55)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -52,7 +53,17 @@ func _ready() -> void:
 	_new = _menu_button("New Campaign", _on_new)
 	for button: Button in [_continue, _new, _menu_button("Combat Sandbox", Game.play_sandbox)]:
 		column.add_child(button)
+	if OS.has_feature("web"):
+		var fullscreen := _menu_button("Fullscreen", _toggle_fullscreen)
+		fullscreen.theme_type_variation = &""
+		fullscreen.add_theme_font_size_override("font_size", 20)
+		column.add_child(fullscreen)
 	queue_redraw()
+
+
+func _toggle_fullscreen() -> void:
+	var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 func _draw() -> void:

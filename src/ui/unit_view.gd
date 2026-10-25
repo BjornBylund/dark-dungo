@@ -85,8 +85,10 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
+## Clicks count on press; taps on release, so a long press (which swallows the
+## release) can show the stat sheet without also choosing the unit.
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed != Device.touch:
 		clicked.emit(self)
 		accept_event()
 

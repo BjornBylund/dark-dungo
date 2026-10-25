@@ -206,6 +206,28 @@ The combat screen follows DD2's, as measured in [research/darkest-dungeon-ui.md]
 - Combat log showing every roll (L, a dev overlay hidden by default) and a 2× speed toggle (S).
 - Mouse first: click a skill, valid targets highlight, click a target. Keyboard: 1–8 pick a skill, Left/Right/Tab move the target, Enter/Space confirm, L log, S speed, R restart. Controller later.
 
+### Mobile and touch
+
+The web build plays on phones and tablets with touch. Mouse and keyboard on desktop stay exactly as they are; touch behaviour turns on with a touchscreen, and the phone layout on small screens.
+
+- **Platform:** the same web build (GitHub Pages) in mobile browsers. Native Android and iOS apps come later.
+- **Landscape only.** Held upright, the game shows "Turn your phone sideways".
+- **Phone layout** on screens shorter than about 600 CSS pixels: roughly twice the text size and full-size touch targets (about 44 CSS pixels), with each screen rearranged to show less at once. Town building windows go full-screen with scrolling lists, and combat shows skill details only when asked. Tablets keep the normal layout, where text comes out around 13 CSS pixels.
+- **Tap to look, tap again to act** in place of hover:
+  - **Map:** tapping a room shows what it holds, with a Go button.
+  - **Combat:** tapping a target shows its stats and the damage preview; tapping it again, or Confirm, uses the skill.
+  - **Long press** (about half a second) on anything with extra information shows it: unit stat sheets, why a button is greyed out, skill icons, heirlooms.
+- **Lineup:** tap a hero in a slot to pick them up, tap another slot to swap, tap the picked hero again to take them out. Dragging still works.
+- **Fullscreen:** a button on the title screen. The web build is installable (Godot's progressive web app export), so "Add to Home Screen" opens it fullscreen in landscape. iPhones can't lock orientation from the browser, so they rely on the "turn sideways" screen.
+- **How it's built:**
+  - The phone layout runs the game on a 960×540 logical screen (half the 1920×1080 the screens are authored at), so everything is drawn twice as large.
+  - Each screen's 1920×1080 stage (backgrounds, battlefield, map) shrinks to fit. The bars, panels, windows and buttons that must stay readable sit on a full-size layer on top.
+  - Quest shields grow 1.8× and map rooms 1.6× on phones; combat skill buttons grow 1.3×.
+  - Combat on phones hides the skill text, target panel and log. It shows Skill info (a popup), the focused target's HIT / DMG / CRIT and Confirm beside the skill bar instead.
+  - Touch behaviour follows the last input: taps arrive as emulated mouse clicks, and a real mouse switches back to click behaviour.
+  - Tablets keep the desktop layout with touch. They target with tap-and-tap-again, without a Confirm button.
+  - `src/ui/device.gd` holds the flags and `src/ui/mobile.gd` (an autoload) does the detection, the long press and the overlays. `--phone` and `--touch` force them on desktop for testing.
+
 ## Content v0
 
 Names are placeholders; the theme/setting is undecided. Rank notation: "From 1–2 → Enemy 1–3" means usable from ranks 1–2 against enemies in ranks 1–3; "1+2" hits both ranks at once. Resistances, crit chances and corpse HP are in the `.tres` files.

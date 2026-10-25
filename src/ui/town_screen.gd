@@ -2,7 +2,9 @@
 ## down the right, and the week, gold and heirlooms sit along the top. Every
 ## action goes through Game.campaign and is saved straight away. Embark (or the
 ## mission board) opens the expedition map.
-## Authored for 1920x1080 on a centred stage, like the combat screen.
+## Authored for 1920x1080 on a centred stage, like the combat screen. In the
+## phone layout the hamlet shrinks to fit and the bar, roster and windows sit
+## on top at full size, the windows filling the screen and scrolling.
 extends Control
 
 const STAGE_SIZE := Vector2(1920, 1080)
@@ -18,7 +20,11 @@ const ABBEY_UPGRADES := ["More stress relief", "Prices -15%", "A second slot per
 		"More stress relief", "Prices -15% more", "A third slot per activity"]
 
 var _stage: Control
+## Where the bar, roster and windows live: the stage itself on desktop, a layer
+## over the whole screen in the phone layout.
+var _ui: Control
 var _bar: EstateBar
+var _roster_panel: PanelContainer
 var _roster: VBoxContainer
 var _hover_label: Label
 var _window: PanelContainer
@@ -79,7 +85,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
 	var background: Texture2D = _campaign().def.town_background if Game.campaign else null
 	if background and _stage:
-		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE), false)
+		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE * _stage.scale), false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -287,7 +293,7 @@ func _build_hero_sheet() -> void:
 	var row := _row()
 	var art := TextureRect.new()
 	art.texture = hero.def.sprite
-	art.custom_minimum_size = Vector2(300, 520)
+	art.custom_minimum_size = Vector2(200, 340) if Device.phone else Vector2(300, 520)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(art)
@@ -343,11 +349,12 @@ func _row() -> HBoxContainer:
 ## A hero list on the left and a detail column on the right.
 func _columns() -> Array[VBoxContainer]:
 	var row := _row()
-	row.add_theme_constant_override("separation", 30)
+	row.add_theme_constant_override("separation", 20 if Device.phone else 30)
 	var result: Array[VBoxContainer] = []
-	for width: float in [300.0, 860.0]:
+	for width: float in [300.0, 0.0 if Device.phone else 860.0]:
 		var column := VBoxContainer.new()
 		column.custom_minimum_size = Vector2(width, 0)
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL if width == 0.0 else Control.SIZE_FILL
 		column.add_theme_constant_override("separation", 8)
 		row.add_child(column)
 		result.append(column)
@@ -433,7 +440,16 @@ func _action(text: String, action: Callable) -> Button:
 
 func _center_stage() -> void:
 	if _stage:
-		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+		Device.fit_stage(_stage, size)
+	if Device.phone and _ui:
+		# The hamlet sits at the left so the roster doesn't cover the gate.
+		_stage.position.x = 0.0
+		_ui.size = size
+		_bar.fit_width(size.x)
+		_roster_panel.position = Vector2(size.x - _roster_panel.size.x - 8, EstateBar.HEIGHT + 6)
+		_roster_panel.size.y = size.y - EstateBar.HEIGHT - 14
+		_window.position = Vector2(8, EstateBar.HEIGHT + 4)
+		_window.size = size - _window.position - Vector2(8, 8)
 	queue_redraw()
 
 
@@ -443,6 +459,11 @@ func _build() -> void:
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stage)
+	_ui = _stage
+	if Device.phone:
+		_ui = Control.new()
+		_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_ui)
 
 	for building: Array in BUILDINGS:
 		var hotspot := Control.new()
@@ -470,55 +491,56 @@ func _build() -> void:
 
 	# Top band: week, gold and heirlooms, Embark, and a way back to the menu.
 	_bar = EstateBar.new()
-	_stage.add_child(_bar)
+	_ui.add_child(_bar)
 	var embark := _action("Embark", Game.go_to_expedition)
 	embark.custom_minimum_size = Vector2(150, 44)
 	embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
 	embark.add_theme_font_size_override("font_size", 26)
 	_bar.add_button(embark)
 	var menu := Button.new()
-	menu.text = "Save and quit"
+	menu.text = "Quit" if Device.phone else "Save and quit"
 	menu.focus_mode = Control.FOCUS_NONE
 	menu.pressed.connect(func() -> void:
 		Game.save()
 		Game.go_to_menu())
 	_bar.add_button(menu)
 
-	# Roster down the right.
-	var roster_panel := PanelContainer.new()
-	roster_panel.position = Vector2(STAGE_SIZE.x - 340, 84)
-	roster_panel.size = Vector2(324, 0)
-	_stage.add_child(roster_panel)
+	# Roster down the right; it scrolls in the phone layout.
+	_roster_panel = PanelContainer.new()
+	_roster_panel.position = Vector2(STAGE_SIZE.x - 340, 84)
+	_roster_panel.size = Vector2(324, 0)
+	_ui.add_child(_roster_panel)
 	var roster_box := VBoxContainer.new()
 	roster_box.add_theme_constant_override("separation", 6)
-	roster_panel.add_child(roster_box)
+	_roster_panel.add_child(roster_box)
 	roster_box.add_child(_label("Roster", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	_roster = VBoxContainer.new()
 	_roster.add_theme_constant_override("separation", 6)
-	roster_box.add_child(_roster)
+	roster_box.add_child(UiStyle.scroll_on_phone(_roster))
 
-	# One building window at a time.
+	# One building window at a time; the phone layout fills the screen with it and scrolls.
 	_window = PanelContainer.new()
 	_window.position = Vector2(60, 90)
 	_window.size = Vector2(1500, 960)
 	_window.add_theme_stylebox_override("panel", UiStyle.box(Color("0e0b0cfa"), Color("4a3e34"), 1, 4))
 	_window.hide()
-	_stage.add_child(_window)
+	_ui.add_child(_window)
 	var frame := VBoxContainer.new()
-	frame.add_theme_constant_override("separation", 12)
+	frame.add_theme_constant_override("separation", 6 if Device.phone else 12)
 	_window.add_child(frame)
 	var header := HBoxContainer.new()
 	frame.add_child(header)
-	_window_title = _label("", 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	_window_title = _label("", 36 if Device.phone else 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	_window_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(_window_title)
-	var close := _action("Close (Esc)", _close_window)
+	var close := _action("Close" if Device.handheld else "Close (Esc)", _close_window)
+	close.custom_minimum_size = Vector2(110, 48) if Device.phone else Vector2.ZERO
 	header.add_child(close)
 	_window_message = _label("", 17, UiStyle.DAMAGE.lightened(0.3))
 	frame.add_child(_window_message)
 	_window_body = VBoxContainer.new()
 	_window_body.add_theme_constant_override("separation", 10)
-	frame.add_child(_window_body)
+	frame.add_child(UiStyle.scroll_on_phone(_window_body))
 
 
 func _hover_label_hide() -> void:

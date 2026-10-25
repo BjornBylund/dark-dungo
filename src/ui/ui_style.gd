@@ -155,6 +155,19 @@ static func percent(value: float) -> String:
 	return "%d%%" % roundi(value * 100.0)
 
 
+## In the phone layout, wraps `content` in a vertical ScrollContainer that fills
+## the space left in its parent box; elsewhere returns `content` unchanged.
+static func scroll_on_phone(content: Control) -> Control:
+	if not Device.phone:
+		return content
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content)
+	return scroll
+
+
 ## [title, text] for the end of a mission, from Campaign.finish_mission()'s summary.
 static func mission_summary(summary: Dictionary) -> Array:
 	var lines: Array[String] = []

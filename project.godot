@@ -11,13 +11,14 @@ config_version=5
 [application]
 
 config/name="Darko Dungo"
-config/description="Darkest Dungeon 2 style combat sandbox."
+config/description="Darkest Dungeon 2 style combat in a Darkest Dungeon 1 style campaign."
 run/main_scene="res://src/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
+Mobile="*res://src/ui/mobile.gd"
 Game="*res://src/game.gd"
 
 [display]

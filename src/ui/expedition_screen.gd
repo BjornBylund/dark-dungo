@@ -2,23 +2,36 @@
 ## markers, the chosen quest's details top left, the roster down the right and
 ## the lineup along the bottom. Embark starts the first fight; Esc goes back to
 ## town. Authored for 1920x1080 on a centred stage, like the other screens.
+## The phone layout keeps the map and quest panel, with bigger quest shields,
+## and moves the lineup and roster onto a party sheet opened from a button.
 extends Control
 
 const STAGE_SIZE := Vector2(1920, 1080)
 const MARKER_GAP := 12.0
 const SLOT_FIGURE := 150.0
+const PHONE_SLOT_FIGURE := 150.0
+## Quest shields and region names grow by this much on phones, so they stay easy to tap.
+const PHONE_MARKER_SCALE := 1.8
 
 var _stage: Control
+## The phone layout's full-screen layer for the bar, quest panel and party sheet.
+var _ui: Control
 var _bar: EstateBar
 var _map: Control
+var _quest_panel: PanelContainer
 var _quest: VBoxContainer
-var _roster: VBoxContainer
+var _roster: BoxContainer
 var _lineup: HBoxContainer
 var _embark: Button
 var _reason: Label
+var _party_button: Button
+var _sheet: Control
+var _sheet_box: VBoxContainer
 ## The quest chosen on the map, and the party in rank order (index 0 in rank 1).
 var _mission: Mission
 var _party: Array[HeroRecord] = []
+## On touch screens: the rank of the hero picked up to swap, or 0.
+var _picked := 0
 
 
 func _ready() -> void:
@@ -28,7 +41,9 @@ func _ready() -> void:
 	theme = UiStyle.make_theme()
 	_mission = _campaign().board.front()
 	_build()
-	resized.connect(_center_stage)
+	resized.connect(func() -> void:
+		_center_stage()
+		_refresh_map())
 	_center_stage()
 	_refresh()
 
@@ -41,7 +56,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
 	var background: Texture2D = _campaign().def.expedition_background if Game.campaign else null
 	if background and _stage:
-		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE), false)
+		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE * _stage.scale), false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -65,30 +80,38 @@ func _refresh() -> void:
 	var reason := campaign.can_embark(_mission, _party)
 	_embark.disabled = reason != ""
 	_reason.text = reason
+	if _party_button:
+		_party_button.text = "Party  %d/4" % _party.size()
 
 
 ## Each region's quests side by side at its spot on the map, its name beneath.
 func _refresh_map() -> void:
 	_clear(_map)
+	var grow := PHONE_MARKER_SCALE if Device.phone else 1.0
+	var marker_size := QuestMarker.SIZE * grow
 	for region in _campaign().def.regions:
 		var quests := _campaign().board.filter(func(m: Mission) -> bool: return m.region == region)
-		var width := quests.size() * QuestMarker.SIZE.x + (quests.size() - 1) * MARKER_GAP
+		var width := quests.size() * marker_size.x + (quests.size() - 1) * MARKER_GAP
+		var spot := region.map_position
+		if Device.phone:
+			# Keep the bigger shields clear of the top bar.
+			spot.y = maxf(spot.y, (EstateBar.HEIGHT + 8.0) / _stage.scale.y + marker_size.y / 2.0)
 		for i in quests.size():
 			var marker := QuestMarker.new()
 			marker.setup(quests[i])
-			marker.position = region.map_position + Vector2(-width / 2.0 + i * (QuestMarker.SIZE.x + MARKER_GAP),
-					-QuestMarker.SIZE.y / 2.0)
+			marker.scale = Vector2(grow, grow)
+			marker.position = spot + Vector2(-width / 2.0 + i * (marker_size.x + MARKER_GAP), -marker_size.y / 2.0)
 			marker.button_pressed = quests[i] == _mission
 			marker.pressed.connect(func() -> void:
 				_mission = marker.mission
 				_refresh())
 			_map.add_child(marker)
-		var name_label := _label(region.display_name, 30, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+		var name_label := _label(region.display_name, roundi(30 * grow), UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 		name_label.add_theme_color_override("font_outline_color", Color.BLACK)
-		name_label.add_theme_constant_override("outline_size", 10)
+		name_label.add_theme_constant_override("outline_size", roundi(10 * grow))
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.size = Vector2(320, 40)
-		name_label.position = region.map_position + Vector2(-160, QuestMarker.SIZE.y / 2.0 + 4)
+		name_label.size = Vector2(320, 40) * grow
+		name_label.position = spot + Vector2(-160 * grow, marker_size.y / 2.0 + 4)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(name_label)
 
@@ -102,7 +125,9 @@ func _refresh_quest() -> void:
 	_quest.add_child(_label(mission.title(), 40, QuestMarker.tier_color(mission.tier), UiStyle.DISPLAY_FONT))
 	_quest.add_child(_label("Level %d   %d columns" % [mission.level(), CampaignRules.MAP_COLUMNS[mission.length]], 18))
 	_quest.add_child(_heading("Goal"))
-	_quest.add_child(_label("Reach the end of the map and win the final fight.", 18))
+	var goal := _label("Reach the end of the map and win the final fight.", 18)
+	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if Device.phone else TextServer.AUTOWRAP_OFF
+	_quest.add_child(goal)
 	_quest.add_child(_heading("Rewards"))
 	_quest.add_child(_label("%s gold on completion" % UiStyle.gold_text(mission.completion_gold()), 20))
 	_quest.add_child(_label("%s gold for each fight won" % UiStyle.gold_text(mission.fight_gold()), 20))
@@ -140,30 +165,60 @@ func _refresh_roster() -> void:
 				not _can_join(hero))
 		badge.button_pressed = place >= 0
 		badge.disabled = not _can_join(hero)
-		badge.pressed.connect(func() -> void:
-			if hero in _party:
-				_party.erase(hero)
-			elif _party.size() < 4:
-				_party.append(hero)
-			_refresh())
+		badge.pressed.connect(_on_roster_pressed.bind(hero))
 		_roster.add_child(badge)
+
+
+## Adds a hero at the back of the lineup, or takes them out. With a hero picked
+## up on a touch screen, a hero from the roster takes their slot instead.
+func _on_roster_pressed(hero: HeroRecord) -> void:
+	if _picked > 0 and hero not in _party:
+		_party[_picked - 1] = hero
+	elif hero in _party:
+		_party.erase(hero)
+	elif _party.size() < 4:
+		_party.append(hero)
+	_picked = 0
+	_refresh()
 
 
 ## Rank 4 on the left to rank 1 on the right, as the party stands in combat.
 func _refresh_lineup() -> void:
 	_clear(_lineup)
+	if _picked > _party.size():
+		_picked = 0
 	for rank in range(4, 0, -1):
 		var hero: HeroRecord = _party[rank - 1] if rank <= _party.size() else null
 		var short := _campaign().levels_short(hero, _mission) if hero else 0
 		var slot := FormationSlot.new()
 		slot.setup(rank, hero, "+%d stress" % (short * CampaignRules.UNDERLEVEL_STRESS) if short > 0 else "",
-				UiStyle.STRESS_TEXT, SLOT_FIGURE)
-		slot.clicked.connect(func(r: int) -> void:
-			_party.remove_at(r - 1)
-			_refresh())
+				UiStyle.STRESS_TEXT, PHONE_SLOT_FIGURE if Device.phone else SLOT_FIGURE)
+		slot.picked = rank == _picked
+		slot.clicked.connect(_on_slot_clicked)
 		# Deferred so the lineup isn't rebuilt while the viewport is still finishing the drop.
 		slot.dropped.connect(_place_in_lineup, CONNECT_DEFERRED)
 		_lineup.add_child(slot)
+
+
+## With a mouse, clicking a hero takes them out. On a touch screen the first
+## tap picks a hero up, a tap on another slot swaps them (or moves them to the
+## back, for an empty slot), and a second tap on the same hero takes them out.
+func _on_slot_clicked(rank: int) -> void:
+	if not Device.touch:
+		if rank <= _party.size():
+			_party.remove_at(rank - 1)
+	elif _picked == 0:
+		if rank <= _party.size():
+			_picked = rank
+	elif _picked == rank:
+		_party.remove_at(rank - 1)
+		_picked = 0
+	else:
+		var hero := _party[_picked - 1]
+		_picked = 0
+		_place_in_lineup(hero, rank)
+		return
+	_refresh()
 
 
 func _can_join(hero: HeroRecord) -> bool:
@@ -214,7 +269,17 @@ func _on_embark() -> void:
 
 func _center_stage() -> void:
 	if _stage:
-		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+		Device.fit_stage(_stage, size)
+	if Device.phone and _ui:
+		# The map sits at the right so the quest panel covers as little of it as possible.
+		_stage.position.x = size.x - STAGE_SIZE.x * _stage.scale.x
+		_ui.size = size
+		_bar.fit_width(size.x)
+		_quest_panel.position = Vector2(8, EstateBar.HEIGHT + 6)
+		_party_button.position = size - _party_button.size - Vector2(12, 12)
+		_sheet.size = size
+		_sheet_box.position = Vector2(12, 10)
+		_sheet_box.size = size - Vector2(24, 20)
 	queue_redraw()
 
 
@@ -230,6 +295,10 @@ func _build() -> void:
 	_map.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.add_child(_map)
 
+	if Device.phone:
+		_build_phone()
+		return
+
 	_bar = EstateBar.new()
 	_stage.add_child(_bar)
 	var back := Button.new()
@@ -239,13 +308,13 @@ func _build() -> void:
 	_bar.add_button(back)
 
 	# The chosen quest, top left.
-	var quest_panel := PanelContainer.new()
-	quest_panel.position = Vector2(40, 88)
-	quest_panel.custom_minimum_size = Vector2(440, 0)
-	_stage.add_child(quest_panel)
+	_quest_panel = PanelContainer.new()
+	_quest_panel.position = Vector2(40, 88)
+	_quest_panel.custom_minimum_size = Vector2(440, 0)
+	_stage.add_child(_quest_panel)
 	_quest = VBoxContainer.new()
 	_quest.add_theme_constant_override("separation", 6)
-	quest_panel.add_child(_quest)
+	_quest_panel.add_child(_quest)
 
 	# Roster down the right.
 	var roster_panel := PanelContainer.new()
@@ -291,6 +360,79 @@ func _build() -> void:
 	embark_box.add_child(_embark)
 
 
+## Phones: the bar and a compact quest panel over the map, a Party button, and
+## the party sheet (lineup above a scrolling roster strip, with Embark).
+func _build_phone() -> void:
+	_ui = Control.new()
+	_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_ui)
+	_bar = EstateBar.new()
+	_ui.add_child(_bar)
+	var back := Button.new()
+	back.text = "Town"
+	back.focus_mode = Control.FOCUS_NONE
+	back.add_theme_font_size_override("font_size", 18)
+	back.pressed.connect(Game.go_to_town)
+	_bar.add_button(back)
+
+	_quest_panel = PanelContainer.new()
+	_quest_panel.custom_minimum_size = Vector2(300, 0)
+	_ui.add_child(_quest_panel)
+	_quest = VBoxContainer.new()
+	_quest.add_theme_constant_override("separation", 2)
+	_quest_panel.add_child(_quest)
+
+	_party_button = _action("", func() -> void: _sheet.show())
+	_party_button.custom_minimum_size = Vector2(240, 60)
+	_party_button.size = _party_button.custom_minimum_size
+	_party_button.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
+	_party_button.add_theme_font_size_override("font_size", 30)
+	_ui.add_child(_party_button)
+
+	_sheet = Control.new()
+	_sheet.hide()
+	_ui.add_child(_sheet)
+	var dim := ColorRect.new()
+	dim.color = Color("0b0809f4")
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_sheet.add_child(dim)
+	_sheet_box = VBoxContainer.new()
+	_sheet_box.add_theme_constant_override("separation", 8)
+	_sheet.add_child(_sheet_box)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 14)
+	_sheet_box.add_child(header)
+	header.add_child(_label("Lineup", 30, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	var hint := _label("Rank 1 is the front. Tap a hero to pick them up, then a slot to swap.", 15, UiStyle.TEXT_DIM)
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	header.add_child(hint)
+	_reason = _label("", 15, UiStyle.TEXT_DIM)
+	header.add_child(_reason)
+	var map_button := _action("Map", func() -> void:
+		_picked = 0
+		_sheet.hide()
+		_refresh())
+	map_button.custom_minimum_size = Vector2(100, 52)
+	header.add_child(map_button)
+	_embark = _action("Embark", _on_embark)
+	_embark.custom_minimum_size = Vector2(170, 52)
+	_embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
+	_embark.add_theme_font_size_override("font_size", 28)
+	header.add_child(_embark)
+	_lineup = HBoxContainer.new()
+	_lineup.alignment = BoxContainer.ALIGNMENT_CENTER
+	_lineup.add_theme_constant_override("separation", 10)
+	_sheet_box.add_child(_lineup)
+	var strip := ScrollContainer.new()
+	strip.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	strip.custom_minimum_size = Vector2(0, HeroBadge.SIZE.y + 14)
+	_sheet_box.add_child(strip)
+	_roster = HBoxContainer.new()
+	_roster.add_theme_constant_override("separation", 8)
+	strip.add_child(_roster)
+
+
 # --- Pieces ---
 
 func _clear(parent: Node) -> void:
@@ -301,7 +443,7 @@ func _clear(parent: Node) -> void:
 
 func _heading(text: String) -> Label:
 	var heading := _label(text, 26, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
-	heading.custom_minimum_size.y = 40
+	heading.custom_minimum_size.y = 30 if Device.phone else 40
 	heading.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	return heading
 

@@ -30,6 +30,8 @@ Launch options go after `--`:
 | `--autoplay` | Play itself: the town hires, treats the wounded and embarks; the map picks rooms, rests and event choices; fights pick sensible moves |
 | `--speed=N` | Combat animation speed |
 | `--start-wave=N` | Sandbox: start at wave N |
+| `--phone` | Phone layout and touch behaviour, for testing on desktop (pair with `--resolution 844x390`) |
+| `--touch` | Touch behaviour with the normal layout, like a tablet |
 
 For example, watch a campaign play itself: `godot --path . -- --new-campaign --autoplay --speed=4`.
 
@@ -49,6 +51,16 @@ The project exports to the web (HTML5) without threads, so any static host works
    ```bash
    powershell -File scripts/serve_web.ps1
    ```
+
+### On phones and tablets
+
+The web build plays in mobile browsers, held sideways.
+- **Phones** get a larger layout.
+- **Touch controls:**
+  - Tap a map room to see what it holds, then Go.
+  - Tap an enemy to see the attack's odds, and tap it again (or Confirm) to attack.
+  - Long-press anything for its details.
+- **Installing:** the build is installable. Use "Add to Home Screen" and it opens fullscreen in landscape. The title screen also has a Fullscreen button.
 
 ### Publish on GitHub Pages
 
@@ -102,7 +114,7 @@ Runs every `tests/test_*.gd` headless, including simulated sandbox runs and camp
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
 | `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
-| `src/ui/` | Title, town, expedition, mission map and combat screens |
+| `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, the campaign and the sandbox as `.tres` files |
 | `art/` | Unit sprites, skill and token icons, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |

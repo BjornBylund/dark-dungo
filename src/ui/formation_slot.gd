@@ -19,6 +19,8 @@ const BELOW_FIGURE := 130.0
 
 var rank := 1
 var hero: HeroRecord
+## Picked up on a touch screen, waiting for a slot to swap with.
+var picked := false
 var note := ""
 var note_color := UiStyle.TEXT_DIM
 var _figure := Rect2(8, 38, WIDTH - 16, 222)
@@ -42,8 +44,10 @@ func _notification(what: int) -> void:
 		_set_drop_hover(false)
 
 
+## Clicks on a hero; on touch screens also taps on an empty slot, the target of a swap.
 func _gui_input(event: InputEvent) -> void:
-	if hero and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+	if (hero or Device.touch) and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT \
+			and not event.pressed:
 		clicked.emit(rank)
 
 
@@ -103,8 +107,10 @@ func _draw() -> void:
 	var body := UiStyle.BODY_FONT
 	draw_string(display, Vector2(0, 24), "Rank %d" % rank, HORIZONTAL_ALIGNMENT_CENTER, size.x, 22,
 			UiStyle.GOLD if hero else UiStyle.TEXT_DIM)
-	var border := UiStyle.GOLD if _drop_hover else Color("3a3430")
-	draw_style_box(UiStyle.box(Color("120e0f"), border, 2 if _drop_hover else 1, 3), _figure.grow(4))
+	var lit := _drop_hover or picked
+	var border := UiStyle.GOLD if lit else Color("3a3430")
+	draw_style_box(UiStyle.box(Color("241b1d") if picked else Color("120e0f"), border, 3 if picked else (2 if lit else 1),
+			3), _figure.grow(4))
 	if hero == null:
 		draw_string(body, Vector2(0, _figure.get_center().y), "Empty", HORIZONTAL_ALIGNMENT_CENTER, size.x, 18,
 				UiStyle.TEXT_DIM)

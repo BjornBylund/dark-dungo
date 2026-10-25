@@ -3,7 +3,10 @@
 ## combat screen and come back here; rests, caches and events open a panel over
 ## the map. The party panel shows each hero's HP, stress and carried tokens, the
 ## loot earned on the way, and Retreat.
-## Authored for 1920x1080 on a centred stage, like the other screens.
+## Authored for 1920x1080 on a centred stage, like the other screens. In the
+## phone layout the map shrinks to fit with bigger room buttons, and the party
+## strip and room panels sit on top at full size. On touch screens a tap on a
+## room shows what it holds, with a Go button.
 extends Control
 
 const STAGE_SIZE := Vector2(1920, 1080)
@@ -11,8 +14,17 @@ const STAGE_SIZE := Vector2(1920, 1080)
 const MAP_AREA := Rect2(150, 130, 1620, 620)
 const PATH_DIM := Color(0.55, 0.5, 0.45, 0.35)
 const PATH_AHEAD := Color(0.85, 0.8, 0.7, 0.7)
+## Room buttons grow by this much on phones, so they stay easy to tap.
+const PHONE_ROOM_SCALE := 1.6
 
 var _stage: Control
+## Where the menu button, party strip and room panel live: the stage on desktop,
+## a layer over the whole screen in the phone layout.
+var _ui: Control
+var _band: ColorRect
+var _top: HBoxContainer
+var _menu: Button
+var _bottom: PanelContainer
 var _paths: Control
 var _rooms: Control
 var _buttons: Dictionary[int, RoomButton] = {}
@@ -57,7 +69,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
 	var background: Texture2D = Game.campaign.def.map_background if Game.campaign else null
 	if background and _stage:
-		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE), false)
+		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE * _stage.scale), false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -93,8 +105,10 @@ func _refresh() -> void:
 			state = RoomButton.State.PASSED_BY
 		var button := RoomButton.new()
 		button.setup(room, state, _describe(room))
-		button.position = _room_center(room) - button.size / 2.0
-		button.pressed.connect(_enter.bind(room))
+		var grow := PHONE_ROOM_SCALE if Device.phone else 1.0
+		button.scale = Vector2(grow, grow)
+		button.position = _room_center(room) - button.size * grow / 2.0
+		button.pressed.connect(_on_room_pressed.bind(room))
 		_rooms.add_child(button)
 		_buttons[room.id] = button
 	_paths.queue_redraw()
@@ -132,9 +146,10 @@ func _dashed(from: Vector2, to: Vector2, color: Color, width: float) -> void:
 	var step := 16.0
 	var length := from.distance_to(to)
 	var direction := (to - from) / length
-	var start := 44.0
-	while start < length - 44.0:
-		_paths.draw_line(from + direction * start, from + direction * minf(start + step * 0.6, length - 44.0), color,
+	var gap := 44.0 * (PHONE_ROOM_SCALE if Device.phone else 1.0)
+	var start := gap
+	while start < length - gap:
+		_paths.draw_line(from + direction * start, from + direction * minf(start + step * 0.6, length - gap), color,
 				width, true)
 		start += step
 
@@ -153,7 +168,19 @@ func _describe(room: MapRoom) -> String:
 	return room.type_name()
 
 
+## A click goes straight there; on a touch screen a tap first shows what the room holds.
+func _on_room_pressed(room: MapRoom) -> void:
+	if not Device.touch:
+		_enter(room)
+		return
+	_show_panel(room.type_name(), _describe(room), [
+		["Go", _enter.bind(room)],
+		["Not yet", _close_panel],
+	])
+
+
 func _enter(room: MapRoom) -> void:
+	_overlay.hide()
 	var run := _run()
 	if run.enter(room.id) != "":
 		return
@@ -232,6 +259,9 @@ func _show_panel(title: String, text: String, buttons: Array) -> void:
 		button.disabled = entry.size() > 2 and entry[2]
 		button.size_flags_horizontal = Control.SIZE_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		if Device.phone:
+			button.custom_minimum_size.y = 48
+			button.add_theme_font_size_override("font_size", 18)
 		_panel_buttons.add_child(button)
 	_overlay.show()
 
@@ -247,6 +277,7 @@ func _close_panel() -> void:
 func _refresh_party() -> void:
 	var run := _run()
 	for child in _party.get_children():
+		_party.remove_child(child)
 		child.queue_free()
 	for i in range(run.formation.size() - 1, -1, -1):
 		var card := MapHeroCard.new()
@@ -257,7 +288,14 @@ func _refresh_party() -> void:
 			var card := MapHeroCard.new()
 			card.setup(run.combatants[i], "Defeated", true)
 			_party.add_child(card)
+	if Device.phone:
+		# Four cards and the loot column share the screen's width.
+		for card: MapHeroCard in _party.get_children():
+			card.custom_minimum_size.x = clampf((size.x - 330.0) / 4.0 - 8.0, 160.0, MapHeroCard.PHONE_SIZE.x)
+		# The strip sits against the bottom edge, so it moves when its height changes.
+		_center_stage.call_deferred()
 	for child in _loot.get_children():
+		_loot.remove_child(child)
 		child.queue_free()
 	_loot.add_child(_label("Earned so far", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	_loot.add_child(_label("%s gold" % UiStyle.gold_text(run.gold_earned), 20))
@@ -265,8 +303,8 @@ func _refresh_party() -> void:
 		if run.heirlooms_earned[type] > 0:
 			_loot.add_child(_label("%d %s" % [run.heirlooms_earned[type], CampaignRules.HEIRLOOM_NAMES[type]], 20))
 	_retreat.visible = run.can_retreat()
-	_retreat.text = "Retreat? +%d stress each. Click again" % CampaignRules.RETREAT_STRESS if _confirm_retreat \
-			else "Retreat"
+	_retreat.text = "Retreat? +%d stress each. %s again" % [CampaignRules.RETREAT_STRESS,
+			"Tap" if Device.touch else "Click"] if _confirm_retreat else "Retreat"
 
 
 func _on_retreat() -> void:
@@ -308,7 +346,16 @@ func _autoplay_step() -> void:
 
 func _center_stage() -> void:
 	if _stage:
-		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+		Device.fit_stage(_stage, size)
+	if Device.phone and _ui:
+		_ui.size = size
+		_overlay.size = size
+		_band.size = Vector2(size.x, 52)
+		_top.position = Vector2(16, 4)
+		_top.size = Vector2(size.x - _menu.size.x - 40, 44)
+		_menu.position = Vector2(size.x - _menu.size.x - 12, 4)
+		_bottom.size = Vector2(size.x - 16, 0)
+		_bottom.position = Vector2(8, size.y - _bottom.get_combined_minimum_size().y - 8)
 	queue_redraw()
 
 
@@ -318,6 +365,11 @@ func _build() -> void:
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stage)
+	_ui = _stage
+	if Device.phone:
+		_ui = Control.new()
+		_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_ui)
 
 	_paths = Control.new()
 	_paths.size = STAGE_SIZE
@@ -330,82 +382,90 @@ func _build() -> void:
 	_stage.add_child(_rooms)
 
 	# Top band: week, region and mission, and a way back to the menu.
-	var band := ColorRect.new()
-	band.color = Color(0, 0, 0, 0.75)
-	band.size = Vector2(STAGE_SIZE.x, 64)
-	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stage.add_child(band)
-	var top := HBoxContainer.new()
-	top.position = Vector2(28, 8)
-	top.size = Vector2(STAGE_SIZE.x - 56, 48)
-	top.add_theme_constant_override("separation", 30)
-	_stage.add_child(top)
-	_week = _label("", 34, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	_band = ColorRect.new()
+	_band.color = Color(0, 0, 0, 0.75)
+	_band.size = Vector2(STAGE_SIZE.x, 64)
+	_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(_band)
+	_top = HBoxContainer.new()
+	_top.position = Vector2(28, 8)
+	_top.size = Vector2(STAGE_SIZE.x - 56, 48)
+	_top.add_theme_constant_override("separation", 20 if Device.phone else 30)
+	_ui.add_child(_top)
+	var top := _top
+	_week = _label("", 26 if Device.phone else 34, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	top.add_child(_week)
-	_header = _label("", 34, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
+	_header = _label("", 26 if Device.phone else 34, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
 	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(_header)
-	var menu := Button.new()
-	menu.text = "Save and quit"
-	menu.focus_mode = Control.FOCUS_NONE
-	menu.pressed.connect(func() -> void:
+	_menu = Button.new()
+	_menu.text = "Quit" if Device.phone else "Save and quit"
+	_menu.focus_mode = Control.FOCUS_NONE
+	_menu.custom_minimum_size = Vector2(80, 44) if Device.phone else Vector2.ZERO
+	_menu.size = _menu.custom_minimum_size
+	_menu.add_theme_font_size_override("font_size", 18 if Device.phone else 15)
+	_menu.pressed.connect(func() -> void:
 		Game.save()
 		Game.go_to_menu())
-	top.add_child(menu)
+	if Device.phone:
+		_ui.add_child(_menu)
+	else:
+		top.add_child(_menu)
 
 	# Party panel along the bottom, with the loot and Retreat on the right.
-	var bottom := PanelContainer.new()
-	bottom.position = Vector2(40, 840)
-	bottom.size = Vector2(STAGE_SIZE.x - 80, 0)
-	_stage.add_child(bottom)
+	_bottom = PanelContainer.new()
+	_bottom.position = Vector2(40, 840)
+	_bottom.size = Vector2(STAGE_SIZE.x - 80, 0)
+	_ui.add_child(_bottom)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 40)
-	bottom.add_child(row)
+	row.add_theme_constant_override("separation", 16 if Device.phone else 40)
+	_bottom.add_child(row)
 	var party_box := VBoxContainer.new()
 	party_box.add_theme_constant_override("separation", 8)
 	row.add_child(party_box)
-	party_box.add_child(_label("Party", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	if not Device.phone:
+		party_box.add_child(_label("Party", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	_party = HBoxContainer.new()
-	_party.add_theme_constant_override("separation", 14)
+	_party.add_theme_constant_override("separation", 8 if Device.phone else 14)
 	party_box.add_child(_party)
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 6)
 	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(side)
 	_loot = VBoxContainer.new()
-	_loot.add_theme_constant_override("separation", 4)
+	_loot.add_theme_constant_override("separation", 0 if Device.phone else 4)
 	side.add_child(_loot)
 	_retreat = _action("Retreat", _on_retreat)
-	_retreat.custom_minimum_size = Vector2(300, 48)
-	_retreat.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_retreat.custom_minimum_size = Vector2(0, 48) if Device.phone else Vector2(300, 48)
+	_retreat.size_flags_horizontal = Control.SIZE_FILL if Device.phone else Control.SIZE_SHRINK_BEGIN
 	side.add_child(_retreat)
 
 	# The room panel over the map.
 	_overlay = Control.new()
 	_overlay.size = STAGE_SIZE
 	_overlay.hide()
-	_stage.add_child(_overlay)
+	_ui.add_child(_overlay)
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.6)
-	dim.size = STAGE_SIZE
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_overlay.add_child(dim)
 	var center := CenterContainer.new()
-	center.size = STAGE_SIZE
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_overlay.add_child(center)
 	var panel := PanelContainer.new()
 	var style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
-	style.set_content_margin_all(32)
+	style.set_content_margin_all(22 if Device.phone else 32)
 	panel.add_theme_stylebox_override("panel", style)
-	panel.custom_minimum_size = Vector2(820, 0)
+	panel.custom_minimum_size = Vector2(760 if Device.phone else 820, 0)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 12 if Device.phone else 18)
 	panel.add_child(box)
-	_panel_title = _label("", 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	_panel_title = _label("", 36 if Device.phone else 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	box.add_child(_panel_title)
 	_panel_text = _label("", 20, UiStyle.TEXT)
 	_panel_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_panel_text.custom_minimum_size = Vector2(756, 0)
+	_panel_text.custom_minimum_size = Vector2(716 if Device.phone else 756, 0)
 	box.add_child(_panel_text)
 	_panel_buttons = VBoxContainer.new()
 	_panel_buttons.add_theme_constant_override("separation", 10)

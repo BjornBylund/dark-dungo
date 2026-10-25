@@ -75,6 +75,16 @@ var _end_title: Label
 var _end_text: Label
 var _end_button: Button
 var _end_action: Callable
+## Phone layout: a full-screen layer over the shrunken stage for the controls
+## that must stay full size. On desktop this is the stage itself.
+var _ui: Control
+var _touch_hud: Control
+var _info_button: Button
+var _target_info: Label
+var _confirm_button: Button
+var _phone_speed: Button
+## On touch screens: the target tapped once, which a second tap (or Confirm) attacks.
+var _armed: Combatant
 
 
 func _ready() -> void:
@@ -102,12 +112,13 @@ func _ready() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("0b0809"))
 	var offset := _stage.position if _stage else Vector2.ZERO
+	var scale_now := _stage.scale.x if _stage else 1.0
 	var background: Texture2D = Game.campaign.def.battle_background if _mission_run else SANDBOX.background
 	if background:
-		draw_texture_rect(background, Rect2(offset, STAGE_SIZE), false)
+		draw_texture_rect(background, Rect2(offset, STAGE_SIZE * scale_now), false)
 	var clear := Color(0, 0, 0, 0)
-	var fade_top := offset.y + FADE_TOP
-	var fade_bottom := offset.y + FADE_BOTTOM
+	var fade_top := offset.y + FADE_TOP * scale_now
+	var fade_bottom := offset.y + FADE_BOTTOM * scale_now
 	draw_polygon(PackedVector2Array([Vector2(0, fade_top), Vector2(size.x, fade_top),
 			Vector2(size.x, fade_bottom), Vector2(0, fade_bottom)]),
 			PackedColorArray([clear, clear, Color.BLACK, Color.BLACK]))
@@ -202,7 +213,7 @@ func _show_end(title: String, text: String, button: String, action: Callable) ->
 	_clear_player_ui()
 	_end_title.text = title
 	_end_text.text = text
-	_end_button.text = button + "  (Enter)"
+	_end_button.text = button if Device.handheld else button + "  (Enter)"
 	_end_action = action
 	_end_panel.show()
 	if _autoplay:
@@ -305,6 +316,7 @@ func _select_skill(skill: SkillDef) -> void:
 	if _busy or _battle.state != Battle.State.AWAITING_INPUT or not _battle.can_use(_battle.current, skill):
 		return
 	_selected = skill
+	_armed = null
 	for button: SkillButton in _skill_row.get_children():
 		button.set_selected(button.skill == skill)
 	_targets = _battle.targets_for(_battle.current, skill)
@@ -366,6 +378,7 @@ func _update_targeting() -> void:
 		view.consumed_tokens.clear()
 		view.queue_redraw()
 	_preview.show_columns([])
+	_update_touch_hud()
 	if _selected == null or _battle.current == null:
 		_target_panel.clear()
 		return
@@ -384,13 +397,19 @@ func _update_targeting() -> void:
 		return
 	_target_panel.show_unit(focused, _tested_resists(_selected))
 	_update_preview(actor, _selected, focused)
+	_update_touch_hud()
 
 
 func _update_preview(actor: Combatant, skill: SkillDef, target: Combatant) -> void:
-	if skill.kind != SkillDef.Kind.ACTION:
-		return
-	var preview := _battle.preview(actor, skill, target)
+	_preview.show_columns(_preview_columns(actor, skill, target))
+
+
+## [value, label] pairs for the HIT / DMG / CRIT preview.
+func _preview_columns(actor: Combatant, skill: SkillDef, target: Combatant) -> Array:
 	var columns := []
+	if skill.kind != SkillDef.Kind.ACTION:
+		return columns
+	var preview := _battle.preview(actor, skill, target)
 	if skill.is_attack():
 		columns.append([UiStyle.percent(preview.hit_chance), "HIT"])
 	if skill.deals_damage():
@@ -399,7 +418,24 @@ func _update_preview(actor: Combatant, skill: SkillDef, target: Combatant) -> vo
 	elif skill.heals():
 		columns.append(["%d-%d" % [preview.heal_min, preview.heal_max], "HEAL"])
 		columns.append([UiStyle.percent(preview.crit_chance), "CRIT"])
-	_preview.show_columns(columns)
+	return columns
+
+
+## Phone layout: the focused target, its preview and the Confirm button.
+func _update_touch_hud() -> void:
+	if _touch_hud == null:
+		return
+	var focused := _focused_target()
+	_confirm_button.disabled = focused == null or _busy
+	_info_button.disabled = _selected == null
+	if focused == null or _selected == null:
+		_target_info.text = ""
+		return
+	var parts: Array[String] = []
+	for column: Array in _preview_columns(_battle.current, _selected, focused):
+		parts.append("%s %s" % [column[1], column[0]])
+	var who := "Every target" if _selected.multi_target else focused.display_name
+	_target_info.text = who + ("\n" + "   ".join(parts) if not parts.is_empty() else "")
 
 
 ## Tokens on the target that this attack would use up.
@@ -455,13 +491,22 @@ func _show_skill_details(skill: SkillDef) -> void:
 	_pips.set_skill(skill)
 
 
+## A click attacks at once. On a touch screen the first tap on a target focuses
+## it and shows the preview; a second tap on it (or on any target of a skill
+## that hits them all) attacks.
 func _on_view_clicked(view: UnitView) -> void:
-	if view.unit in _targets:
+	if view.unit not in _targets:
+		return
+	if not Device.touch or view.unit == _armed or (_selected.multi_target and _armed != null):
 		_confirm(view.unit)
+		return
+	_armed = view.unit
+	_focus_index = _targets.find(view.unit)
+	_update_targeting()
 
 
 func _on_view_hovered(view: UnitView, inside: bool) -> void:
-	if inside and view.unit in _targets and _hud.visible:
+	if inside and view.unit in _targets and _hud.visible and not Device.touch:
 		_focus_index = _targets.find(view.unit)
 		_update_targeting()
 
@@ -897,6 +942,8 @@ func _toggle_log() -> void:
 func _toggle_speed() -> void:
 	_speed = 2.0 if _speed == 1.0 else 1.0
 	_speed_button.text = "Speed %dx (S)" % roundi(_speed)
+	if _phone_speed:
+		_phone_speed.text = "Speed %dx" % roundi(_speed)
 
 
 func _log_line(line: String) -> void:
@@ -907,16 +954,35 @@ func _log_line(line: String) -> void:
 
 func _center_stage() -> void:
 	if _stage:
-		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+		Device.fit_stage(_stage, size)
+		var s := _stage.scale.x
 		# Window-wide layers inside the stage are pulled back to cover the whole window.
 		for layer: Control in [_ink, _top_band]:
-			layer.position = -_stage.position
-			layer.size = size
+			layer.position = -_stage.position / s
+			layer.size = size / s
 			layer.queue_redraw()
 		# The close-up tint stops where the battlefield fades to black, keeping the letterbox black.
-		_tint.position = -_stage.position
-		_tint.size = Vector2(size.x, _stage.position.y + FADE_BOTTOM)
+		_tint.position = -_stage.position / s
+		_tint.size = Vector2(size.x / s, _stage.position.y / s + FADE_BOTTOM)
+	if Device.phone and _ui:
+		_layout_phone()
 	queue_redraw()
+
+
+## Places the phone controls beside the shrunken skill bar: skill info on the
+## left, the target's preview and Confirm on the right.
+func _layout_phone() -> void:
+	_ui.size = size
+	_end_panel.size = size
+	_touch_hud.size = size
+	var s := _stage.scale.x
+	var hud_top := _stage.position.y + 840.0 * s
+	var left := _stage.position.x
+	var right := _stage.position.x + STAGE_SIZE.x * s
+	_info_button.position = Vector2(left + 12, hud_top + 20)
+	_confirm_button.position = Vector2(right - _confirm_button.size.x - 12, size.y - _confirm_button.size.y - 10)
+	_target_info.position = Vector2(right - 222, _confirm_button.position.y - 52)
+	_target_info.size = Vector2(210, 48)
 
 
 func _build() -> void:
@@ -1008,6 +1074,18 @@ func _build() -> void:
 	_target_panel.size = Vector2(576, 260)
 	_hud.add_child(_target_panel)
 	_hud.hide()
+	if Device.phone:
+		# Too small to read once the stage shrinks: the phone controls show these instead.
+		for node: Control in [top_left, _skill_text, _target_panel, _preview]:
+			node.hide()
+		_skill_row.scale = Vector2(1.3, 1.3)
+		_skill_row.position.x = STAGE_SIZE.x / 2.0 - _skill_row.size.x * 1.3 / 2.0
+		_skill_row.position.y = 840
+		_hero_name.add_theme_font_size_override("font_size", 48)
+		_hero_name.size.x = 600
+		_skill_name.add_theme_font_size_override("font_size", 40)
+		_skill_name.position.y = 760
+		_skill_name.size.y = 54
 
 	_closeup_title = _label(44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	_closeup_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1041,14 +1119,19 @@ func _build() -> void:
 	_log.add_theme_font_size_override("bold_font_size", 14)
 	_log_panel.add_child(_log)
 
-	_end_panel = _layer(_stage, STAGE_SIZE)
+	_ui = _stage
+	if Device.phone:
+		_ui = _layer(self, size)
+		_build_phone_controls()
+
+	_end_panel = _layer(_ui, STAGE_SIZE)
 	_end_panel.z_index = 40
 	var backdrop := ColorRect.new()
 	backdrop.color = Color(0, 0, 0, 0.72)
-	backdrop.size = STAGE_SIZE
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.add_child(backdrop)
 	var center := CenterContainer.new()
-	center.size = STAGE_SIZE
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.add_child(center)
 	var frame := PanelContainer.new()
 	var frame_style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
@@ -1071,6 +1154,51 @@ func _build() -> void:
 	for node: Control in [_end_title, _end_text, _end_button]:
 		end_box.add_child(node)
 	_end_panel.hide()
+
+
+## Phone layout: Speed (and Restart in the sandbox) at the top left, and, on
+## hero turns, Skill info, the target's preview and Confirm beside the skill bar.
+func _build_phone_controls() -> void:
+	var top := HBoxContainer.new()
+	top.position = Vector2(12, 6)
+	top.add_theme_constant_override("separation", 10)
+	_ui.add_child(top)
+	_phone_speed = _phone_button("Speed %dx" % roundi(_speed), _toggle_speed, Vector2(116, 44), 18)
+	top.add_child(_phone_speed)
+	if _mission_run == null:
+		top.add_child(_phone_button("Restart", _new_run, Vector2(110, 44), 18))
+
+	_touch_hud = _layer(_ui, size)
+	_touch_hud.hide()
+	_hud.visibility_changed.connect(func() -> void: _touch_hud.visible = _hud.visible)
+	_info_button = _phone_button("Skill info", _show_skill_info, Vector2(150, 52), 18)
+	_touch_hud.add_child(_info_button)
+	_target_info = _label(16, UiStyle.TEXT)
+	_target_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_target_info.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_touch_hud.add_child(_target_info)
+	_confirm_button = _phone_button("Confirm", _confirm_focused, Vector2(180, 62), 30)
+	_confirm_button.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
+	_touch_hud.add_child(_confirm_button)
+
+
+func _show_skill_info() -> void:
+	if _selected:
+		Mobile.show_info(_selected.display_name, UiStyle.skill_bbcode(_selected))
+
+
+func _confirm_focused() -> void:
+	if _focused_target():
+		_confirm(_focused_target())
+
+
+func _phone_button(text: String, action: Callable, min_size: Vector2, font_size: int) -> Button:
+	var button := _button(text, action)
+	button.theme_type_variation = &"ActionButton"
+	button.custom_minimum_size = min_size
+	button.size = min_size
+	button.add_theme_font_size_override("font_size", font_size)
+	return button
 
 
 ## Rules framing the hero name, and the thin diamond outline behind the skill name.
