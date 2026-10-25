@@ -3,6 +3,11 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_a1ut3"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_phsca"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ffuty"]
+[ext_resource type="Texture2D" path="res://art/skills/slice.svg" id="4_gyv13"]
+[ext_resource type="Texture2D" path="res://art/skills/twin_strike.svg" id="5_t346e"]
+[ext_resource type="Texture2D" path="res://art/skills/lunge.svg" id="6_hj6tn"]
+[ext_resource type="Texture2D" path="res://art/skills/fade.svg" id="7_rdd2t"]
+[ext_resource type="Texture2D" path="res://art/skills/hamstring.svg" id="8_3mj6x"]
 [ext_resource type="Texture2D" path="res://art/units/cutthroat.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_sxywe"]
@@ -16,6 +21,7 @@ script = ExtResource("2_phsca")
 id = &"slice"
 display_name = "Slice"
 description = "A deep cut that keeps bleeding."
+icon = ExtResource("4_gyv13")
 launch_ranks = Array[int]([1, 2, 3])
 target_ranks = Array[int]([1, 2])
 damage_min = 4
@@ -32,6 +38,7 @@ script = ExtResource("2_phsca")
 id = &"twin_strike"
 display_name = "Twin Strike"
 description = "Sets up a Combo. Against a Combo target: spend it for +50% damage."
+icon = ExtResource("5_t346e")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2, 3])
 damage_min = 3
@@ -45,6 +52,7 @@ script = ExtResource("2_phsca")
 id = &"lunge"
 display_name = "Lunge"
 description = "Dash forward from the back and strike."
+icon = ExtResource("6_hj6tn")
 launch_ranks = Array[int]([3, 4])
 target_ranks = Array[int]([1, 2])
 damage_min = 5
@@ -66,6 +74,7 @@ script = ExtResource("2_phsca")
 id = &"fade"
 display_name = "Fade"
 description = "Slip into the shadows."
+icon = ExtResource("7_rdd2t")
 side = 2
 effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_hj6tn"), SubResource("Resource_rdd2t")])
 cooldown = 1
@@ -85,6 +94,7 @@ script = ExtResource("2_phsca")
 id = &"hamstring"
 display_name = "Hamstring"
 description = "Open a vein and leave the foe exposed."
+icon = ExtResource("8_3mj6x")
 launch_ranks = Array[int]([1, 2, 3])
 damage_min = 2
 damage_max = 3

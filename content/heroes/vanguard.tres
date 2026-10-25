@@ -3,6 +3,11 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_h4n3i"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_rnt5r"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_8wp1l"]
+[ext_resource type="Texture2D" path="res://art/skills/shield_bash.svg" id="4_qtnyg"]
+[ext_resource type="Texture2D" path="res://art/skills/cleave.svg" id="5_gynor"]
+[ext_resource type="Texture2D" path="res://art/skills/hold_the_line.svg" id="6_vmjb0"]
+[ext_resource type="Texture2D" path="res://art/skills/shield_ally.svg" id="7_po4ow"]
+[ext_resource type="Texture2D" path="res://art/skills/rally.svg" id="8_4egp0"]
 [ext_resource type="Texture2D" path="res://art/units/vanguard.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_rtyp6"]
@@ -14,6 +19,7 @@ script = ExtResource("2_rnt5r")
 id = &"shield_bash"
 display_name = "Shield Bash"
 description = "Bash a foe with your shield. Stuns."
+icon = ExtResource("4_qtnyg")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2])
 damage_min = 3
@@ -26,6 +32,7 @@ script = ExtResource("2_rnt5r")
 id = &"cleave"
 display_name = "Cleave"
 description = "A wide swing that hits the two front foes."
+icon = ExtResource("5_gynor")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2])
 multi_target = true
@@ -47,6 +54,7 @@ script = ExtResource("2_rnt5r")
 id = &"hold_the_line"
 display_name = "Hold the Line"
 description = "Brace and draw the enemy's attention."
+icon = ExtResource("6_vmjb0")
 side = 2
 effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_qtnyg"), SubResource("Resource_gynor")])
 
@@ -60,6 +68,7 @@ script = ExtResource("2_rnt5r")
 id = &"shield_ally"
 display_name = "Shield Ally"
 description = "Raise your shield over an ally."
+icon = ExtResource("7_po4ow")
 launch_ranks = Array[int]([1, 2])
 side = 1
 can_target_self = false
@@ -70,6 +79,7 @@ script = ExtResource("2_rnt5r")
 id = &"rally"
 display_name = "Rally"
 description = "Steady the whole party. Once per battle."
+icon = ExtResource("8_4egp0")
 side = 1
 multi_target = true
 stress = -1

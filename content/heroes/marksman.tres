@@ -3,6 +3,11 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_gw7sh"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_x03ae"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_yewb2"]
+[ext_resource type="Texture2D" path="res://art/skills/aimed_shot.svg" id="4_236uf"]
+[ext_resource type="Texture2D" path="res://art/skills/volley.svg" id="5_fu307"]
+[ext_resource type="Texture2D" path="res://art/skills/blinding_shot.svg" id="6_j3m5c"]
+[ext_resource type="Texture2D" path="res://art/skills/expose.svg" id="7_0berm"]
+[ext_resource type="Texture2D" path="res://art/skills/point_blank.svg" id="8_ricmk"]
 [ext_resource type="Texture2D" path="res://art/units/marksman.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_bx3iw"]
@@ -10,6 +15,7 @@ script = ExtResource("2_x03ae")
 id = &"aimed_shot"
 display_name = "Aimed Shot"
 description = "A careful shot with a high crit chance."
+icon = ExtResource("4_236uf")
 launch_ranks = Array[int]([3, 4])
 target_ranks = Array[int]([2, 3, 4])
 damage_min = 5
@@ -21,6 +27,7 @@ script = ExtResource("2_x03ae")
 id = &"volley"
 display_name = "Volley"
 description = "Rain arrows on the back two ranks."
+icon = ExtResource("5_fu307")
 launch_ranks = Array[int]([3, 4])
 target_ranks = Array[int]([3, 4])
 multi_target = true
@@ -37,6 +44,7 @@ script = ExtResource("2_x03ae")
 id = &"blinding_shot"
 display_name = "Blinding Shot"
 description = "A flash-powder arrow. Blinds."
+icon = ExtResource("6_j3m5c")
 launch_ranks = Array[int]([2, 3, 4])
 damage_min = 2
 damage_max = 4
@@ -56,6 +64,7 @@ script = ExtResource("2_x03ae")
 id = &"expose"
 display_name = "Expose"
 description = "Mark a weakness: Vulnerable and Combo."
+icon = ExtResource("7_0berm")
 launch_ranks = Array[int]([2, 3, 4])
 effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_fu307"), SubResource("Resource_j3m5c")])
 
@@ -64,6 +73,7 @@ script = ExtResource("2_x03ae")
 id = &"point_blank"
 display_name = "Point Blank"
 description = "Fire into the front foe's face and step back."
+icon = ExtResource("8_ricmk")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1])
 damage_min = 6

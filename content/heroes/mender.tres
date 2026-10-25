@@ -3,6 +3,11 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_k35l2"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_ga4xx"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ejcji"]
+[ext_resource type="Texture2D" path="res://art/skills/mend.svg" id="4_qacnk"]
+[ext_resource type="Texture2D" path="res://art/skills/purge.svg" id="5_a85gm"]
+[ext_resource type="Texture2D" path="res://art/skills/ward.svg" id="6_a1rxl"]
+[ext_resource type="Texture2D" path="res://art/skills/soothe.svg" id="7_h30im"]
+[ext_resource type="Texture2D" path="res://art/skills/hex.svg" id="8_hrv8o"]
 [ext_resource type="Texture2D" path="res://art/units/mender.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_dmbhf"]
@@ -10,6 +15,7 @@ script = ExtResource("2_ga4xx")
 id = &"mend"
 display_name = "Mend"
 description = "Close an ally's wounds."
+icon = ExtResource("4_qacnk")
 launch_ranks = Array[int]([3, 4])
 side = 1
 heal_min = 4
@@ -28,6 +34,7 @@ script = ExtResource("2_ga4xx")
 id = &"purge"
 display_name = "Purge"
 description = "Draw out poison, bleeding and curses."
+icon = ExtResource("5_a85gm")
 launch_ranks = Array[int]([2, 3, 4])
 side = 1
 heal_min = 2
@@ -44,6 +51,7 @@ script = ExtResource("2_ga4xx")
 id = &"ward"
 display_name = "Ward"
 description = "A protective blessing."
+icon = ExtResource("6_a1rxl")
 launch_ranks = Array[int]([2, 3, 4])
 side = 1
 effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_a85gm")])
@@ -53,6 +61,7 @@ script = ExtResource("2_ga4xx")
 id = &"soothe"
 display_name = "Soothe"
 description = "Calm a frayed mind."
+icon = ExtResource("7_h30im")
 launch_ranks = Array[int]([3, 4])
 side = 1
 stress = -2
@@ -72,6 +81,7 @@ script = ExtResource("2_ga4xx")
 id = &"hex"
 display_name = "Hex"
 description = "A withering curse: blight and Weakness."
+icon = ExtResource("8_hrv8o")
 damage_min = 2
 damage_max = 4
 crit_chance = 0.05

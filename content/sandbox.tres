@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SandboxDef" format=3]
 
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_2h6wc"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/ruined_road.svg" id="1_lf4pb"]
 [ext_resource type="Resource" path="res://content/heroes/vanguard.tres" id="2_lf4pb"]
 [ext_resource type="Resource" path="res://content/heroes/cutthroat.tres" id="3_2jsws"]
 [ext_resource type="Resource" path="res://content/heroes/marksman.tres" id="4_q2y63"]
@@ -15,3 +16,4 @@
 script = ExtResource("6_7e4xa")
 party = Array[ExtResource("1_2h6wc")]([ExtResource("2_lf4pb"), ExtResource("3_2jsws"), ExtResource("4_q2y63"), ExtResource("5_o6ckf")])
 waves = Array[ExtResource("7_wj1tx")]([ExtResource("8_6euxj"), ExtResource("9_yowrh"), ExtResource("10_u4uvk")])
+background = ExtResource("1_lf4pb")

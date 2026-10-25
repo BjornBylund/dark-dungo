@@ -17,6 +17,8 @@ enum TargetPreference { RANDOM, LOWEST_HP, HIGHEST_STRESS, HAS_COMBO }
 @export var id: StringName
 @export var display_name: String
 @export_multiline var description: String
+## Square icon for the skill bar. Empty shows the skill's name instead.
+@export var icon: Texture2D
 @export var kind: Kind = Kind.ACTION
 
 @export_group("Ranks")

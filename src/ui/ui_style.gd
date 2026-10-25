@@ -1,23 +1,30 @@
-## Colours, labels and text helpers shared by the combat UI. Placeholder look until there is art.
+## Fonts, colours, icons and text helpers shared by the combat UI.
+## Colours follow DD2's palette (docs/research/darkest-dungeon-ui.md, A7).
 class_name UiStyle
 extends RefCounted
 
-const BACKGROUND_TOP := Color("15111a")
-const BACKGROUND_BOTTOM := Color("261c1f")
-const FLOOR := Color("1d1517")
-const PANEL := Color("1a1418e6")
-const PANEL_BORDER := Color("5a4636")
+const DISPLAY_FONT: FontFile = preload("res://art/fonts/grenze_gotisch/GrenzeGotisch.ttf")
+## Gelasio is metrically compatible with Georgia (SIL Open Font License).
+const BODY_FONT: FontFile = preload("res://art/fonts/gelasio/Gelasio.ttf")
+
 const TEXT := Color("e8dcc8")
 const TEXT_DIM := Color("9a8c7a")
-const GOLD := Color("d9b45a")
-const HP := Color("b3332e")
-const HP_BACK := Color("3a1a1a")
-const STRESS := Color("c9b8ff")
-const STRESS_BACK := Color("2c2440")
-const HEAL := Color("6fd38a")
-const ENEMY_TARGET := Color("e0533f")
-const ALLY_TARGET := Color("5fc7a0")
-const CRIT := Color("ffd25e")
+const GREY := Color("8a8a8a")
+const RULE := Color(0.33, 0.33, 0.33, 0.6)
+const GOLD := Color("c9a66b")
+const BLUE := Color("4c78b5")
+const GREEN := Color("4ccb7a")
+const PALE_GREEN := Color("a8d8a0")
+const AMBER := Color("f0b050")
+const HP_FILL := Color("8e1020")
+const HP_FRAME := Color("3a3a3a")
+const HP_EMPTY := Color("050505")
+const CORPSE_FILL := Color("6b5a4a")
+const STRESS_ON := Color("f0f0f0")
+const STRESS_OFF := Color("2e2e2e")
+const DAMAGE := Color("d9262e")
+const CRIT := Color("f08a24")
+const STRESS_TEXT := Color("e6e0ff")
 
 const DOT_COLORS := {
 	&"bleed": Color("d9443a"),
@@ -25,27 +32,15 @@ const DOT_COLORS := {
 	&"burn": Color("f08a2a"),
 }
 
-## Token id -> [short label, colour].
-const TOKENS := {
-	Tokens.CRIT: ["CRT", Color("ffd25e")],
-	Tokens.DODGE: ["DDG", Color("8fd0ff")],
-	Tokens.DODGE_PLUS: ["DDG+", Color("5fb8ff")],
-	Tokens.BLOCK: ["BLK", Color("9fb3c8")],
-	Tokens.BLOCK_PLUS: ["BLK+", Color("c8dcf0")],
-	Tokens.STRENGTH: ["STR", Color("f0a050")],
-	Tokens.RIPOSTE: ["RIP", Color("e0c070")],
-	Tokens.GUARD: ["GRD", Color("a0c0a0")],
-	Tokens.SPEED: ["SPD", Color("80e0d0")],
-	Tokens.STEALTH: ["STL", Color("8080a0")],
-	Tokens.STUN: ["STUN", Color("ffe070")],
-	Tokens.DAZE: ["DAZE", Color("e0d090")],
-	Tokens.BLIND: ["BLND", Color("b070d0")],
-	Tokens.WEAK: ["WEAK", Color("c06080")],
-	Tokens.VULNERABLE: ["VULN", Color("e06060")],
-	Tokens.TAUNT: ["TNT", Color("e08040")],
-	Tokens.IMMOBILIZE: ["IMMO", Color("a08060")],
-	Tokens.COMBO: ["CMB", Color("f070c0")],
-}
+## The resistance row in the target panel: [resist id, label, colour].
+const RESIST_COLUMNS := [
+	[&"bleed", "BLD", Color("d9443a")],
+	[&"blight", "BLGT", Color("8fbf3a")],
+	[&"burn", "BURN", Color("f08a2a")],
+	[&"stun", "STN", Color("e8c84a")],
+	[&"move", "MOV", Color("b09070")],
+	[&"debuff", "DBFF", Color("b070d0")],
+]
 
 const TOKEN_NAMES := {
 	Tokens.CRIT: "Crit", Tokens.DODGE: "Dodge", Tokens.DODGE_PLUS: "Dodge+", Tokens.BLOCK: "Block",
@@ -76,101 +71,156 @@ const TOKEN_HELP := {
 	Tokens.COMBO: "Some skills get bonus effects against it.",
 }
 
+## Icons for the built-in actions, which are made in code rather than loaded as content.
+const BASIC_SKILL_ICONS := {
+	&"swap": preload("res://art/skills/swap.svg"),
+	&"pass": preload("res://art/skills/pass.svg"),
+	&"recover": preload("res://art/skills/recover.svg"),
+}
+
+const GREYSCALE_SHADER: Shader = preload("res://src/ui/greyscale.gdshader")
+
+static var _token_icons := {}
+
+
+static func skill_icon(skill: SkillDef) -> Texture2D:
+	return skill.icon if skill.icon else BASIC_SKILL_ICONS.get(skill.id)
+
+
+## Icon for a token, DoT type (&"bleed", &"blight", &"burn") or &"death_armor",
+## loaded from art/tokens/<id>.svg. Null when there is no file.
+static func token_icon(id: StringName) -> Texture2D:
+	if not _token_icons.has(id):
+		var path := "res://art/tokens/%s.svg" % id
+		_token_icons[id] = load(path) if ResourceLoader.exists(path) else null
+	return _token_icons[id]
+
 
 static func token_name(token: StringName) -> String:
 	return TOKEN_NAMES.get(token, String(token).capitalize())
 
 
-static func token_color(token: StringName) -> Color:
-	return TOKENS[token][1] if TOKENS.has(token) else TEXT
+## A material that draws a control in greyscale at the given brightness.
+static func greyscale(brightness: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = GREYSCALE_SHADER
+	material.set_shader_parameter("brightness", brightness)
+	return material
 
 
 static func percent(value: float) -> String:
 	return "%d%%" % roundi(value * 100.0)
 
 
-## "1-2" or "1, 3" style rank list.
-static func ranks(list: Array[int]) -> String:
-	if list.is_empty():
-		return "-"
-	var sorted := list.duplicate()
-	sorted.sort()
-	if sorted.back() - sorted.front() == sorted.size() - 1 and sorted.size() > 1:
-		return "%d-%d" % [sorted.front(), sorted.back()]
-	return ", ".join(sorted.map(func(rank: int) -> String: return str(rank)))
+## Draws a texture clipped to a diamond (or any convex polygon) inside `rect`.
+static func draw_clipped(canvas: CanvasItem, texture: Texture2D, points: PackedVector2Array, rect: Rect2,
+		source: Rect2, flip: bool = false, modulate: Color = Color.WHITE) -> void:
+	var uvs := PackedVector2Array()
+	var size := texture.get_size()
+	for point in points:
+		var t := (point - rect.position) / rect.size
+		if flip:
+			t.x = 1.0 - t.x
+		uvs.append((source.position + t * source.size) / size)
+	canvas.draw_colored_polygon(points, modulate, uvs, texture)
 
 
-static func describe_effect(effect: EffectDef) -> String:
+static var _portrait_regions := {}
+
+
+## The top of the drawn figure in a unit's sprite (ignoring transparent margins), for portraits.
+static func portrait_region(texture: Texture2D) -> Rect2:
+	if not _portrait_regions.has(texture):
+		var used := Rect2(Vector2.ZERO, texture.get_size())
+		var image := texture.get_image()
+		if image:
+			if image.is_compressed():
+				image.decompress()
+			used = Rect2(image.get_used_rect())
+		var side := minf(used.size.x, used.size.y * 0.6)
+		_portrait_regions[texture] = Rect2(used.get_center().x - side / 2.0, used.position.y, side, side)
+	return _portrait_regions[texture]
+
+
+static func diamond(center: Vector2, half: float) -> PackedVector2Array:
+	return PackedVector2Array([center + Vector2(0, -half), center + Vector2(half, 0),
+			center + Vector2(0, half), center + Vector2(-half, 0)])
+
+
+static func icon_bbcode(id: StringName, size: int = 20) -> String:
+	var path := "res://art/tokens/%s.svg" % id
+	return "[img=%dx%d]%s[/img]" % [size, size, path] if ResourceLoader.exists(path) else ""
+
+
+static func effect_bbcode(effect: EffectDef) -> String:
 	match effect.kind:
 		EffectDef.Kind.TOKEN:
 			if not effect.token_pool.is_empty():
-				return " or ".join(effect.token_pool.map(func(t: StringName) -> String: return token_name(t)))
-			return token_name(effect.token) + (" x%d" % effect.stacks if effect.stacks > 1 else "")
+				return " or ".join(effect.token_pool.map(func(t: StringName) -> String:
+					return "%s %s" % [icon_bbcode(t), token_name(t)]))
+			var stacks := " x%d" % effect.stacks if effect.stacks > 1 else ""
+			return "%s %s%s" % [icon_bbcode(effect.token), token_name(effect.token), stacks]
 		EffectDef.Kind.DOT:
-			return "%s %d for %d turns" % [String(effect.dot).capitalize(), effect.amount, effect.duration]
+			return "%s [color=#%s]%s %d[/color] (%d Turns)" % [icon_bbcode(effect.dot),
+					DOT_COLORS.get(effect.dot, TEXT).to_html(false), String(effect.dot).capitalize(),
+					effect.amount, effect.duration]
 		EffectDef.Kind.MOVE:
-			return ("Pull forward %d" if effect.amount > 0 else "Knock back %d") % absi(effect.amount)
+			return ("Pull %d" if effect.amount > 0 else "Knockback %d") % absi(effect.amount)
 		EffectDef.Kind.CLEANSE_DOTS:
-			return "Cure bleed, blight and burn"
+			return "Cure Bleed, Blight and Burn"
 		EffectDef.Kind.CLEANSE_NEGATIVE:
-			return "Remove negative tokens"
+			return "Clear negative tokens"
 		EffectDef.Kind.GUARD:
-			return "Guard x%d" % effect.stacks
+			return "%s Guard x%d" % [icon_bbcode(Tokens.GUARD), effect.stacks]
 	return ""
 
 
-## Multi-line summary of what a skill does, for the info panel.
-static func describe_skill(skill: SkillDef, unit: Combatant) -> String:
+## Skill details in DD2's order: numbers, Target lines, Self lines, conditional
+## bonuses, then the description. Cooldowns and uses are shown on the icon.
+static func skill_bbcode(skill: SkillDef) -> String:
 	var lines: Array[String] = []
-	if skill.description != "":
-		lines.append(skill.description)
-	if skill.kind == SkillDef.Kind.ACTION:
-		var where := "Use from %s" % ranks(skill.launch_ranks)
-		match skill.side:
-			SkillDef.TargetSide.SELF:
-				where += " on self"
-			SkillDef.TargetSide.ALLY:
-				where += " on %s ally ranks %s" % ["all" if skill.multi_target else "one", ranks(skill.target_ranks)]
-			SkillDef.TargetSide.ENEMY:
-				where += " on %s enemy ranks %s" % ["all" if skill.multi_target else "one", ranks(skill.target_ranks)]
-		lines.append(where)
 	var numbers: Array[String] = []
 	if skill.deals_damage():
-		numbers.append("%d-%d damage" % [skill.damage_min, skill.damage_max])
-		numbers.append("crit %s" % percent(skill.crit_chance))
+		numbers.append("DMG: %d-%d" % [skill.damage_min, skill.damage_max])
+		numbers.append("CRIT: %s" % percent(skill.crit_chance))
 	if skill.heal_max > 0:
-		numbers.append("heal %d-%d" % [skill.heal_min, skill.heal_max])
+		numbers.append("HEAL: %d-%d" % [skill.heal_min, skill.heal_max])
 	if skill.heal_fraction > 0.0:
-		numbers.append("heal %s HP" % percent(skill.heal_fraction))
-	if skill.stress != 0:
-		numbers.append("%+d stress" % skill.stress)
-	if skill.combo_damage_bonus > 0.0:
-		numbers.append("+%s damage vs Combo" % percent(skill.combo_damage_bonus))
+		numbers.append("HEAL: %s HP" % percent(skill.heal_fraction))
 	if not numbers.is_empty():
-		lines.append(", ".join(numbers))
-	var effects: Array[String] = []
-	for effect in skill.effects:
-		effects.append(describe_effect(effect))
-	if not effects.is_empty():
-		lines.append("Target: " + ", ".join(effects))
+		lines.append("   ".join(numbers))
+
+	var target_parts: Array[String] = []
+	if skill.side != SkillDef.TargetSide.SELF:
+		for effect in skill.effects:
+			target_parts.append(effect_bbcode(effect))
+		if skill.stress != 0:
+			target_parts.append("Stress %+d" % skill.stress)
 	var self_parts: Array[String] = []
+	if skill.side == SkillDef.TargetSide.SELF:
+		for effect in skill.effects:
+			self_parts.append(effect_bbcode(effect))
+		if skill.stress != 0:
+			self_parts.append("Stress %+d" % skill.stress)
 	for effect in skill.self_effects:
-		self_parts.append(describe_effect(effect))
+		self_parts.append(effect_bbcode(effect))
 	if skill.self_move != 0:
-		self_parts.append(("move forward %d" if skill.self_move > 0 else "move back %d") % absi(skill.self_move))
+		self_parts.append(("Forward %d" if skill.self_move > 0 else "Back %d") % absi(skill.self_move))
 	if skill.self_stress != 0:
-		self_parts.append("%+d stress" % skill.self_stress)
+		self_parts.append("Stress %+d" % skill.self_stress)
+	if skill.kind == SkillDef.Kind.SWAP:
+		self_parts.append("Trade places with a nearby ally")
+	if not target_parts.is_empty():
+		lines.append("[color=#%s]Target:[/color] %s" % [BLUE.lightened(0.25).to_html(false), ", ".join(target_parts)])
 	if not self_parts.is_empty():
-		lines.append("Self: " + ", ".join(self_parts))
-	var limits: Array[String] = []
-	if skill.cooldown > 0:
-		limits.append("cooldown %d" % skill.cooldown)
-	if skill.uses_per_battle > 0:
-		limits.append("%d of %d uses left" % [unit.uses_left(skill), skill.uses_per_battle])
-	if unit.cooldown_left(skill) > 0:
-		limits.append("ready in %d turn%s" % [unit.cooldown_left(skill), "" if unit.cooldown_left(skill) == 1 else "s"])
-	if not limits.is_empty():
-		lines.append(", ".join(limits))
+		lines.append("[color=#%s]Self:[/color] %s" % [GOLD.to_html(false), ", ".join(self_parts)])
+	if skill.combo_damage_bonus > 0.0:
+		lines.append("[color=#%s]+%s DMG when Target has %s Combo[/color]" % [PALE_GREEN.to_html(false),
+				percent(skill.combo_damage_bonus), icon_bbcode(Tokens.COMBO)])
+	if skill.multi_target:
+		lines.append("[color=#%s]Hits every target in range[/color]" % PALE_GREEN.to_html(false))
+	if skill.description != "":
+		lines.append("[i][color=#%s]%s[/color][/i]" % [TEXT_DIM.to_html(false), skill.description])
 	return "\n".join(lines)
 
 
@@ -185,14 +235,6 @@ static func describe_unit(unit: Combatant) -> String:
 	if unit.is_hero:
 		hp_line += "   Stress %d/%d" % [unit.stress, Rules.STRESS_MAX]
 	lines.append(hp_line)
-	var resists: Array[String] = []
-	for kind: String in ["stun", "bleed", "blight", "burn", "move", "debuff"]:
-		resists.append("%s %s" % [kind.capitalize(), percent(unit.resist(kind))])
-	if unit.is_hero:
-		resists.append("Deathblow %s" % percent(clampf(unit.resist(&"deathblow"), Rules.DEATHBLOW_MIN, Rules.DEATHBLOW_MAX)))
-	lines.append("Resist: " + ", ".join(resists))
-	if unit.death_armor > 0:
-		lines.append("Death Armor %d" % unit.death_armor)
 	if unit.deaths_door:
 		lines.append("On Death's Door")
 	for token: StringName in unit.tokens:

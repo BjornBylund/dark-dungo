@@ -113,6 +113,18 @@ func covers_rank(unit: Combatant, ranks: Array[int]) -> bool:
 	return false
 
 
+## Units still to act this round, in order, starting with the one acting now.
+func turn_order() -> Array[Combatant]:
+	var order: Array[Combatant] = []
+	if current:
+		order.append(current)
+	for entry in _queue:
+		var unit: Combatant = entry.unit
+		if unit.is_active():
+			order.append(unit)
+	return order
+
+
 ## Every action the unit could take this turn, usable or not.
 func actions_for(unit: Combatant) -> Array[SkillDef]:
 	var actions: Array[SkillDef] = []

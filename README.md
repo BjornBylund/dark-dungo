@@ -15,7 +15,7 @@ godot --path .
 
 Controls: click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart. Hover any unit for its stats.
 
-Watch it play itself: `godot --path . -- --autoplay --speed=2`.
+Watch it play itself: `godot --path . -- --autoplay --speed=2`. Add `--start-wave=3` to jump straight to a wave.
 
 ## Play in a browser
 
@@ -49,7 +49,13 @@ Units draw a coloured placeholder until they have a sprite.
 1. Put a transparent PNG in the project, e.g. `art/units/ghoul.png`. Draw every unit facing right with its feet on the bottom edge; enemies are mirrored automatically.
 2. Open the unit's `.tres` in `content/` and drag the PNG into its **Sprite** field (Art group). Adjust **Sprite Scale** if it should stand taller or shorter.
 
-Sprites are fitted into the unit's slot, keeping their aspect ratio. Work at about 2x the on-screen size, roughly 300×560 px for a normal unit and 680×560 px for a 2-rank one. Textures import with mipmaps so they stay smooth when scaled down.
+Sprites are fitted into the unit's slot, keeping their aspect ratio. Units stand about 380 px tall on a 1080p screen and up to 1.5× that in close-ups, so draw them at least 560 px tall (around 300×560 for a normal unit, 680×560 for a 2-rank one). Textures import with mipmaps so they stay smooth when scaled down.
+
+Other art, all replaceable:
+
+- **Skill icons:** each skill's **Icon** field (square, e.g. `art/skills/slice.svg`). Swap, Pass and Recover use `art/skills/swap.svg`, `pass.svg` and `recover.svg`.
+- **Token and status icons:** `art/tokens/<token>.svg`, e.g. `block.svg` or `bleed.svg`. Replace a file to change its icon.
+- **Background:** the sandbox's **Background** field (`content/sandbox.tres`), 1920×1080 with the ground line at y ≈ 680.
 
 ## Test it
 
