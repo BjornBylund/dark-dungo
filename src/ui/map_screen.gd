@@ -57,6 +57,10 @@ func _ready() -> void:
 	_refresh()
 	if not run.room_done:
 		_open_room()
+	elif not run.setting_out.is_empty():
+		_show_panel("Setting out", "Some of the party set out at the end of their tether.\n\n" +
+				"\n".join(run.setting_out), [["Onward", _close_panel]])
+		run.setting_out.clear()
 	elif run.new_map:
 		_show_panel("Map %d of %d" % [run.layer + 1, run.layers],
 				"The way leads deeper. The party binds its wounds before pressing on: every hero is back to full HP.",

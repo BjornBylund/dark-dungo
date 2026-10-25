@@ -653,12 +653,9 @@ func _remove_unit(unit: Combatant, reason: StringName) -> void:
 
 
 func _heal(target: Combatant, amount: int, crit: bool) -> void:
-	if target.deaths_door and amount > 0:
-		target.deaths_door = false
-		target.remove_buffs(Combatant.BuffExpiry.DEATHS_DOOR)
-		_emit(&"left_deaths_door", target)
 	var before := target.hp
-	target.hp = mini(target.max_hp, target.hp + amount)
+	if target.heal(amount):
+		_emit(&"left_deaths_door", target)
 	_emit(&"heal", target, {amount = target.hp - before, crit = crit, hp = target.hp})
 
 
@@ -701,23 +698,15 @@ func _crit_stress(actor: Combatant, victims: Array[Combatant]) -> void:
 
 ## At 10 stress: 80% Meltdown, 20% Resolute. Both are one-off events.
 func _overstress(hero: Combatant) -> void:
-	if rng.randf() < Rules.MELTDOWN_CHANCE:
-		hero.stress = Rules.MELTDOWN_STRESS
-		if hero.hp > 0:
-			hero.hp = mini(hero.hp, maxi(1, roundi(hero.max_hp * Rules.MELTDOWN_HP_FRACTION)))
-		hero.add_buff(&"resist_deathblow", Rules.MELTDOWN_DEATHBLOW, Combatant.BuffExpiry.RUN)
-		hero.add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, Combatant.BuffExpiry.ROUNDS,
-				Rules.OVERSTRESS_BUFF_ROUNDS)
+	var hp_before := hero.hp
+	var was_at_deaths_door := hero.deaths_door
+	if hero.overstress(rng):
 		_emit(&"meltdown", hero, {hp = hero.hp, stress = hero.stress})
-	else:
-		hero.stress = 0
-		hero.add_buff(&"resist_deathblow", Rules.RESOLUTE_DEATHBLOW, Combatant.BuffExpiry.RUN)
-		hero.add_buff(&"resist_debuff", Rules.RESOLUTE_DEBUFF_RESIST, Combatant.BuffExpiry.ROUNDS,
-				Rules.OVERSTRESS_BUFF_ROUNDS)
-		hero.add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, Combatant.BuffExpiry.ROUNDS,
-				Rules.OVERSTRESS_BUFF_ROUNDS)
-		_emit(&"resolute", hero, {stress = 0})
-		_heal(hero, roundi(hero.max_hp * Rules.RESOLUTE_HEAL_FRACTION), false)
+		return
+	_emit(&"resolute", hero, {stress = 0})
+	if was_at_deaths_door and not hero.deaths_door:
+		_emit(&"left_deaths_door", hero)
+	_emit(&"heal", hero, {amount = hero.hp - hp_before, crit = false, hp = hero.hp})
 
 
 # --- Effects, tokens and movement ---

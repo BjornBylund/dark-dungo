@@ -292,6 +292,7 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
 	run = MissionRun.new(mission, _draw_map(mission), party, rng)
 	run.events = _events_for(mission)
+	run.setting_out = run.resolve_max_stress()
 	return run
 
 

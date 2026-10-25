@@ -128,6 +128,38 @@ func tick_round_buffs() -> void:
 		return buff.expiry != BuffExpiry.ROUNDS or buff.rounds > 0))
 
 
+# --- Healing and stress ---
+
+## Raises HP, at most to max HP. Any healing lifts the unit off Death's Door and
+## its penalties. Returns whether it did.
+func heal(amount: int) -> bool:
+	var left_deaths_door := deaths_door and amount > 0
+	if left_deaths_door:
+		deaths_door = false
+		remove_buffs(BuffExpiry.DEATHS_DOOR)
+	hp = mini(max_hp, hp + amount)
+	return left_deaths_door
+
+
+## At max stress, one of DD2's one-off events: a Meltdown (MELTDOWN_CHANCE) cuts
+## HP and leaves the hero easier to kill; a Resolute heals and steadies them.
+## Both reset stress. Returns true for a Meltdown.
+func overstress(rng: RandomNumberGenerator) -> bool:
+	if rng.randf() < Rules.MELTDOWN_CHANCE:
+		stress = Rules.MELTDOWN_STRESS
+		if hp > 0:
+			hp = mini(hp, maxi(1, roundi(max_hp * Rules.MELTDOWN_HP_FRACTION)))
+		add_buff(&"resist_deathblow", Rules.MELTDOWN_DEATHBLOW, BuffExpiry.RUN)
+		add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
+		return true
+	stress = 0
+	add_buff(&"resist_deathblow", Rules.RESOLUTE_DEATHBLOW, BuffExpiry.RUN)
+	add_buff(&"resist_debuff", Rules.RESOLUTE_DEBUFF_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
+	add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
+	heal(roundi(max_hp * Rules.RESOLUTE_HEAL_FRACTION))
+	return false
+
+
 # --- Tokens ---
 
 func has_token(token: StringName) -> bool:

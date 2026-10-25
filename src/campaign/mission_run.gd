@@ -38,6 +38,10 @@ var room_done := true
 var gold_earned := 0
 var heirlooms_earned: Dictionary[StringName, int] = {}
 var defeated: Array[HeroRecord] = []
+## Lines about heroes who set out at max stress and melted down or turned
+## resolute, for the map screen to show once. Not saved; the first save comes
+## after the first fight.
+var setting_out: Array[String] = []
 var outcome := Outcome.IN_PROGRESS
 ## The fight waiting to start, from a fight room or an event, and how it pays.
 var pending: EncounterDef
@@ -159,8 +163,7 @@ func _next_map() -> void:
 	room_done = true
 	new_map = true
 	for unit in formation:
-		unit.hp = unit.max_hp
-		unit.deaths_door = false
+		unit.heal(unit.max_hp)
 
 
 func _queue_fight(encounter: EncounterDef, kind: FightKind) -> void:
@@ -177,8 +180,7 @@ func rest(heal: bool) -> String:
 		return "There is no rest here."
 	for unit in formation:
 		if heal:
-			unit.hp = mini(unit.max_hp, unit.hp + ceili(unit.max_hp * CampaignRules.REST_HEAL))
-			unit.deaths_door = false
+			unit.heal(ceili(unit.max_hp * CampaignRules.REST_HEAL))
 		else:
 			unit.stress = maxi(0, unit.stress - CampaignRules.REST_STRESS)
 	room_done = true
@@ -235,6 +237,7 @@ func choose(index: int) -> Dictionary:
 	var lines: Array[String] = []
 	for effect in (choice.success if success else choice.failure):
 		lines.append_array(_apply(effect, chosen))
+	lines.append_array(resolve_max_stress())
 	if pending == null:
 		room_done = true
 	return {success = success, text = choice.success_text if success else choice.failure_text, lines = lines}
@@ -285,9 +288,10 @@ func _apply(effect: EventOutcomeDef, chosen: Combatant) -> Array[String]:
 			for unit in _targets(effect, chosen):
 				var change := roundi(unit.max_hp * effect.amount)
 				var before := unit.hp
-				unit.hp = clampi(unit.hp + change, 1, unit.max_hp)
 				if change > 0:
-					unit.deaths_door = false
+					unit.heal(change)
+				else:
+					unit.hp = clampi(unit.hp + change, 1, unit.max_hp)
 				lines.append("%s %s %d HP" % [unit.display_name, "heals" if change > 0 else "loses",
 						absi(unit.hp - before)])
 		EventOutcomeDef.Kind.STRESS:
@@ -316,6 +320,20 @@ func _apply(effect: EventOutcomeDef, chosen: Combatant) -> Array[String]:
 			_queue_fight(MissionMap._pick(region.elites if not region.elites.is_empty() else region.finales, rng),
 					FightKind.ELITE)
 			lines.append("An elite fight!")
+	return lines
+
+
+## Heroes at max stress outside a fight melt down or turn resolute there and
+## then, as they would in one. Returns a line for each, for the screen.
+func resolve_max_stress() -> Array[String]:
+	var lines: Array[String] = []
+	for unit in formation:
+		if unit.stress < Rules.STRESS_MAX:
+			continue
+		if unit.overstress(rng):
+			lines.append("%s melts down! HP drops to %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+		else:
+			lines.append("%s is resolute! Stress clears, HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
 	return lines
 
 

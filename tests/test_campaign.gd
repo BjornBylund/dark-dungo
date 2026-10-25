@@ -114,6 +114,16 @@ func test_embarking_draws_the_missions_map() -> void:
 	assert_eq(run.events, campaign.def.events, "events for the maps still to come")
 
 
+func test_heroes_setting_out_at_max_stress_melt_down_or_turn_resolute() -> void:
+	var campaign := _campaign()
+	var party := _party(campaign)
+	party[0].stress = Rules.STRESS_MAX
+	var run := campaign.embark(_mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.SHORT), party)
+	assert_true(run.combatants[0].stress < Rules.STRESS_MAX)
+	assert_eq(run.setting_out.size(), 1, "only the hero at max stress")
+	assert_true(run.setting_out[0].begins_with(party[0].display_name))
+
+
 func test_completing_a_mission_pays_everything_and_ends_the_week() -> void:
 	for seed_value in 10:
 		var campaign := _campaign(seed_value)

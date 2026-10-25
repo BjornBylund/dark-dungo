@@ -431,6 +431,43 @@ func test_event_hp_loss_never_kills_and_gold_loss_stops_at_zero() -> void:
 	assert_eq(run.gold_earned, 0)
 
 
+func test_an_event_that_maxes_out_stress_brings_a_meltdown_or_a_resolute() -> void:
+	var meltdowns := 0
+	for seed_value in 40:
+		var map := _map_of([MapRoom.Type.EVENT])
+		map.room(0).event.choices.assign([Fixtures.choice("Despair", [
+			Fixtures.outcome(EventOutcomeDef.Kind.STRESS, 20),
+		])])
+		var run := _run(map)
+		run.rng.seed = seed_value
+		for unit in run.formation:
+			unit.hp = 10
+		run.enter(0)
+		var result := run.choose(0)
+		assert_eq(result.lines.size(), 8, "a stress line and a Meltdown or Resolute line per hero")
+		for unit in run.formation:
+			if unit.stress == Rules.MELTDOWN_STRESS:
+				meltdowns += 1
+				assert_eq(unit.hp, roundi(unit.max_hp * Rules.MELTDOWN_HP_FRACTION))
+			else:
+				assert_eq(unit.stress, 0, "Resolute")
+				assert_eq(unit.hp, mini(unit.max_hp, 10 + roundi(unit.max_hp * Rules.RESOLUTE_HEAL_FRACTION)))
+	assert_between(meltdowns / 160.0, 0.65, 0.95, "meltdown rate")
+
+
+func test_healing_between_fights_lifts_deaths_door_and_its_penalty() -> void:
+	var run := _run(_map_of([MapRoom.Type.REST]))
+	var hero := run.formation[0]
+	hero.hp = 0
+	hero.deaths_door = true
+	hero.add_buff(&"speed", Rules.DEATHS_DOOR_SPEED, Combatant.BuffExpiry.DEATHS_DOOR)
+	var speed := hero.speed()
+	run.enter(0)
+	run.rest(true)
+	assert_false(hero.deaths_door)
+	assert_eq(hero.speed(), speed - Rules.DEATHS_DOOR_SPEED)
+
+
 func test_tokens_from_events_carry_into_the_next_fight() -> void:
 	var map := _map_of([MapRoom.Type.EVENT])
 	var bless := Fixtures.outcome(EventOutcomeDef.Kind.TOKEN)

@@ -23,7 +23,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 ## Combat model
 
 - **Mirror Darkest Dungeon 2.** Where DD2 has a rule, copy it number for number. Reference: [research/darkest-dungeon-combat.md](research/darkest-dungeon-combat.md). All DD2 numbers live in `src/core/rules.gd` and `src/core/tokens.gd`.
-- **Stress** 0–10 with mid-combat Meltdown (80%) or Resolute (20%) at 10.
+- **Stress** 0–10 with Meltdown (80%) or Resolute (20%) at 10. In a fight it happens on the spot; on a mission map, as soon as an event pushes a hero to 10 or when a hero sets out at 10 (the map opens with a "Setting out" panel). Round-based buffs from one outside a fight count down in the next fight.
 - **Death's Door**: heroes at 0 HP are on Death's Door; further damage rolls deathblow resistance (60% base, −10% per survived check, clamped 33–90%). A failed roll **defeats** the hero rather than killing them (see [Campaign](#campaign)). Enemies die at 0 HP unless they have Death Armor.
 - **Hero kit**: 5 skills each, plus Swap and Pass. Recover (DD2's `pass_heal`) appears below 25% HP. DD2 cooldowns and per-battle limits apply.
 - **Enemy AI**: a forced skill if one is usable, otherwise a pick among usable skills by `ai_weight` (all 1 by default, which is DD2's uniform pick), then a target that respects Taunt and Stealth and avoids corpses when possible.
