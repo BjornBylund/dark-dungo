@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_5vtlx"]
+[ext_resource type="Resource" path="res://content/enemies/ghoul.tres" id="2_vjtdi"]
+[ext_resource type="Resource" path="res://content/enemies/high_priest.tres" id="3_2p7bg"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="4_mkuu0"]
+
+[resource]
+script = ExtResource("4_mkuu0")
+display_name = "The High Priest's Flock"
+enemies = Array[ExtResource("1_5vtlx")]([ExtResource("2_vjtdi"), ExtResource("2_vjtdi"), ExtResource("3_2p7bg")])

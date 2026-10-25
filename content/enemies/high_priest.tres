@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_g5bfs"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_rie5r"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ibuev"]
+[ext_resource type="Texture2D" path="res://art/units/high_priest.png" id="4_8ymyc"]
+
+[sub_resource type="Resource" id="Resource_g5bfs"]
+script = ExtResource("2_rie5r")
+id = &"dread_sermon"
+display_name = "Dread Sermon"
+launch_ranks = Array[int]([2, 3, 4])
+multi_target = true
+stress = 2
+cooldown = 2
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_rie5r"]
+script = ExtResource("3_ibuev")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_ibuev"]
+script = ExtResource("3_ibuev")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_8ymyc"]
+script = ExtResource("2_rie5r")
+id = &"curse_of_ruin"
+display_name = "Curse of Ruin"
+launch_ranks = Array[int]([2, 3, 4])
+damage_min = 6
+damage_max = 9
+crit_chance = 0.08
+effects = Array[ExtResource("3_ibuev")]([SubResource("Resource_rie5r"), SubResource("Resource_ibuev")])
+
+[sub_resource type="Resource" id="Resource_cq2g2"]
+script = ExtResource("2_rie5r")
+id = &"scourge"
+display_name = "Scourge"
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([1, 2, 3])
+multi_target = true
+damage_min = 8
+damage_max = 11
+crit_chance = 0.05
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_ukexo"]
+script = ExtResource("2_rie5r")
+id = &"unholy_mending"
+display_name = "Unholy Mending"
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+heal_min = 6
+heal_max = 10
+condition = 3
+condition_value = 0.6
+ai_weight = 2.0
+ai_target = 1
+
+[resource]
+script = ExtResource("1_g5bfs")
+id = &"high_priest"
+display_name = "High Priest"
+color = Color(0.35, 0.16, 0.4, 1)
+max_hp = 66
+speed = 7
+corpse_hp = 20
+death_armor = 1
+resist_stun = 0.3
+resist_bleed = 0.3
+resist_blight = 0.3
+resist_burn = 0.3
+resist_move = 0.4
+resist_debuff = 0.6
+skills = Array[ExtResource("2_rie5r")]([SubResource("Resource_g5bfs"), SubResource("Resource_8ymyc"), SubResource("Resource_cq2g2"), SubResource("Resource_ukexo")])
+sprite = ExtResource("4_8ymyc")

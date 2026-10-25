@@ -1,5 +1,5 @@
-## A mission on the board: a chain of fights in one region at one difficulty
-## tier, with its rewards.
+## A mission on the board: a region, a difficulty tier and a length, with its
+## rewards. Its map is drawn when the party embarks.
 class_name Mission
 extends RefCounted
 
@@ -9,15 +9,10 @@ var tier: CampaignRules.Tier
 var length: CampaignRules.Length
 ## Heirloom type paid on completion.
 var heirloom: StringName
-var encounters: Array[EncounterDef] = []
 
 
 func level() -> int:
 	return CampaignRules.TIER_LEVELS[tier]
-
-
-func fights() -> int:
-	return encounters.size()
 
 
 func title() -> String:
@@ -28,14 +23,14 @@ func gold() -> int:
 	return roundi(CampaignRules.GOLD[length] * CampaignRules.TIER_GOLD_MULTIPLIER[tier])
 
 
-## Half the gold is split across the fights and paid as each is won.
+## Paid for every fight won: half the gold, split as if the route held 2 / 3 / 4 fights.
 func fight_gold() -> int:
-	return gold() / 2 / fights()
+	return gold() / 2 / CampaignRules.FIGHT_SHARES[length]
 
 
 ## The rest is paid on completion.
 func completion_gold() -> int:
-	return gold() - fight_gold() * fights()
+	return gold() - fight_gold() * CampaignRules.FIGHT_SHARES[length]
 
 
 func xp() -> int:
@@ -47,10 +42,7 @@ func heirloom_amount() -> int:
 
 
 func to_dict() -> Dictionary:
-	return {
-		region = region.resource_path if region else "", tier = tier, length = length, heirloom = heirloom,
-		encounters = encounters.map(func(e: EncounterDef) -> String: return e.resource_path),
-	}
+	return {region = region.resource_path if region else "", tier = tier, length = length, heirloom = heirloom}
 
 
 static func from_dict(data: Dictionary) -> Mission:
@@ -60,6 +52,4 @@ static func from_dict(data: Dictionary) -> Mission:
 	mission.tier = int(data.tier) as CampaignRules.Tier
 	mission.length = int(data.length) as CampaignRules.Length
 	mission.heirloom = StringName(data.heirloom)
-	for path: String in data.encounters:
-		mission.encounters.append(load(path))
 	return mission

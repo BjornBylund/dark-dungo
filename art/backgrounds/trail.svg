@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <!-- Placeholder mission map backdrop: a dark trail through dead woods, shared by every region.
+       The map is drawn over the band y 110-690; the party panel covers the bottom. -->
+  <defs>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#151014"/>
+      <stop offset="0.5" stop-color="#1e1719"/>
+      <stop offset="1" stop-color="#0b0809"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6a5a70" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#6a5a70" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#6a5a70" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.4" r="0.75">
+      <stop offset="0.45" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.9"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#ground)"/>
+  <!-- the trail winding from left to right -->
+  <path d="M0 470 Q260 360 520 430 Q780 500 1040 400 Q1300 300 1560 390 Q1760 450 1920 400 L1920 470 Q1760 520 1560 460 Q1300 370 1040 470 Q780 570 520 500 Q260 430 0 540 Z" fill="#2a2020"/>
+  <path d="M0 505 Q260 395 520 465 Q780 535 1040 435 Q1300 335 1560 425 Q1760 485 1920 435" fill="none" stroke="#3a2c26" stroke-width="6" stroke-dasharray="18 26"/>
+  <!-- stones and roots along the way -->
+  <g fill="#211a1c">
+    <ellipse cx="300" cy="620" rx="40" ry="14"/><ellipse cx="820" cy="300" rx="34" ry="12"/>
+    <ellipse cx="1240" cy="600" rx="46" ry="15"/><ellipse cx="1700" cy="250" rx="30" ry="10"/>
+    <ellipse cx="640" cy="200" rx="26" ry="9"/><ellipse cx="1480" cy="660" rx="36" ry="12"/>
+  </g>
+  <!-- fog banks -->
+  <rect y="250" width="1920" height="60" fill="url(#fog)"/>
+  <rect y="560" width="1920" height="80" fill="url(#fog)"/>
+  <!-- dead trees at the edges -->
+  <g fill="none" stroke="#060405" stroke-linecap="round">
+    <path d="M60 1080 Q80 700 40 420 Q20 300 -20 200" stroke-width="40"/>
+    <path d="M60 640 Q140 560 200 420 M50 470 Q0 420 -20 410 M170 470 Q220 440 260 450" stroke-width="14"/>
+    <path d="M1870 1080 Q1840 720 1880 480 Q1900 360 1940 260" stroke-width="40"/>
+    <path d="M1870 660 Q1790 580 1730 450 M1880 520 Q1920 470 1940 460" stroke-width="14"/>
+  </g>
+  <rect width="1920" height="1080" fill="url(#vignette)"/>
+</svg>

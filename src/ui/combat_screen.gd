@@ -75,7 +75,6 @@ var _end_title: Label
 var _end_text: Label
 var _end_button: Button
 var _end_action: Callable
-var _end_retreat: Button
 
 
 func _ready() -> void:
@@ -87,6 +86,9 @@ func _ready() -> void:
 	theme = UiStyle.make_theme()
 	if Game.campaign and Game.campaign.run:
 		_mission_run = Game.campaign.run
+		if not _mission_run.has_pending_fight():
+			Game.go_to_map.call_deferred()
+			return
 	_build()
 	resized.connect(_center_stage)
 	_center_stage()
@@ -202,7 +204,6 @@ func _show_end(title: String, text: String, button: String, action: Callable) ->
 	_end_text.text = text
 	_end_button.text = button + "  (Enter)"
 	_end_action = action
-	_end_retreat.hide()
 	_end_panel.show()
 	if _autoplay:
 		var generation := _generation
@@ -218,25 +219,26 @@ func _start_fight() -> void:
 	_end_panel.hide()
 	_hud.hide()
 	var mission := _mission_run.mission
-	_battle = _mission_run.start_next_fight()
+	var encounter := _mission_run.pending
+	var kind: String = ["Fight", "Elite", "Finale"][_mission_run.pending_kind]
+	_battle = _mission_run.start_fight()
 	_units.clear()
 	for unit in _battle.all_units():
 		_units[unit.uid] = unit
 	_rebuild_views()
-	var encounter := mission.encounters[_mission_run.fight_index]
 	var place := mission.region.display_name + "   " if mission.region else ""
-	_wave_label.text = "Week %d   %s%s   Fight %d/%d" % [Game.campaign.week, place, mission.title(),
-			_mission_run.fight_index + 1, mission.fights()]
+	_wave_label.text = "Week %d   %s%s   %s" % [Game.campaign.week, place, mission.title(), kind]
 	_round_label.text = ""
 	_queue.show_units([])
-	_log_line("[color=#d9b45a]== Fight %d: %s ==[/color]" % [_mission_run.fight_index + 1, encounter.display_name])
+	_log_line("[color=#d9b45a]== %s: %s ==[/color]" % [kind, encounter.display_name])
 	_show_wave_title(encounter.display_name + "!")
 	await _wait(1.6)
 	if generation == _generation:
 		_pump()
 
 
-## After a fight: settle it, save, and either offer Continue / Retreat or show the results.
+## After a fight: settle it, save, and go back to the map, or show the results
+## if the mission is over.
 func _on_fight_over() -> void:
 	_mission_run.finish_fight()
 	Game.save()
@@ -245,38 +247,16 @@ func _on_fight_over() -> void:
 		return
 	var survivors := "\n".join(_mission_run.formation.map(func(h: Combatant) -> String:
 		return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
-	_show_end("Fight won", "Gold so far: %d\n%s" % [_mission_run.gold_earned, survivors], "Continue", _start_fight)
-	_end_retreat.show()
-
-
-func _retreat() -> void:
-	_mission_run.retreat()
-	_show_results()
+	_show_end("Fight won", "Gold so far: %d\n%s" % [_mission_run.gold_earned, survivors], "Back to the map",
+			Game.go_to_map)
 
 
 ## Ends the mission in the campaign (which also ends the week) and shows what it earned.
 func _show_results() -> void:
 	var summary := Game.campaign.finish_mission()
 	Game.save()
-	var lines: Array[String] = []
-	var title := "Mission complete"
-	match summary.outcome:
-		MissionRun.Outcome.RETREATED:
-			title = "Retreated"
-		MissionRun.Outcome.FAILED:
-			title = "Mission failed"
-			lines.append("The whole party fell. No rewards.")
-	if summary.gold > 0:
-		lines.append("Gold +%d" % summary.gold)
-	if summary.heirlooms > 0:
-		lines.append("%s +%d" % [CampaignRules.HEIRLOOM_NAMES[summary.heirloom], summary.heirlooms])
-	if summary.xp > 0:
-		lines.append("XP +%d" % summary.xp)
-	for hero: HeroRecord in summary.level_ups:
-		lines.append("%s reaches level %d!" % [hero.display_name, hero.level()])
-	for hero: HeroRecord in summary.wounded:
-		lines.append("%s is wounded and sits out next week." % hero.display_name)
-	_show_end(title, "\n".join(lines), "Return to town", Game.go_to_town)
+	var text: Array = UiStyle.mission_summary(summary)
+	_show_end(text[0], text[1], "Return to town", Game.go_to_town)
 
 
 # --- Player turn ---
@@ -1088,12 +1068,7 @@ func _build() -> void:
 	_end_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_end_button.custom_minimum_size = Vector2(280, 52)
 	_end_button.add_theme_font_size_override("font_size", 22)
-	_end_retreat = _button("Retreat with what you have", _retreat)
-	_end_retreat.theme_type_variation = &"ActionButton"
-	_end_retreat.custom_minimum_size = Vector2(280, 44)
-	_end_retreat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_end_retreat.hide()
-	for node: Control in [_end_title, _end_text, _end_button, _end_retreat]:
+	for node: Control in [_end_title, _end_text, _end_button]:
 		end_box.add_child(node)
 	_end_panel.hide()
 

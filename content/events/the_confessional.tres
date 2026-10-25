@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_4pw7y"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_t0ukr"]
+[ext_resource type="Resource" path="res://content/heroes/penitent.tres" id="3_o11u5"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="4_osp0q"]
+
+[sub_resource type="Resource" id="Resource_yas2y"]
+script = ExtResource("2_t0ukr")
+kind = 1
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_wgik7"]
+script = ExtResource("2_t0ukr")
+kind = 1
+amount = -3.0
+
+[sub_resource type="Resource" id="Resource_yclw2"]
+script = ExtResource("1_4pw7y")
+label = "Confess"
+chance = 0.6
+success = Array[ExtResource("2_t0ukr")]([SubResource("Resource_wgik7")])
+success_text = "The voice forgives you. You almost believe it."
+failure = Array[ExtResource("2_t0ukr")]([SubResource("Resource_yas2y")])
+failure_text = "The voice repeats your sins back to you, one by one, in your mother's voice."
+
+[sub_resource type="Resource" id="Resource_kaob3"]
+script = ExtResource("2_t0ukr")
+target = 2
+amount = -0.2
+
+[sub_resource type="Resource" id="Resource_1xxjs"]
+script = ExtResource("2_t0ukr")
+kind = 1
+amount = -2.0
+
+[sub_resource type="Resource" id="Resource_6bqdx"]
+script = ExtResource("1_4pw7y")
+label = "Scourge yourself"
+requires = ExtResource("3_o11u5")
+success = Array[ExtResource("2_t0ukr")]([SubResource("Resource_kaob3"), SubResource("Resource_1xxjs")])
+success_text = "The Penitent bleeds for all of you."
+
+[sub_resource type="Resource" id="Resource_pcjeb"]
+script = ExtResource("2_t0ukr")
+kind = 6
+
+[sub_resource type="Resource" id="Resource_xw5li"]
+script = ExtResource("1_4pw7y")
+label = "Tear the curtain aside"
+success = Array[ExtResource("2_t0ukr")]([SubResource("Resource_pcjeb")])
+success_text = "The voice stops being patient."
+
+[resource]
+script = ExtResource("4_osp0q")
+id = &"the_confessional"
+title = "The Confessional"
+text = "A confessional booth stands untouched among the broken pews. The curtain stirs, though there is no wind, and a patient voice asks you to kneel."
+choices = Array[ExtResource("1_4pw7y")]([SubResource("Resource_yclw2"), SubResource("Resource_6bqdx"), SubResource("Resource_xw5li")])

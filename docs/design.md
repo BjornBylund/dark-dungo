@@ -61,8 +61,8 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 
 - **One mission is one week.** The week advances when the party returns, whether it won, retreated or wiped. Then: Abbey and wound treatments finish, idle heroes lose stress, a new hero may arrive, and the mission board refreshes.
 - **Regions**, like DD1's Ruins, Weald, Warrens and Cove: three placeholder places, each with its own enemy groups and finale. **The Graveyard** has skeletons and cultists, **the Burrows** ghouls and spitters, and **the Chapel** cultists and the Brute (`content/regions/`).
-- **Missions:** 2 per region each week, so 6 to choose from, each with a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short 2 fights, medium 3, long 4). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
-- **A mission is a chain of fights** drawn from its region's enemy groups, ending with the region's finale on medium and long missions. Its goal is to win every fight; DD1's other quest goals (Explore, Gather, Activate, Boss) wait for a dungeon map. Between fights you choose **Continue** or **Retreat**. HP, stress and Death's Door carry from fight to fight; the DD2 end-of-battle heal (up to 20% HP) still applies.
+- **Missions:** 2 per region each week, so 6 to choose from, each with a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short, medium, long). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
+- **A mission is a map** of rooms to pick a route through, like Slay the Spire or DD2's roads. Its goal is to reach the end and win the region's finale. See [Mission maps](#mission-maps). DD1's other quest goals (Explore, Gather, Activate, Boss) stay deferred.
 - **Party selection:** up to 4 heroes, rank 1 first in the order picked. Heroes who are Wounded or busy at the Abbey can't go. Heroes at least 2 levels above the mission level refuse it ("will not go"). Heroes more than one level below it start the mission with +2 stress per level short: level 0 is fine for Apprentice, level 2 for Veteran, level 4 for Champion.
 - **Nobody fit to go:** when every hero is Wounded or at the Abbey and nobody waits at the Stagecoach, the board offers **Wait out the week**, which ends the week without a mission. It keeps a wiped party that can't afford treatment from locking the campaign; DD1 never needs it because its Stagecoach always has recruits.
 - **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +50% HP and damage and +5% crit.
@@ -76,12 +76,63 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 | Bust or Portrait (Apprentice / Veteran / Champion) | 2 / 2 / 3 | 2 / 3 / 5 | 4 / 6 / 9 |
 | Deed or Crest (Apprentice / Veteran / Champion) | 3 / 4 / 6 | 5 / 6 / 9 | 9 / 12 / 18 |
 
-- **Gold:** half is split evenly across the fights and paid as each is won; the other half is paid on completion.
-- **Heirlooms:** each mission shows one heirloom type, paid on completion in the amount above.
+- **Gold:** half is paid on completion. The other half sets the **fight share**, half the gold divided by 2 / 3 / 4 for short / medium / long, which every fight won pays. So a route with more fights pays more.
+- **Heirlooms:** each mission shows one heirloom type, paid on completion in the amount above. Elites and caches pay extra on the way (see [Mission maps](#mission-maps)).
 - **XP** only for completing the mission.
-- **Retreat:** keep the gold from fights already won; no completion gold, heirlooms or XP; +2 stress per hero.
-- **Party wipe:** the mission fails. No rewards at all, not even gold from fights won, and every hero is Wounded.
+- **Retreat:** keep everything earned on the way (fight gold, elite and cache loot); no completion gold, heirlooms or XP; +2 stress per hero.
+- **Party wipe:** the mission fails. No rewards at all, not even what was earned on the way, and every hero is Wounded.
 - **Starting resources:** 5,000 gold, no heirlooms.
+
+### Mission maps
+
+A mission is a map of rooms in columns, played left to right, like Slay the Spire's acts ([research/path-maps.md](research/path-maps.md)). From each room you choose one of the rooms it leads to in the next column. Every route ends at the same final room.
+
+- **Size:** 4 rows. Short maps have 4 columns, medium 6 and long 8, counting the final room. About half the rooms are fights, so a route holds roughly 2, 3 or 4 fights plus the finale.
+- **Building a map:** 3 random walks from the first column to the final room, starting in different rows. Each step moves to the same row or the next one up or down, and walks never cross. Rooms no walk reaches are removed, so most rooms offer 2–3 ways on. Every room's type is shown from the start; [scouting](#scouting) is a future feature.
+- **Validation:** a map is redrawn until it passes the elite rules below and these layout rules:
+  - Every column before the final room has at least two rooms, so routes never narrow to a single room before the end.
+  - Every room leads on.
+  - Every room can be reached from the first column.
+- **Room types:**
+
+| Room | Share | What happens |
+|---|---|---|
+| **Fight** | 50% | One of the region's enemy groups. Pays the fight share. |
+| **Event** | 22% | A scene with flavour text and choices (below). |
+| **Rest** | 12% | The whole party either heals 30% of max HP (which lifts heroes off Death's Door) or loses 2 stress each. |
+| **Elite** | 8% | The region's miniboss and two of its regular enemies. Pays twice the fight share plus 2 / 3 / 4 heirlooms of the mission's type (Apprentice / Veteran / Champion). |
+| **Cache** | 8% | Free loot, shown on the map before you choose: the fight share in gold, or 2 / 3 / 4 heirlooms of a random type. |
+| **Finale** | final room | The region's finale group. |
+
+- **Placement rules**, after Slay the Spire's:
+  - The first column is all fights.
+  - On medium and long maps the middle column is all rests.
+  - No elite or rest in the first third of the map, and no rest in the column before the finale.
+  - No elite after an elite or rest after a rest on any route.
+  - A room's exits lead to rooms of different types.
+  - Medium and long maps always have at least one elite. If none was rolled, an open room becomes one (a fight room when possible) where the rules allow it.
+  - Every map has a route to the finale that avoids all elites, so an elite is always a choice.
+- **Between rooms** the map screen shows where the party is, the rooms it can reach next, each hero's HP and stress, and the gold earned so far. **Retreat** is offered there, before picking the next room. HP, stress, Death's Door and defeated heroes carry from room to room; the DD2 end-of-battle heal (up to 20% HP) still applies after fights.
+- **Saving:** after every room, including the map and the party's place on it, so Continue resumes on the map.
+
+#### Events
+
+- **10 to start:** 4 that can appear in any region and 2 for each region. An event doesn't repeat within one map. They are content files (`content/events/`), editable in the inspector.
+- **Text:** a title, descriptive flavour text setting the scene, and choice buttons that state what they do.
+- **Choices** are certain ("Drink: the party heals 20% HP") or a stated chance ("Search the coffin: 60% 900 gold, otherwise a fight"). Some need a class in the party; for example, only the Mender can tend the wounded stranger.
+- **Outcomes:** HP or stress change for the party or one hero; gold or heirlooms gained or lost; tokens that carry into the next fight (Block, Strength, Dodge, Vulnerable and so on); or a fight, normal or the region's elite. Fights from events count as normal or elite fights in every way, including pay and wipes.
+
+#### Minibosses
+
+One per region, fought in elite rooms with two regular enemies of the region, using mechanics the combat engine already has:
+
+| Region | Miniboss | Kit |
+|---|---|---|
+| Graveyard | **Bone Captain** | Acts twice a round. Guards its escorts, gives them Block, rallies them with Strength, sweeps the front two ranks |
+| Burrows | **Broodmother** (2 ranks) | Blight sprays at the back ranks, a bleeding bite across the front two, a stress shriek |
+| Chapel | **High Priest** (ranks 2–4) | Party-wide stress, Vulnerable and Weaken curses, a sweeping scourge, heals its followers |
+
+Tuned with `tools/balance_probe.gd` so that a fresh level-0 party loses about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale.
 
 ### Hero growth
 
@@ -123,9 +174,10 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 ### Town screen and saving
 
 - DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms, and **Embark**.
-- **Expedition screen**, DD1's quest map: Embark (or the noticeboard) opens a full-screen placeholder map of the land beyond the hamlet with one landmark per region. Each region's quests sit by its landmark as shields framed in the tier's colour (Apprentice green, Veteran orange, Champion red), with the mission level inside and one pip per length step. The chosen quest's region, title, level, goal and rewards show top left, the roster runs down the right, and the lineup and Embark button sit along the bottom. Embark goes straight to the first fight; DD1's provisioning shop is skipped because there are no supplies. Esc goes back to town.
+- **Expedition screen**, DD1's quest map: Embark (or the noticeboard) opens a full-screen placeholder map of the land beyond the hamlet with one landmark per region. Each region's quests sit by its landmark as shields framed in the tier's colour (Apprentice green, Veteran orange, Champion red), with the mission level inside and one pip per length step. The chosen quest's region, title, level, goal and rewards show top left, the roster runs down the right, and the lineup and Embark button sit along the bottom. Embark goes straight to the mission map; DD1's provisioning shop is skipped because there are no supplies. Esc goes back to town.
+- **Mission map screen:** the map drawn over one shared placeholder backdrop (a dark trail), the region's name in the header, the party's marker, and the reachable rooms highlighted. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
 - **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
-- One autosave slot, written after every town action and every fight (`user://`, which is browser storage on the web build).
+- One autosave slot, written after every town action and every room on a mission map (`user://`, which is browser storage on the web build).
 - A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town hires arrivals, treats the wounded, and embarks on its own, and the fights play themselves.
 
 ## Deviations from DD2
@@ -257,6 +309,20 @@ To decide when we design it:
 - how large units on two slots interact with terrain
 - how terrain shows up on screen and in the skill targeting
 - what the AI does with it
+
+### Scouting
+
+On mission maps, rooms start hidden or revealed instead of all showing their type, as in DD2 ([research/path-maps.md](research/path-maps.md)). The first version of the map shows every room.
+
+- **Hidden rooms** show only that a room is there; you learn its type when you reach it or once it is scouted.
+- **Ways to scout:** a watchtower room that reveals everything ahead, hero skills or quirks that scout, and Guild or Stagecoach upgrades that reveal more at the start.
+- **Regions or modifiers** that scout less (fog) or more.
+- **Always revealed:** the elite rooms and the finale, so the big risks can still be planned around, as DD2 always shows the Lair.
+
+To decide when we design it:
+- how much starts revealed, and whether that depends on mission tier
+- whether roads between rooms can be hidden as well as rooms
+- whether unscouted events and fights pay or cost more
 
 ## Open / deferred
 

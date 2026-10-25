@@ -9,20 +9,11 @@ func _def(arrivals: Array = []) -> CampaignDef:
 		def.starting_heroes.append(load("res://content/heroes/%s.tres" % id))
 	def.arrivals.assign(arrivals)
 	def.regions.assign([
-		_region(&"first", ["wave_1", "wave_2"], ["wave_3"]),
-		_region(&"second", ["graveyard_watch", "rot_nest"], ["brute_and_bones"]),
+		Fixtures.region(&"first", ["wave_1", "wave_2"], ["brute_and_bones"], ["wave_3"]),
+		Fixtures.region(&"second", ["graveyard_watch", "rot_nest"], ["the_glutton"], ["brute_and_bones"]),
 	])
+	def.events.assign([Fixtures.spring_event()])
 	return def
-
-
-func _region(id: StringName, encounters: Array, finales: Array) -> RegionDef:
-	var region := RegionDef.new()
-	region.id = id
-	for name: String in encounters:
-		region.encounters.append(load("res://content/encounters/%s.tres" % name))
-	for name: String in finales:
-		region.finales.append(load("res://content/encounters/%s.tres" % name))
-	return region
 
 
 func _campaign(seed_value: int = 1, arrivals: Array = []) -> Campaign:
@@ -40,24 +31,24 @@ func _party(campaign: Campaign) -> Array[HeroRecord]:
 	return campaign.roster().slice(0, 4)
 
 
-## Plays fights with the sensible scripted player until the mission stops.
-func _play(run: MissionRun, fights: int = 99) -> void:
-	while run.has_next_fight() and fights > 0:
-		var battle := run.start_next_fight()
-		for i in 3000:
-			if battle.state == Battle.State.VICTORY or battle.state == Battle.State.DEFEAT:
-				break
-			battle.advance()
-			if battle.state == Battle.State.AWAITING_INPUT:
-				var choice := AutoPlayer.sensible(battle)
-				battle.submit(choice[0], choice[1])
-		run.finish_fight()
-		fights -= 1
+## Enters the first room (always a fight) and plays it with the sensible player.
+func _win_first_fight(run: MissionRun) -> void:
+	run.enter(run.next_rooms()[0].id)
+	var battle := run.start_fight()
+	for i in 3000:
+		if battle.state == Battle.State.VICTORY or battle.state == Battle.State.DEFEAT:
+			break
+		battle.advance()
+		if battle.state == Battle.State.AWAITING_INPUT:
+			var choice := AutoPlayer.sensible(battle)
+			battle.submit(choice[0], choice[1])
+	run.finish_fight()
 
 
-## Heroes only pass, so the enemies win.
+## Enters the first room and only passes, so the enemies win.
 func _lose(run: MissionRun) -> void:
-	var battle := run.start_next_fight()
+	run.enter(run.next_rooms()[0].id)
+	var battle := run.start_fight()
 	for i in 5000:
 		if battle.state == Battle.State.DEFEAT or battle.state == Battle.State.VICTORY:
 			break
@@ -73,7 +64,7 @@ func _strengthen(party: Array[HeroRecord]) -> void:
 		hero.armor_rank = 5
 
 
-func test_new_campaign_starts_with_four_heroes_and_three_missions() -> void:
+func test_new_campaign_starts_with_four_heroes_and_six_missions() -> void:
 	var campaign := _campaign()
 	assert_eq(campaign.week, 1)
 	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD)
@@ -81,7 +72,6 @@ func test_new_campaign_starts_with_four_heroes_and_three_missions() -> void:
 	assert_eq(campaign.board.size(), 2 * CampaignRules.MISSIONS_PER_REGION)
 	for mission in campaign.board:
 		assert_eq(mission.tier, CampaignRules.Tier.APPRENTICE)
-		assert_eq(mission.fights(), CampaignRules.FIGHTS[mission.length])
 
 
 func test_the_board_has_two_missions_per_region_at_both_ends_of_the_tiers() -> void:
@@ -97,16 +87,6 @@ func test_the_board_has_two_missions_per_region_at_both_ends_of_the_tiers() -> v
 		assert_true(CampaignRules.Tier.APPRENTICE in tiers, "seed %d has an Apprentice mission" % seed_value)
 
 
-func test_missions_fight_their_regions_enemies() -> void:
-	var campaign := _campaign()
-	for i in 20:
-		campaign._refresh_board()
-		for mission in campaign.board:
-			for fight in mission.encounters:
-				assert_true(fight in mission.region.encounters or fight in mission.region.finales,
-						"%s in %s" % [fight.display_name, mission.region.id])
-
-
 func test_levels_follow_the_dd1_xp_table() -> void:
 	for pair: Array in [[0, 0], [1, 0], [2, 1], [7, 1], [8, 2], [24, 4], [48, 6], [100, 6]]:
 		assert_eq(CampaignRules.level_for_xp(pair[0]), pair[1], "xp %d" % pair[0])
@@ -119,14 +99,17 @@ func test_mission_rewards_follow_the_tables() -> void:
 	assert_eq(mission.gold(), 11250)
 	assert_eq(mission.xp(), 8)
 	assert_eq(mission.heirloom_amount(), 12)
-	assert_eq(mission.fight_gold() * mission.fights() + mission.completion_gold(), mission.gold())
+	assert_eq(mission.fight_gold(), 11250 / 2 / 4)
+	assert_eq(mission.fight_gold() * CampaignRules.FIGHT_SHARES[mission.length] + mission.completion_gold(),
+			mission.gold())
 
 
-func test_medium_and_long_missions_end_with_a_finale() -> void:
+func test_embarking_draws_the_missions_map() -> void:
 	var campaign := _campaign()
-	var finale: EncounterDef = load("res://content/encounters/wave_3.tres")
-	assert_eq(campaign._make_mission(0, CampaignRules.Length.MEDIUM).encounters.back(), finale)
-	assert_ne(campaign._make_mission(0, CampaignRules.Length.SHORT).encounters.back(), finale)
+	var mission := _mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM)
+	var run := campaign.embark(mission, _party(campaign))
+	assert_eq(run.map.columns, CampaignRules.MAP_COLUMNS[CampaignRules.Length.MEDIUM])
+	assert_eq(run.map.final_room().encounter, load("res://content/encounters/wave_3.tres"))
 
 
 func test_completing_a_mission_pays_everything_and_ends_the_week() -> void:
@@ -136,12 +119,15 @@ func test_completing_a_mission_pays_everything_and_ends_the_week() -> void:
 		var party := _party(campaign)
 		_strengthen(party)
 		var run := campaign.embark(mission, party)
-		_play(run)
+		MapAutoPlayer.play(run)
 		if run.outcome != MissionRun.Outcome.COMPLETED:
 			continue
+		var earned := run.gold_earned
+		var loot := run.heirlooms_earned.duplicate()
 		var summary := campaign.finish_mission()
-		assert_eq(campaign.gold, CampaignRules.STARTING_GOLD + mission.gold())
-		assert_eq(campaign.heirlooms[mission.heirloom], mission.heirloom_amount())
+		assert_eq(summary.gold, earned + mission.completion_gold())
+		assert_eq(campaign.gold, CampaignRules.STARTING_GOLD + summary.gold)
+		assert_eq(campaign.heirlooms[mission.heirloom], mission.heirloom_amount() + loot.get(mission.heirloom, 0))
 		assert_eq(summary.xp, mission.xp())
 		assert_eq(campaign.week, 2)
 		assert_eq(campaign.run, null)
@@ -152,14 +138,15 @@ func test_completing_a_mission_pays_everything_and_ends_the_week() -> void:
 	fail("no seed completed the mission")
 
 
-func test_retreat_keeps_fight_gold_and_adds_stress() -> void:
+func test_retreat_keeps_what_was_earned_and_adds_stress() -> void:
 	var campaign := _campaign(3)
 	var mission := _mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM)
 	var party := _party(campaign)
 	_strengthen(party)
 	var run := campaign.embark(mission, party)
-	_play(run, 1)
+	_win_first_fight(run)
 	assert_eq(run.outcome, MissionRun.Outcome.IN_PROGRESS)
+	assert_true(run.can_retreat())
 	run.retreat()
 	var stress_before := run.combatants.map(func(c: Combatant) -> int: return c.stress)
 	campaign.finish_mission()
@@ -175,12 +162,14 @@ func test_party_wipe_pays_nothing_and_wounds_everyone() -> void:
 	var mission := _mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.SHORT)
 	var party := _party(campaign)
 	var run := campaign.embark(mission, party)
+	run.gold_earned = 500
+	run.heirlooms_earned[&"bust"] = 3
 	_lose(run)
 	assert_eq(run.outcome, MissionRun.Outcome.FAILED)
 	var summary := campaign.finish_mission()
 	assert_eq(summary.gold, 0)
 	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD)
-	assert_eq(campaign.heirlooms[mission.heirloom], 0)
+	assert_eq(campaign.heirlooms[&"bust"], 0)
 	assert_eq(campaign.week, 2)
 	for hero in party:
 		assert_true(hero.wounded, hero.display_name)
@@ -334,13 +323,36 @@ func test_save_and_load_round_trip() -> void:
 	var party := _party(campaign)
 	_strengthen(party)
 	var run := campaign.embark(_mission(campaign, 0, CampaignRules.Length.LONG), party)
-	_play(run, 1)
+	_win_first_fight(run)
+	run.combatants[0].add_token(Tokens.BLOCK, 2)
+	run.heirlooms_earned[&"deed"] = 2
 	var text := JSON.stringify(campaign.to_dict())
 	var loaded := Campaign.from_dict(JSON.parse_string(text), campaign.def)
 	assert_eq(JSON.stringify(loaded.to_dict()), text)
-	assert_eq(loaded.run.fight_index, 1)
+	assert_eq(loaded.run.room_id, run.room_id)
+	assert_eq(loaded.run.map.rooms.size(), run.map.rooms.size())
 	assert_eq(loaded.run.combatants[0].hp, run.combatants[0].hp)
+	assert_eq(loaded.run.combatants[0].token_count(Tokens.BLOCK), 2, "tokens carry into the next fight")
+	assert_eq(loaded.run.heirlooms_earned[&"deed"], 2)
 	assert_eq(loaded.rng.randi(), campaign.rng.randi(), "random sequence continues identically")
+
+
+func test_missions_saved_before_maps_resume_on_a_fresh_map() -> void:
+	var campaign := _campaign(8)
+	var party := _party(campaign)
+	var run := campaign.embark(_mission(campaign, 0, CampaignRules.Length.MEDIUM), party)
+	run.combatants[1].hp = 9
+	var data: Dictionary = JSON.parse_string(JSON.stringify(campaign.to_dict()))
+	data.version = 2
+	for key: String in ["map", "room_id", "room_done", "heirlooms_earned", "pending", "pending_kind"]:
+		data.run.erase(key)
+	data.run.fight_index = 1
+	data.run.gold_earned = 300
+	var loaded := Campaign.from_dict(data, campaign.def)
+	assert_eq(loaded.run.room_id, -1)
+	assert_eq(loaded.run.gold_earned, 300)
+	assert_eq(loaded.run.combatants[1].hp, 9)
+	assert_eq(loaded.run.map.columns, CampaignRules.MAP_COLUMNS[CampaignRules.Length.MEDIUM])
 
 
 func test_saves_keep_each_missions_region() -> void:

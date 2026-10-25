@@ -1,0 +1,89 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_csi8e"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_u6llk"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_p7sng"]
+[ext_resource type="Texture2D" path="res://art/units/bone_captain.png" id="4_vbq2o"]
+
+[sub_resource type="Resource" id="Resource_csi8e"]
+script = ExtResource("2_u6llk")
+id = &"halberd_sweep"
+display_name = "Halberd Sweep"
+launch_ranks = Array[int]([1, 2, 3])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 5
+damage_max = 8
+crit_chance = 0.05
+ai_weight = 2.0
+
+[sub_resource type="Resource" id="Resource_u6llk"]
+script = ExtResource("2_u6llk")
+id = &"executioners_chop"
+display_name = "Executioner's Chop"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 9
+damage_max = 13
+crit_chance = 0.12
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_p7sng"]
+script = ExtResource("3_p7sng")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_vbq2o"]
+script = ExtResource("2_u6llk")
+id = &"shield_wall"
+display_name = "Shield Wall"
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_p7sng")]([SubResource("Resource_p7sng")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_1stg6"]
+script = ExtResource("3_p7sng")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_xpofr"]
+script = ExtResource("2_u6llk")
+id = &"rally_the_dead"
+display_name = "Rally the Dead"
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_p7sng")]([SubResource("Resource_1stg6")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_t7aet"]
+script = ExtResource("3_p7sng")
+kind = 5
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_x6mad"]
+script = ExtResource("2_u6llk")
+id = &"bodyguard"
+display_name = "Bodyguard"
+side = 1
+can_target_self = false
+effects = Array[ExtResource("3_p7sng")]([SubResource("Resource_t7aet")])
+cooldown = 2
+ai_target = 1
+
+[resource]
+script = ExtResource("1_csi8e")
+id = &"bone_captain"
+display_name = "Bone Captain"
+color = Color(0.42, 0.44, 0.48, 1)
+max_hp = 72
+speed = 5
+turns_per_round = 2
+corpse_hp = 22
+death_armor = 1
+resist_stun = 0.5
+resist_bleed = 0.6
+resist_blight = 0.6
+resist_burn = 0.3
+resist_move = 0.5
+resist_debuff = 0.4
+skills = Array[ExtResource("2_u6llk")]([SubResource("Resource_csi8e"), SubResource("Resource_u6llk"), SubResource("Resource_vbq2o"), SubResource("Resource_xpofr"), SubResource("Resource_x6mad")])
+sprite = ExtResource("4_vbq2o")

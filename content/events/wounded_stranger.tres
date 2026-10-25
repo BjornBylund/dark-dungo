@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_ww0en"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_kkx2m"]
+[ext_resource type="Resource" path="res://content/heroes/mender.tres" id="3_x4mst"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="4_l5cdd"]
+
+[sub_resource type="Resource" id="Resource_b3mx6"]
+script = ExtResource("2_kkx2m")
+kind = 1
+amount = -1.0
+
+[sub_resource type="Resource" id="Resource_ji3gi"]
+script = ExtResource("2_kkx2m")
+kind = 3
+amount = 2.0
+heirloom = &"crest"
+
+[sub_resource type="Resource" id="Resource_ukucm"]
+script = ExtResource("1_ww0en")
+label = "Tend him"
+requires = ExtResource("3_x4mst")
+success = Array[ExtResource("2_kkx2m")]([SubResource("Resource_b3mx6"), SubResource("Resource_ji3gi")])
+success_text = "The bleeding slows. He presses a signet into the Mender's palm before the fever takes his words."
+
+[sub_resource type="Resource" id="Resource_w103l"]
+script = ExtResource("2_kkx2m")
+kind = 2
+amount = 1.0
+
+[sub_resource type="Resource" id="Resource_g7003"]
+script = ExtResource("2_kkx2m")
+kind = 1
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_6gjnf"]
+script = ExtResource("1_ww0en")
+label = "Take his purse"
+success = Array[ExtResource("2_kkx2m")]([SubResource("Resource_w103l"), SubResource("Resource_g7003")])
+success_text = "He does not resist. He only watches."
+
+[sub_resource type="Resource" id="Resource_nh0cw"]
+script = ExtResource("1_ww0en")
+label = "Walk on"
+success_text = "His breathing follows you a long way down the road."
+
+[resource]
+script = ExtResource("4_l5cdd")
+id = &"wounded_stranger"
+title = "A Wounded Stranger"
+text = "A man lies in the ditch, clutching a wound that will not close. His purse is heavy and his breathing is not."
+choices = Array[ExtResource("1_ww0en")]([SubResource("Resource_ukucm"), SubResource("Resource_6gjnf"), SubResource("Resource_nh0cw")])

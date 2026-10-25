@@ -59,6 +59,18 @@ static func expiry(token: StringName) -> Expiry:
 	return RULES[token]["expiry"]
 
 
+const NAMES := {
+	CRIT: "Crit", DODGE: "Dodge", DODGE_PLUS: "Dodge+", BLOCK: "Block", BLOCK_PLUS: "Block+",
+	STRENGTH: "Strength", RIPOSTE: "Riposte", GUARD: "Guard", SPEED: "Speed", STEALTH: "Stealth", STUN: "Stun",
+	DAZE: "Daze", BLIND: "Blind", WEAK: "Weak", VULNERABLE: "Vulnerable", TAUNT: "Taunt",
+	IMMOBILIZE: "Immobilize", COMBO: "Combo",
+}
+
+
+static func display_name(token: StringName) -> String:
+	return NAMES.get(token, String(token).capitalize())
+
+
 static func is_negative(token: StringName) -> bool:
 	return RULES[token]["negative"]
 

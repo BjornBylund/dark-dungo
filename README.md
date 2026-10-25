@@ -13,10 +13,11 @@ Open the folder in Godot 4.7 and press Play, or from a terminal:
 godot --path .
 ```
 
-The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight.
+The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every room of a mission.
 
 - **Town:** click a building to open it (Stagecoach, Blacksmith, Guild, Abbey), or a hero in the roster for their sheet. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
+- **Mission map:** click a glowing room to go there; hover a room to see what it holds. Fights open the combat screen and come back; rests, caches and events open a panel over the map. **Retreat** (click twice) ends the mission with what you earned on the way.
 - **Combat:** click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for its stats.
 
 Launch options go after `--`:
@@ -26,7 +27,7 @@ Launch options go after `--`:
 | `--continue` | Load the save and skip the title screen |
 | `--new-campaign` | Start a new campaign, replacing the save |
 | `--sandbox` | Open the combat sandbox |
-| `--autoplay` | Play itself: the town hires, treats the wounded and embarks; fights pick sensible moves |
+| `--autoplay` | Play itself: the town hires, treats the wounded and embarks; the map picks rooms, rests and event choices; fights pick sensible moves |
 | `--speed=N` | Combat animation speed |
 | `--start-wave=N` | Sandbox: start at wave N |
 
@@ -73,14 +74,17 @@ Other art, all replaceable:
 - **Battle backgrounds:** **Battle Background** in `content/campaign.tres` and **Background** in `content/sandbox.tres`, 1920×1080 with the ground line at y ≈ 680.
 - **Town:** **Town Background** in `content/campaign.tres` (`art/backgrounds/hamlet.svg`). The clickable building areas are the `BUILDINGS` rectangles at the top of `src/ui/town_screen.gd`; move them if the buildings move.
 - **Expedition map:** **Expedition Background** in `content/campaign.tres` (`art/backgrounds/expedition_map.svg`). Each region's quest markers sit at its **Map Position** in `content/regions/`; move them if the landmarks move.
+- **Mission maps:** **Map Background** in `content/campaign.tres` (`art/backgrounds/trail.svg`); rooms are drawn over the band y 130–750. Room icons are `art/rooms/<fight|event|rest|elite|cache|finale>.svg`.
 - **Heirlooms:** `art/heirlooms/<bust|portrait|deed|crest>.svg`.
 
 ## Add content
 
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Arrivals** (one arrives per week, in order).
 - **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. Each region offers two missions a week.
-- **Enemy groups:** `content/encounters/`. A mission draws its fights from its region's **Encounters**; medium and long missions end with one of the region's **Finales**.
-- **Campaign numbers** (rewards, prices, XP, upgrade costs) are constants in `src/campaign/campaign_rules.gd`.
+- **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**.
+- **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
+- **Campaign numbers** (rewards, prices, XP, upgrade costs, map size and room odds) are constants in `src/campaign/campaign_rules.gd`.
+- **Balance check:** `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
 
 ## Test it
 
@@ -95,14 +99,15 @@ Runs every `tests/test_*.gd` headless, including simulated sandbox runs and camp
 | Path | What |
 |---|---|
 | `src/core/` | Combat rules: `battle.gd` (turns, hits, death, stress), `combatant.gd` (unit state), `tokens.gd` and `rules.gd` (DD2 numbers), `enemy_ai.gd`, `sandbox_run.gd` |
-| `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `SandboxDef`, `CampaignDef` |
-| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd` and `mission_run.gd` (a chain of fights), `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
+| `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
+| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
-| `src/ui/` | Title, town, expedition and combat screens |
-| `content/` | Heroes, enemies, encounters, regions, the campaign and the sandbox as `.tres` files |
+| `src/ui/` | Title, town, expedition, mission map and combat screens |
+| `content/` | Heroes, enemies, encounters, regions, events, the campaign and the sandbox as `.tres` files |
 | `art/` | Unit sprites, skill and token icons, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |
 | `scripts/` | `test.ps1` runs the tests, `serve_web.ps1` serves the web export locally |
 | `tests/` | Headless tests and the runner |
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
+| `tools/balance_probe.gd` | Fresh random parties against every enemy group: win rate, HP lost, stress |

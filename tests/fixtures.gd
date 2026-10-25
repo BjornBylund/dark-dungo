@@ -1,6 +1,55 @@
-## Builders for small hand-made battles in tests.
+## Builders for small hand-made battles and campaign content in tests.
 class_name Fixtures
 extends RefCounted
+
+
+## A region from encounter file names in content/encounters/.
+static func region(id: StringName, encounters: Array, elites: Array, finales: Array) -> RegionDef:
+	var result := RegionDef.new()
+	result.id = id
+	result.display_name = String(id).capitalize()
+	for name: String in encounters:
+		result.encounters.append(load("res://content/encounters/%s.tres" % name))
+	for name: String in elites:
+		result.elites.append(load("res://content/encounters/%s.tres" % name))
+	for name: String in finales:
+		result.finales.append(load("res://content/encounters/%s.tres" % name))
+	return result
+
+
+static func outcome(kind: EventOutcomeDef.Kind, amount: float = 0.0,
+		target: EventOutcomeDef.Target = EventOutcomeDef.Target.PARTY) -> EventOutcomeDef:
+	var result := EventOutcomeDef.new()
+	result.kind = kind
+	result.amount = amount
+	result.target = target
+	return result
+
+
+static func choice(label: String, success: Array, chance: float = 1.0, failure: Array = [],
+		requires: UnitDef = null) -> EventChoiceDef:
+	var result := EventChoiceDef.new()
+	result.label = label
+	result.success.assign(success)
+	result.chance = chance
+	result.failure.assign(failure)
+	result.requires = requires
+	return result
+
+
+## An event with one choice of each kind: certain healing, a gamble between
+## gold and a fight, and one only the Mender can take.
+static func spring_event() -> EventDef:
+	var event := EventDef.new()
+	event.id = &"spring"
+	event.title = "A Spring"
+	event.choices.assign([
+		choice("Drink", [outcome(EventOutcomeDef.Kind.HP, 0.2)]),
+		choice("Dig", [outcome(EventOutcomeDef.Kind.GOLD, 1.0)], 0.5, [outcome(EventOutcomeDef.Kind.FIGHT)]),
+		choice("Bless it", [outcome(EventOutcomeDef.Kind.STRESS, -2, EventOutcomeDef.Target.CHOSEN_HERO)], 1.0, [],
+				load("res://content/heroes/mender.tres")),
+	])
+	return event
 
 
 static func unit(display_name: String, hp: int = 30, speed: int = 0, skills: Array = []) -> UnitDef:

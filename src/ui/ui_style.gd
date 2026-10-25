@@ -42,14 +42,6 @@ const RESIST_COLUMNS := [
 	[&"debuff", "DBFF", Color("b070d0")],
 ]
 
-const TOKEN_NAMES := {
-	Tokens.CRIT: "Crit", Tokens.DODGE: "Dodge", Tokens.DODGE_PLUS: "Dodge+", Tokens.BLOCK: "Block",
-	Tokens.BLOCK_PLUS: "Block+", Tokens.STRENGTH: "Strength", Tokens.RIPOSTE: "Riposte",
-	Tokens.GUARD: "Guard", Tokens.SPEED: "Speed", Tokens.STEALTH: "Stealth", Tokens.STUN: "Stun",
-	Tokens.DAZE: "Daze", Tokens.BLIND: "Blind", Tokens.WEAK: "Weak", Tokens.VULNERABLE: "Vulnerable",
-	Tokens.TAUNT: "Taunt", Tokens.IMMOBILIZE: "Immobilize", Tokens.COMBO: "Combo",
-}
-
 const TOKEN_HELP := {
 	Tokens.CRIT: "Next attack or heal is a guaranteed crit.",
 	Tokens.DODGE: "50% to evade the next attack.",
@@ -148,7 +140,7 @@ static func token_icon(id: StringName) -> Texture2D:
 
 
 static func token_name(token: StringName) -> String:
-	return TOKEN_NAMES.get(token, String(token).capitalize())
+	return Tokens.display_name(token)
 
 
 ## A material that draws a control in greyscale at the given brightness.
@@ -161,6 +153,30 @@ static func greyscale(brightness: float) -> ShaderMaterial:
 
 static func percent(value: float) -> String:
 	return "%d%%" % roundi(value * 100.0)
+
+
+## [title, text] for the end of a mission, from Campaign.finish_mission()'s summary.
+static func mission_summary(summary: Dictionary) -> Array:
+	var lines: Array[String] = []
+	var title := "Mission complete"
+	match summary.outcome:
+		MissionRun.Outcome.RETREATED:
+			title = "Retreated"
+		MissionRun.Outcome.FAILED:
+			title = "Mission failed"
+			lines.append("The whole party fell. No rewards.")
+	if summary.gold > 0:
+		lines.append("Gold +%s" % gold_text(summary.gold))
+	for type: StringName in summary.heirlooms:
+		if summary.heirlooms[type] > 0:
+			lines.append("%s +%d" % [CampaignRules.HEIRLOOM_NAMES[type], summary.heirlooms[type]])
+	if summary.xp > 0:
+		lines.append("XP +%d" % summary.xp)
+	for hero: HeroRecord in summary.level_ups:
+		lines.append("%s reaches level %d!" % [hero.display_name, hero.level()])
+	for hero: HeroRecord in summary.wounded:
+		lines.append("%s is wounded and sits out next week." % hero.display_name)
+	return [title, "\n".join(lines)]
 
 
 ## Gold with thousands separators: 12,500.

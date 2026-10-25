@@ -100,11 +100,12 @@ func _refresh_quest() -> void:
 	if mission.region:
 		_quest.add_child(_label(mission.region.display_name, 20, UiStyle.TEXT_DIM, UiStyle.DISPLAY_FONT))
 	_quest.add_child(_label(mission.title(), 40, QuestMarker.tier_color(mission.tier), UiStyle.DISPLAY_FONT))
-	_quest.add_child(_label("Level %d   %d fights" % [mission.level(), mission.fights()], 18))
+	_quest.add_child(_label("Level %d   %d columns" % [mission.level(), CampaignRules.MAP_COLUMNS[mission.length]], 18))
 	_quest.add_child(_heading("Goal"))
-	_quest.add_child(_label("Win all %d fights." % mission.fights(), 18))
+	_quest.add_child(_label("Reach the end of the map and win the final fight.", 18))
 	_quest.add_child(_heading("Rewards"))
-	_quest.add_child(_label("%s gold" % UiStyle.gold_text(mission.gold()), 20))
+	_quest.add_child(_label("%s gold on completion" % UiStyle.gold_text(mission.completion_gold()), 20))
+	_quest.add_child(_label("%s gold for each fight won" % UiStyle.gold_text(mission.fight_gold()), 20))
 	var heirloom := HBoxContainer.new()
 	heirloom.add_theme_constant_override("separation", 8)
 	var icon := TextureRect.new()
@@ -206,7 +207,7 @@ func _eligibility_tag(hero: HeroRecord) -> Array:
 func _on_embark() -> void:
 	if _campaign().embark(_mission, _party):
 		Game.save()
-		Game.go_to_battle()
+		Game.go_to_map()
 
 
 # --- Building the screen ---

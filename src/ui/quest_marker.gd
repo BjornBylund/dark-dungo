@@ -16,7 +16,7 @@ func setup(quest: Mission) -> void:
 	toggle_mode = true
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	tooltip_text = "%s, %d fights" % [mission.title(), mission.fights()]
+	tooltip_text = mission.title()
 	mouse_entered.connect(queue_redraw)
 	mouse_exited.connect(queue_redraw)
 	toggled.connect(func(_on: bool) -> void: queue_redraw())

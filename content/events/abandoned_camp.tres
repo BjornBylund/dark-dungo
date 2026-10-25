@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_n4gxu"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_im7kx"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="3_qwkqw"]
+
+[sub_resource type="Resource" id="Resource_fd205"]
+script = ExtResource("2_im7kx")
+amount = 0.15
+
+[sub_resource type="Resource" id="Resource_vf834"]
+script = ExtResource("1_n4gxu")
+label = "Rest by the embers"
+success = Array[ExtResource("2_im7kx")]([SubResource("Resource_fd205")])
+success_text = "Sleep comes in fits, but it comes."
+
+[sub_resource type="Resource" id="Resource_vmspn"]
+script = ExtResource("2_im7kx")
+kind = 5
+
+[sub_resource type="Resource" id="Resource_xs3lt"]
+script = ExtResource("2_im7kx")
+kind = 2
+amount = 1.0
+
+[sub_resource type="Resource" id="Resource_trc1o"]
+script = ExtResource("1_n4gxu")
+label = "Search the packs"
+chance = 0.6
+success = Array[ExtResource("2_im7kx")]([SubResource("Resource_xs3lt")])
+success_text = "Rations, rope, and a purse no one will miss."
+failure = Array[ExtResource("2_im7kx")]([SubResource("Resource_vmspn")])
+failure_text = "The owners were never far. They crawl out of the dark to reclaim their things."
+
+[resource]
+script = ExtResource("3_qwkqw")
+id = &"abandoned_camp"
+title = "The Abandoned Camp"
+text = "Bedrolls, a cold firepit, packs still buckled shut. Whoever camped here left in a hurry, or did not leave at all."
+choices = Array[ExtResource("1_n4gxu")]([SubResource("Resource_vf834"), SubResource("Resource_trc1o")])

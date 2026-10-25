@@ -1,10 +1,11 @@
-## Checks the campaign's content and plays missions with random parties from the
-## whole cast, printing how often each class's parties complete them.
+## Checks the campaign's content and plays whole mission maps with random
+## parties from the cast, printing how often each class's parties complete them.
 extends TestCase
 
 const CAMPAIGN_PATH := "res://content/campaign.tres"
 const RUNS := 160
 const MAX_ROUNDS := 60
+const ELITE_RUNS := 100
 
 
 func _def() -> CampaignDef:
@@ -41,14 +42,38 @@ func test_regions_have_fights_a_finale_and_a_place_on_the_map() -> void:
 	for region in regions:
 		assert_true(region.encounters.size() >= 2, "%s encounters" % region.id)
 		assert_true(region.finales.size() >= 1, "%s finale" % region.id)
+		assert_true(region.elites.size() >= 1, "%s elite" % region.id)
 		assert_true(region.map_position != Vector2.ZERO, "%s map position" % region.id)
 	assert_true(_def().expedition_background != null)
+
+
+func test_events_have_text_and_working_choices() -> void:
+	var cast := _cast()
+	var all: Array[EventDef] = []
+	all.append_array(_def().events)
+	assert_eq(all.size(), 4, "shared events")
+	for region in _def().regions:
+		assert_eq(region.events.size(), 2, "%s events" % region.id)
+		all.append_array(region.events)
+	for event in all:
+		assert_true(event.title != "" and event.text != "", "%s has text" % event.id)
+		assert_true(event.choices.size() >= 2, "%s has choices" % event.id)
+		for choice in event.choices:
+			assert_true(choice.label != "" and choice.success_text != "", "%s/%s" % [event.id, choice.label])
+			if choice.chance < 1.0:
+				assert_true(choice.failure_text != "", "%s/%s failure text" % [event.id, choice.label])
+			if choice.requires:
+				assert_true(choice.requires in cast, "%s needs a hero in the cast" % event.id)
+			for outcome in choice.success + choice.failure:
+				if outcome.kind == EventOutcomeDef.Kind.TOKEN:
+					assert_true(Tokens.RULES.has(outcome.token), "%s token" % event.id)
 
 
 func test_encounters_fit_in_four_ranks() -> void:
 	var groups: Array[EncounterDef] = []
 	for region in _def().regions:
 		groups.append_array(region.encounters)
+		groups.append_array(region.elites)
 		groups.append_array(region.finales)
 	assert_true(groups.size() >= 5)
 	for group in groups:
@@ -56,6 +81,39 @@ func test_encounters_fit_in_four_ranks() -> void:
 		for enemy in group.enemies:
 			ranks += enemy.size
 		assert_true(ranks <= Rules.RANKS, group.display_name)
+
+
+## Fresh random parties of level-0 heroes against each region's elite group at Apprentice.
+func test_elite_fights_are_hard_but_winnable() -> void:
+	var cast := _cast()
+	var rates: Array[String] = []
+	for region in _def().regions:
+		var wins := 0
+		for seed_value in ELITE_RUNS:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed_value
+			var heroes: Array[Combatant] = []
+			var picked: Array[UnitDef] = []
+			while picked.size() < 4:
+				var pick := cast[rng.randi_range(0, cast.size() - 1)]
+				if pick not in picked:
+					picked.append(pick)
+					heroes.append(Growth.hero_combatant(HeroRecord.new(pick)))
+			var enemies: Array[Combatant] = []
+			for enemy in region.elites[0].enemies:
+				enemies.append(Growth.enemy_combatant(enemy, CampaignRules.Tier.APPRENTICE))
+			var battle := Battle.new(heroes, enemies, rng)
+			while battle.state != Battle.State.VICTORY and battle.state != Battle.State.DEFEAT:
+				assert_true(battle.round_number <= MAX_ROUNDS, "%s stalled" % region.id)
+				if battle.round_number > MAX_ROUNDS:
+					break
+				battle.advance()
+				if battle.state == Battle.State.AWAITING_INPUT:
+					var choice := AutoPlayer.sensible(battle)
+					battle.submit(choice[0], choice[1])
+			wins += int(battle.state == Battle.State.VICTORY)
+		rates.append("%s %d%%" % [region.elites[0].display_name, roundi(100.0 * wins / ELITE_RUNS)])
+	print("        elite fights, fresh random parties at Apprentice: %s" % ", ".join(rates))
 
 
 func test_random_parties_finish_apprentice_missions() -> void:
@@ -77,19 +135,8 @@ func test_random_parties_finish_apprentice_missions() -> void:
 		var mission := campaign._make_mission(CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM, region)
 		campaign.board.append(mission)
 		var run := campaign.embark(mission, party)
-		while run.has_next_fight():
-			var battle := run.start_next_fight()
-			while battle.state != Battle.State.VICTORY and battle.state != Battle.State.DEFEAT:
-				if battle.round_number > MAX_ROUNDS:
-					stalled += 1
-					break
-				battle.advance()
-				if battle.state == Battle.State.AWAITING_INPUT:
-					var choice := AutoPlayer.sensible(battle)
-					battle.submit(choice[0], choice[1])
-			if battle.round_number > MAX_ROUNDS:
-				break
-			run.finish_fight()
+		if not MapAutoPlayer.play(run, MAX_ROUNDS):
+			stalled += 1
 		var won := run.outcome == MissionRun.Outcome.COMPLETED
 		if won:
 			completed += 1

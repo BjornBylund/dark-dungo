@@ -1,0 +1,431 @@
+## A mission in progress, like a Slay the Spire act: the map of rooms, the
+## party's route so far and the rooms it can go to next. Fight rooms go to the
+## combat screen and come back here; rests, caches and events open a panel over
+## the map. The party panel shows each hero's HP, stress and carried tokens, the
+## loot earned on the way, and Retreat.
+## Authored for 1920x1080 on a centred stage, like the other screens.
+extends Control
+
+const STAGE_SIZE := Vector2(1920, 1080)
+## Where the rooms are spread, first column to the final room.
+const MAP_AREA := Rect2(150, 130, 1620, 620)
+const PATH_DIM := Color(0.55, 0.5, 0.45, 0.35)
+const PATH_AHEAD := Color(0.85, 0.8, 0.7, 0.7)
+
+var _stage: Control
+var _paths: Control
+var _rooms: Control
+var _buttons: Dictionary[int, RoomButton] = {}
+var _week: Label
+var _header: Label
+var _party: HBoxContainer
+var _loot: VBoxContainer
+var _retreat: Button
+var _confirm_retreat := false
+var _overlay: Control
+var _panel_title: Label
+var _panel_text: Label
+var _panel_buttons: VBoxContainer
+## Run with `-- --autoplay` to let the map play itself.
+var _autoplay := "--autoplay" in OS.get_cmdline_user_args()
+
+
+func _ready() -> void:
+	if Game.campaign == null or Game.campaign.run == null:
+		(Game.go_to_town if Game.campaign else Game.go_to_menu).call_deferred()
+		return
+	theme = UiStyle.make_theme()
+	_build()
+	resized.connect(_center_stage)
+	_center_stage()
+	var run := _run()
+	if run.has_pending_fight():
+		Game.go_to_battle.call_deferred()
+		return
+	_refresh()
+	if not run.room_done:
+		_open_room()
+	if _autoplay:
+		_autoplay_step()
+
+
+func _run() -> MissionRun:
+	return Game.campaign.run
+
+
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
+	var background: Texture2D = Game.campaign.def.map_background if Game.campaign else null
+	if background and _stage:
+		draw_texture_rect(background, Rect2(_stage.position, STAGE_SIZE), false)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE and _confirm_retreat:
+		_confirm_retreat = false
+		_refresh()
+		get_viewport().set_input_as_handled()
+
+
+# --- The map ---
+
+func _refresh() -> void:
+	var run := _run()
+	var mission := run.mission
+	_week.text = "Week %d" % Game.campaign.week
+	_header.text = "%s%s" % [mission.region.display_name + "   " if mission.region else "", mission.title()]
+	for child in _rooms.get_children():
+		child.queue_free()
+	_buttons.clear()
+	var reachable := run.next_rooms()
+	var furthest := -1
+	for id in run.visited:
+		furthest = maxi(furthest, run.map.room(id).column)
+	for room in run.map.rooms:
+		var state := RoomButton.State.AHEAD
+		if room.id == run.room_id:
+			state = RoomButton.State.CURRENT
+		elif room.id in run.visited:
+			state = RoomButton.State.VISITED
+		elif room in reachable:
+			state = RoomButton.State.REACHABLE
+		elif room.column <= furthest:
+			state = RoomButton.State.PASSED_BY
+		var button := RoomButton.new()
+		button.setup(room, state, _describe(room))
+		button.position = _room_center(room) - button.size / 2.0
+		button.pressed.connect(_enter.bind(room))
+		_rooms.add_child(button)
+		_buttons[room.id] = button
+	_paths.queue_redraw()
+	_refresh_party()
+
+
+func _room_center(room: MapRoom) -> Vector2:
+	var x := MAP_AREA.position.x + MAP_AREA.size.x * room.column / float(_run().map.columns - 1)
+	if room.row < 0:
+		return Vector2(x, MAP_AREA.get_center().y)
+	return Vector2(x, MAP_AREA.position.y + MAP_AREA.size.y * (room.row + 0.5) / CampaignRules.MAP_ROWS)
+
+
+## Paths between rooms: the route taken in gold, the ways on from the current
+## room bright, everything else faint.
+func _draw_paths() -> void:
+	var run := _run()
+	var reachable := run.next_rooms()
+	for room in run.map.rooms:
+		for exit in room.exits:
+			var to := run.map.room(exit)
+			var color := PATH_DIM
+			var width := 3.0
+			var taken := run.visited.find(room.id)
+			if taken >= 0 and taken + 1 < run.visited.size() and run.visited[taken + 1] == exit:
+				color = UiStyle.GOLD
+				width = 5.0
+			elif room.id == run.room_id and to in reachable:
+				color = PATH_AHEAD
+				width = 4.0
+			_dashed(_room_center(room), _room_center(to), color, width)
+
+
+func _dashed(from: Vector2, to: Vector2, color: Color, width: float) -> void:
+	var step := 16.0
+	var length := from.distance_to(to)
+	var direction := (to - from) / length
+	var start := 44.0
+	while start < length - 44.0:
+		_paths.draw_line(from + direction * start, from + direction * minf(start + step * 0.6, length - 44.0), color,
+				width, true)
+		start += step
+
+
+func _describe(room: MapRoom) -> String:
+	var run := _run()
+	match room.type:
+		MapRoom.Type.FIGHT, MapRoom.Type.ELITE, MapRoom.Type.FINALE:
+			return "%s: %s" % [room.type_name(), room.encounter.display_name]
+		MapRoom.Type.REST:
+			return "Rest: heal %d%% HP or relieve %d stress" % [roundi(CampaignRules.REST_HEAL * 100), CampaignRules.REST_STRESS]
+		MapRoom.Type.CACHE:
+			if room.cache_heirloom == &"":
+				return "Cache: %s gold" % UiStyle.gold_text(run.cache_gold())
+			return "Cache: %d %s" % [run.cache_heirlooms(), CampaignRules.HEIRLOOM_NAMES[room.cache_heirloom]]
+	return room.type_name()
+
+
+func _enter(room: MapRoom) -> void:
+	var run := _run()
+	if run.enter(room.id) != "":
+		return
+	_confirm_retreat = false
+	Game.save()
+	if run.has_pending_fight():
+		Game.go_to_battle()
+		return
+	_refresh()
+	_open_room(true)
+
+
+# --- Rooms that open a panel ---
+
+## `entered` is false when reopening a room after loading, so a cache isn't announced twice.
+func _open_room(entered: bool = false) -> void:
+	var run := _run()
+	var room := run.current_room()
+	match room.type:
+		MapRoom.Type.CACHE:
+			if entered:
+				var found := "%s gold" % UiStyle.gold_text(run.cache_gold()) if room.cache_heirloom == &"" \
+						else "%d %s" % [run.cache_heirlooms(), CampaignRules.HEIRLOOM_NAMES[room.cache_heirloom]]
+				_show_panel("Cache", "Someone hid this well, but not well enough. You find %s." % found,
+						[["Continue", _close_panel]])
+		MapRoom.Type.REST:
+			_show_panel("Rest", "The party makes camp and takes stock.", [
+				["Tend wounds: the party heals %d%% HP" % roundi(CampaignRules.REST_HEAL * 100), _rest.bind(true)],
+				["Steady nerves: the party %+d stress" % -CampaignRules.REST_STRESS, _rest.bind(false)],
+			])
+		MapRoom.Type.EVENT:
+			var event := run.event()
+			var buttons: Array = []
+			for i in event.choices.size():
+				var choice := event.choices[i]
+				var effects := run.describe_choice(choice)
+				var label := choice.label + (": " + effects if effects != "" else "")
+				var blocked := run.choice_blocked(choice)
+				if blocked != "":
+					label += "   (%s)" % blocked
+				buttons.append([label, _choose.bind(i), blocked != ""])
+			_show_panel(event.title, event.text, buttons)
+
+
+func _rest(heal: bool) -> void:
+	_run().rest(heal)
+	Game.save()
+	_show_panel("Rest", "The party heals." if heal else "The party's nerves steady.", [["Continue", _close_panel]])
+	_refresh()
+
+
+func _choose(index: int) -> void:
+	var run := _run()
+	var event := run.event()
+	var result := run.choose(index)
+	if result.is_empty():
+		return
+	Game.save()
+	var text: String = result.text
+	if not result.lines.is_empty():
+		text += "\n\n" + "\n".join(result.lines)
+	if run.has_pending_fight():
+		_show_panel(event.title, text, [["Fight!", Game.go_to_battle]])
+	else:
+		_show_panel(event.title, text, [["Continue", _close_panel]])
+	_refresh()
+
+
+func _show_panel(title: String, text: String, buttons: Array) -> void:
+	_panel_title.text = title
+	_panel_text.text = text
+	for child in _panel_buttons.get_children():
+		child.queue_free()
+	for entry: Array in buttons:
+		var button := _action(entry[0], entry[1])
+		button.disabled = entry.size() > 2 and entry[2]
+		button.size_flags_horizontal = Control.SIZE_FILL
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_panel_buttons.add_child(button)
+	_overlay.show()
+
+
+func _close_panel() -> void:
+	_overlay.hide()
+	_refresh()
+
+
+# --- Party, loot and retreat ---
+
+## Heroes in rank order, rank 4 on the left as in combat, then the defeated.
+func _refresh_party() -> void:
+	var run := _run()
+	for child in _party.get_children():
+		child.queue_free()
+	for i in range(run.formation.size() - 1, -1, -1):
+		var card := MapHeroCard.new()
+		card.setup(run.formation[i], "Rank %d" % (i + 1))
+		_party.add_child(card)
+	for i in run.party.size():
+		if run.party[i] in run.defeated:
+			var card := MapHeroCard.new()
+			card.setup(run.combatants[i], "Defeated", true)
+			_party.add_child(card)
+	for child in _loot.get_children():
+		child.queue_free()
+	_loot.add_child(_label("Earned so far", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	_loot.add_child(_label("%s gold" % UiStyle.gold_text(run.gold_earned), 20))
+	for type: StringName in run.heirlooms_earned:
+		if run.heirlooms_earned[type] > 0:
+			_loot.add_child(_label("%d %s" % [run.heirlooms_earned[type], CampaignRules.HEIRLOOM_NAMES[type]], 20))
+	_retreat.visible = run.can_retreat()
+	_retreat.text = "Retreat? +%d stress each. Click again" % CampaignRules.RETREAT_STRESS if _confirm_retreat \
+			else "Retreat"
+
+
+func _on_retreat() -> void:
+	if not _confirm_retreat:
+		_confirm_retreat = true
+		_refresh_party()
+		return
+	_run().retreat()
+	var summary := Game.campaign.finish_mission()
+	Game.save()
+	var text: Array = UiStyle.mission_summary(summary)
+	_retreat.hide()
+	_show_panel(text[0], text[1], [["Return to town", Game.go_to_town]])
+
+
+# --- Autoplay ---
+
+## With `-- --autoplay`: pick rooms, rests and event choices with MapAutoPlayer.
+func _autoplay_step() -> void:
+	await get_tree().create_timer(1.2).timeout
+	if not is_inside_tree() or Game.campaign.run == null:
+		return
+	var run := _run()
+	if _overlay.visible:
+		if run.event():
+			_choose(MapAutoPlayer.choose_event(run))
+		elif not run.room_done:
+			_rest(MapAutoPlayer.choose_rest(run))
+		else:
+			var first: Button = _panel_buttons.get_child(0)
+			first.pressed.emit()
+	elif run.room_done and run.outcome == MissionRun.Outcome.IN_PROGRESS:
+		_enter(run.map.room(MapAutoPlayer.choose_room(run)))
+	if is_inside_tree():
+		_autoplay_step()
+
+
+# --- Building the screen ---
+
+func _center_stage() -> void:
+	if _stage:
+		_stage.position = ((size - STAGE_SIZE) / 2.0).floor()
+	queue_redraw()
+
+
+func _build() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_stage = Control.new()
+	_stage.size = STAGE_SIZE
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_stage)
+
+	_paths = Control.new()
+	_paths.size = STAGE_SIZE
+	_paths.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_paths.draw.connect(_draw_paths)
+	_stage.add_child(_paths)
+	_rooms = Control.new()
+	_rooms.size = STAGE_SIZE
+	_rooms.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(_rooms)
+
+	# Top band: week, region and mission, and a way back to the menu.
+	var band := ColorRect.new()
+	band.color = Color(0, 0, 0, 0.75)
+	band.size = Vector2(STAGE_SIZE.x, 64)
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(band)
+	var top := HBoxContainer.new()
+	top.position = Vector2(28, 8)
+	top.size = Vector2(STAGE_SIZE.x - 56, 48)
+	top.add_theme_constant_override("separation", 30)
+	_stage.add_child(top)
+	_week = _label("", 34, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	top.add_child(_week)
+	_header = _label("", 34, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
+	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(_header)
+	var menu := Button.new()
+	menu.text = "Save and quit"
+	menu.focus_mode = Control.FOCUS_NONE
+	menu.pressed.connect(func() -> void:
+		Game.save()
+		Game.go_to_menu())
+	top.add_child(menu)
+
+	# Party panel along the bottom, with the loot and Retreat on the right.
+	var bottom := PanelContainer.new()
+	bottom.position = Vector2(40, 840)
+	bottom.size = Vector2(STAGE_SIZE.x - 80, 0)
+	_stage.add_child(bottom)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 40)
+	bottom.add_child(row)
+	var party_box := VBoxContainer.new()
+	party_box.add_theme_constant_override("separation", 8)
+	row.add_child(party_box)
+	party_box.add_child(_label("Party", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	_party = HBoxContainer.new()
+	_party.add_theme_constant_override("separation", 14)
+	party_box.add_child(_party)
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 6)
+	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(side)
+	_loot = VBoxContainer.new()
+	_loot.add_theme_constant_override("separation", 4)
+	side.add_child(_loot)
+	_retreat = _action("Retreat", _on_retreat)
+	_retreat.custom_minimum_size = Vector2(300, 48)
+	_retreat.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	side.add_child(_retreat)
+
+	# The room panel over the map.
+	_overlay = Control.new()
+	_overlay.size = STAGE_SIZE
+	_overlay.hide()
+	_stage.add_child(_overlay)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.size = STAGE_SIZE
+	_overlay.add_child(dim)
+	var center := CenterContainer.new()
+	center.size = STAGE_SIZE
+	_overlay.add_child(center)
+	var panel := PanelContainer.new()
+	var style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
+	style.set_content_margin_all(32)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = Vector2(820, 0)
+	center.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	panel.add_child(box)
+	_panel_title = _label("", 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	box.add_child(_panel_title)
+	_panel_text = _label("", 20, UiStyle.TEXT)
+	_panel_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_panel_text.custom_minimum_size = Vector2(756, 0)
+	box.add_child(_panel_text)
+	_panel_buttons = VBoxContainer.new()
+	_panel_buttons.add_theme_constant_override("separation", 10)
+	box.add_child(_panel_buttons)
+
+
+func _label(text: String, font_size: int, color: Color = UiStyle.TEXT, font: Font = null) -> Label:
+	var label := Label.new()
+	label.text = text
+	if font:
+		label.add_theme_font_override("font", font)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	return label
+
+
+func _action(text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.theme_type_variation = &"ActionButton"
+	button.focus_mode = Control.FOCUS_NONE
+	button.pressed.connect(action)
+	return button

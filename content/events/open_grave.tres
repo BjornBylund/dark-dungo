@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_msnmh"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_83uc2"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="3_flexj"]
+
+[sub_resource type="Resource" id="Resource_oovfu"]
+script = ExtResource("2_83uc2")
+kind = 5
+
+[sub_resource type="Resource" id="Resource_x54nb"]
+script = ExtResource("2_83uc2")
+kind = 2
+amount = 1.5
+
+[sub_resource type="Resource" id="Resource_36e0j"]
+script = ExtResource("1_msnmh")
+label = "Search the coffin"
+chance = 0.6
+success = Array[ExtResource("2_83uc2")]([SubResource("Resource_x54nb")])
+success_text = "Grave goods, buried with someone who will not miss them."
+failure = Array[ExtResource("2_83uc2")]([SubResource("Resource_oovfu")])
+failure_text = "Bony fingers close around your wrist."
+
+[sub_resource type="Resource" id="Resource_tfvxi"]
+script = ExtResource("2_83uc2")
+kind = 1
+amount = -1.0
+
+[sub_resource type="Resource" id="Resource_ydu48"]
+script = ExtResource("1_msnmh")
+label = "Fill it in"
+success = Array[ExtResource("2_83uc2")]([SubResource("Resource_tfvxi")])
+success_text = "You shovel the earth back. Some doors are better shut."
+
+[resource]
+script = ExtResource("3_flexj")
+id = &"open_grave"
+title = "The Open Grave"
+text = "A grave gapes open beneath a leaning stone, its earth still wet. The coffin lid is cracked, and something inside catches the light."
+choices = Array[ExtResource("1_msnmh")]([SubResource("Resource_36e0j"), SubResource("Resource_ydu48")])

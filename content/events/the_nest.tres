@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_r17j5"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_puqtn"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="3_cap3m"]
+
+[sub_resource type="Resource" id="Resource_vxyn8"]
+script = ExtResource("2_puqtn")
+kind = 6
+
+[sub_resource type="Resource" id="Resource_uigin"]
+script = ExtResource("1_r17j5")
+label = "Smash the eggs"
+success = Array[ExtResource("2_puqtn")]([SubResource("Resource_vxyn8")])
+success_text = "The chamber shudders. She is coming."
+
+[sub_resource type="Resource" id="Resource_tfyft"]
+script = ExtResource("2_puqtn")
+target = 1
+amount = -0.2
+
+[sub_resource type="Resource" id="Resource_k2g1p"]
+script = ExtResource("2_puqtn")
+kind = 3
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_k1abu"]
+script = ExtResource("1_r17j5")
+label = "Pick through the bones"
+chance = 0.5
+success = Array[ExtResource("2_puqtn")]([SubResource("Resource_k2g1p")])
+success_text = "Rings and lockets, still on the fingers that wore them."
+failure = Array[ExtResource("2_puqtn")]([SubResource("Resource_tfyft")])
+failure_text = "An egg splits open, and something small and sharp latches on."
+
+[sub_resource type="Resource" id="Resource_ir8u2"]
+script = ExtResource("2_puqtn")
+kind = 5
+
+[sub_resource type="Resource" id="Resource_t4i07"]
+script = ExtResource("1_r17j5")
+label = "Sneak past"
+chance = 0.7
+success_text = "You hold your breath until the chamber is far behind."
+failure = Array[ExtResource("2_puqtn")]([SubResource("Resource_ir8u2")])
+failure_text = "A bone cracks underfoot. The nest wakes."
+
+[resource]
+script = ExtResource("3_cap3m")
+id = &"the_nest"
+title = "The Nest"
+text = "The tunnel opens into a chamber heaped with bones and glistening eggs. Something large has made its home here, and it is not far."
+choices = Array[ExtResource("1_r17j5")]([SubResource("Resource_uigin"), SubResource("Resource_k1abu"), SubResource("Resource_t4i07")])

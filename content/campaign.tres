@@ -7,9 +7,14 @@
 [ext_resource type="Resource" path="res://content/heroes/penitent.tres" id="5_dpfic"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/ruined_road.svg" id="6_17eji"]
 [ext_resource type="Script" path="res://src/core/defs/region_def.gd" id="7_region"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="7_vuitf"]
+[ext_resource type="Resource" path="res://content/events/wayside_shrine.tres" id="8_5fm3x"]
 [ext_resource type="Resource" path="res://content/regions/graveyard.tres" id="8_graveyard"]
 [ext_resource type="Resource" path="res://content/regions/burrows.tres" id="9_burrows"]
+[ext_resource type="Resource" path="res://content/events/wounded_stranger.tres" id="9_ebf00"]
 [ext_resource type="Resource" path="res://content/regions/chapel.tres" id="10_chapel"]
+[ext_resource type="Resource" path="res://content/events/abandoned_camp.tres" id="10_dpfic"]
+[ext_resource type="Resource" path="res://content/events/hollow_peddler.tres" id="11_17eji"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/expedition_map.svg" id="11_map"]
 [ext_resource type="Script" path="res://src/core/defs/campaign_def.gd" id="17_30rl4"]
 [ext_resource type="Resource" path="res://content/heroes/vanguard.tres" id="18_3gi35"]
@@ -17,12 +22,15 @@
 [ext_resource type="Resource" path="res://content/heroes/marksman.tres" id="20_q6xh7"]
 [ext_resource type="Resource" path="res://content/heroes/mender.tres" id="21_ahiah"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/hamlet.svg" id="22_vuitf"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/trail.svg" id="23_trail"]
 
 [resource]
 script = ExtResource("17_30rl4")
 starting_heroes = Array[ExtResource("1_rwgop")]([ExtResource("18_3gi35"), ExtResource("19_rqh1u"), ExtResource("20_q6xh7"), ExtResource("21_ahiah")])
 arrivals = Array[ExtResource("1_rwgop")]([ExtResource("2_vuitf"), ExtResource("3_5fm3x"), ExtResource("4_ebf00"), ExtResource("5_dpfic")])
 regions = Array[ExtResource("7_region")]([ExtResource("8_graveyard"), ExtResource("9_burrows"), ExtResource("10_chapel")])
+events = Array[ExtResource("7_vuitf")]([ExtResource("8_5fm3x"), ExtResource("9_ebf00"), ExtResource("10_dpfic"), ExtResource("11_17eji")])
 battle_background = ExtResource("6_17eji")
 town_background = ExtResource("22_vuitf")
 expedition_background = ExtResource("11_map")
+map_background = ExtResource("23_trail")

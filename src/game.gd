@@ -6,6 +6,7 @@ const SAVE_PATH := "user://campaign.json"
 const MAIN_MENU := "res://src/ui/main_menu.tscn"
 const TOWN := "res://src/ui/town_screen.tscn"
 const EXPEDITION := "res://src/ui/expedition_screen.tscn"
+const MAP := "res://src/ui/map_screen.tscn"
 const BATTLE := "res://src/ui/combat_screen.tscn"
 
 ## Null in the main menu and the combat sandbox.
@@ -27,8 +28,10 @@ func continue_campaign() -> bool:
 	campaign = Campaign.load_from(SAVE_PATH, CAMPAIGN)
 	if campaign == null:
 		return false
-	if campaign.run:
+	if campaign.run and campaign.run.has_pending_fight():
 		go_to_battle()
+	elif campaign.run:
+		go_to_map()
 	else:
 		go_to_town()
 	return true
@@ -48,6 +51,11 @@ func go_to_town() -> void:
 ## The map for choosing a mission and lining up the party.
 func go_to_expedition() -> void:
 	get_tree().change_scene_to_file(EXPEDITION)
+
+
+## The mission in progress: its map, between rooms.
+func go_to_map() -> void:
+	get_tree().change_scene_to_file(MAP)
 
 
 func go_to_battle() -> void:

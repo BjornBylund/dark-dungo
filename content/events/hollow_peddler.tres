@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_csdp3"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_bt3c7"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="3_8xqby"]
+
+[sub_resource type="Resource" id="Resource_fpl61"]
+script = ExtResource("2_bt3c7")
+kind = 2
+amount = -0.5
+
+[sub_resource type="Resource" id="Resource_ocddm"]
+script = ExtResource("2_bt3c7")
+kind = 4
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_0q307"]
+script = ExtResource("1_csdp3")
+label = "Buy a tonic"
+success = Array[ExtResource("2_bt3c7")]([SubResource("Resource_fpl61"), SubResource("Resource_ocddm")])
+success_text = "It burns going down. Your blood runs hot."
+
+[sub_resource type="Resource" id="Resource_ydfjo"]
+script = ExtResource("2_bt3c7")
+kind = 1
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_30oy8"]
+script = ExtResource("2_bt3c7")
+amount = 0.25
+
+[sub_resource type="Resource" id="Resource_ae8p0"]
+script = ExtResource("1_csdp3")
+label = "Drink from the open bottle"
+chance = 0.5
+success = Array[ExtResource("2_bt3c7")]([SubResource("Resource_30oy8")])
+success_text = "It tastes of honey and iron. Your wounds knit."
+failure = Array[ExtResource("2_bt3c7")]([SubResource("Resource_ydfjo")])
+failure_text = "It tastes of nothing at all. The peddler laughs for a long time."
+
+[sub_resource type="Resource" id="Resource_g17hb"]
+script = ExtResource("1_csdp3")
+label = "Send him on his way"
+success_text = "He bows and wheels his cart into the fog. You do not hear it leave."
+
+[resource]
+script = ExtResource("3_8xqby")
+id = &"hollow_peddler"
+title = "The Hollow-Eyed Peddler"
+text = "A peddler blocks the road with a cart of stoppered bottles. He smiles too widely, and he never seems to blink."
+choices = Array[ExtResource("1_csdp3")]([SubResource("Resource_0q307"), SubResource("Resource_ae8p0"), SubResource("Resource_g17hb")])

@@ -14,13 +14,28 @@ const MISSIONS_PER_REGION := 2
 
 # Missions, indexed [tier] or [length].
 const TIER_LEVELS := [1, 3, 5]
-const FIGHTS := [2, 3, 4]
+## Half a mission's gold divided by this is the fight share, paid for every fight won.
+const FIGHT_SHARES := [2, 3, 4]
 const GOLD := [3000, 4500, 7500]
 const TIER_GOLD_MULTIPLIER := [1.0, 1.5, 2.0]
 const XP := [2, 3, 4]
 const TIER_XP_MULTIPLIER := [1, 2, 4]
 ## A hero must reach this level before Veteran / Champion missions show up.
 const TIER_UNLOCK_LEVEL := [0, 2, 4]
+
+# Mission maps, indexed [length] or [tier].
+## Columns of rooms, counting the final room.
+const MAP_COLUMNS := [4, 6, 8]
+const MAP_ROWS := 4
+## Random walks from the first column that make up the routes.
+const MAP_WALKS := 3
+## Odds for rooms the placement rules leave open, by MapRoom.Type: fight, event, rest, elite, cache.
+const ROOM_WEIGHTS := [50, 22, 12, 8, 8]
+const ELITE_HEIRLOOMS := [2, 3, 4]
+const CACHE_HEIRLOOMS := [2, 3, 4]
+const EVENT_HEIRLOOM_MULTIPLIER := [1.0, 1.5, 2.0]
+const REST_HEAL := 0.3
+const REST_STRESS := 2
 
 const HEIRLOOMS: Array[StringName] = [&"bust", &"portrait", &"deed", &"crest"]
 const HEIRLOOM_NAMES := {&"bust": "Busts", &"portrait": "Portraits", &"deed": "Deeds", &"crest": "Crests"}

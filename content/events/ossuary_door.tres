@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_3abk6"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_ymyks"]
+[ext_resource type="Resource" path="res://content/heroes/warden.tres" id="3_k4jgp"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="4_6l4re"]
+
+[sub_resource type="Resource" id="Resource_fs8gr"]
+script = ExtResource("2_ymyks")
+kind = 3
+amount = 3.0
+
+[sub_resource type="Resource" id="Resource_7fq1c"]
+script = ExtResource("2_ymyks")
+target = 2
+amount = -0.1
+
+[sub_resource type="Resource" id="Resource_86mwy"]
+script = ExtResource("1_3abk6")
+label = "Force the door"
+requires = ExtResource("3_k4jgp")
+success = Array[ExtResource("2_ymyks")]([SubResource("Resource_fs8gr"), SubResource("Resource_7fq1c")])
+success_text = "The Warden sets a shoulder to the iron. It screams, then gives."
+
+[sub_resource type="Resource" id="Resource_k4dio"]
+script = ExtResource("2_ymyks")
+kind = 3
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_8dp24"]
+script = ExtResource("2_ymyks")
+target = 1
+amount = -0.2
+
+[sub_resource type="Resource" id="Resource_2il7e"]
+script = ExtResource("1_3abk6")
+label = "Pry it open"
+success = Array[ExtResource("2_ymyks")]([SubResource("Resource_k4dio"), SubResource("Resource_8dp24")])
+success_text = "The bars spring loose and gash whoever stands nearest."
+
+[sub_resource type="Resource" id="Resource_miu55"]
+script = ExtResource("2_ymyks")
+kind = 6
+
+[sub_resource type="Resource" id="Resource_cfsfd"]
+script = ExtResource("1_3abk6")
+label = "Knock"
+success = Array[ExtResource("2_ymyks")]([SubResource("Resource_miu55")])
+success_text = "Something answers."
+
+[resource]
+script = ExtResource("4_6l4re")
+id = &"ossuary_door"
+title = "The Ossuary Door"
+text = "An iron door seals the hillside crypt, its bars bent outward from within. Beyond it lie the bones of the old families, and whatever they were buried with."
+choices = Array[ExtResource("1_3abk6")]([SubResource("Resource_86mwy"), SubResource("Resource_2il7e"), SubResource("Resource_cfsfd")])

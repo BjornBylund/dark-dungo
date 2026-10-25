@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_pgqeh"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_qo6hk"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_bpj17"]
+[ext_resource type="Texture2D" path="res://art/units/broodmother.png" id="4_ow4nw"]
+
+[sub_resource type="Resource" id="Resource_pgqeh"]
+script = ExtResource("3_bpj17")
+kind = 1
+dot = &"bleed"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_qo6hk"]
+script = ExtResource("2_qo6hk")
+id = &"rending_bite"
+display_name = "Rending Bite"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 4
+damage_max = 7
+crit_chance = 0.05
+effects = Array[ExtResource("3_bpj17")]([SubResource("Resource_pgqeh")])
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_bpj17"]
+script = ExtResource("3_bpj17")
+kind = 1
+dot = &"blight"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_ow4nw"]
+script = ExtResource("2_qo6hk")
+id = &"bile_spray"
+display_name = "Bile Spray"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 2
+damage_max = 4
+effects = Array[ExtResource("3_bpj17")]([SubResource("Resource_bpj17")])
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_24ex7"]
+script = ExtResource("2_qo6hk")
+id = &"brood_shriek"
+display_name = "Brood Shriek"
+launch_ranks = Array[int]([1, 2])
+multi_target = true
+stress = 1
+cooldown = 3
+
+[resource]
+script = ExtResource("1_pgqeh")
+id = &"broodmother"
+display_name = "Broodmother"
+color = Color(0.42, 0.48, 0.2, 1)
+size = 2
+max_hp = 85
+speed = 2
+corpse_hp = 28
+death_armor = 1
+resist_stun = 0.5
+resist_bleed = 0.3
+resist_blight = 0.7
+resist_burn = 0.2
+resist_move = 0.8
+resist_debuff = 0.3
+skills = Array[ExtResource("2_qo6hk")]([SubResource("Resource_qo6hk"), SubResource("Resource_ow4nw"), SubResource("Resource_24ex7")])
+sprite = ExtResource("4_ow4nw")

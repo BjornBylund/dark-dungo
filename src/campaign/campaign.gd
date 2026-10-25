@@ -7,8 +7,8 @@ extends RefCounted
 
 enum Eligibility { OK, UNDERLEVELED, WILL_NOT_GO, WOUNDED, BUSY, NOT_RECRUITED }
 
-## 2 added regions to missions; version 1 saves still load.
-const SAVE_VERSION := 2
+## 2 added regions to missions and 3 mission maps; older saves still load.
+const SAVE_VERSION := 3
 
 var def: CampaignDef
 var week := 1
@@ -282,7 +282,7 @@ func wait_week() -> String:
 	return reason
 
 
-## Heroes below the mission level start it stressed.
+## Draws the mission's map. Heroes below the mission level start it stressed.
 func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 	if can_embark(mission, party) != "":
 		return null
@@ -290,26 +290,37 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 		var short := levels_short(hero, mission)
 		if short > 0:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
-	run = MissionRun.new(mission, party, rng)
+	run = MissionRun.new(mission, _draw_map(mission), party, rng)
 	return run
 
 
+func _draw_map(mission: Mission) -> MissionMap:
+	if mission.region == null:
+		mission.region = def.regions[0]
+	var events: Array[EventDef] = []
+	events.append_array(def.events)
+	events.append_array(mission.region.events)
+	return MissionMap.generate(mission.region, mission.length, events, rng)
+
+
 ## Settles a finished mission and ends the week. Returns a summary for the
-## results screen: {outcome, gold, heirloom, heirlooms, xp, level_ups, wounded}.
+## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups, wounded}.
+## Completing pays everything; retreating keeps what was earned on the way.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
-		outcome = run.outcome, gold = 0, heirloom = mission.heirloom, heirlooms = 0, xp = 0,
-		level_ups = [], wounded = [],
+		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
 	}
 	for i in run.party.size():
 		run.party[i].stress = clampi(run.combatants[i].stress, 0, Rules.STRESS_MAX)
+	if run.outcome != MissionRun.Outcome.FAILED:
+		summary.gold = run.gold_earned
+		summary.heirlooms = run.heirlooms_earned.duplicate()
 	match run.outcome:
 		MissionRun.Outcome.COMPLETED:
-			summary.gold = run.gold_earned + mission.completion_gold()
-			summary.heirlooms = mission.heirloom_amount()
+			summary.gold += mission.completion_gold()
+			summary.heirlooms[mission.heirloom] = summary.heirlooms.get(mission.heirloom, 0) + mission.heirloom_amount()
 			summary.xp = mission.xp()
-			heirlooms[mission.heirloom] += summary.heirlooms
 			for hero in run.party:
 				if hero in run.defeated:
 					continue
@@ -318,10 +329,11 @@ func finish_mission() -> Dictionary:
 				if hero.level() > before:
 					summary.level_ups.append(hero)
 		MissionRun.Outcome.RETREATED:
-			summary.gold = run.gold_earned
 			for hero in run.party:
 				hero.stress = mini(hero.stress + CampaignRules.RETREAT_STRESS, Rules.STRESS_MAX)
 	gold += summary.gold
+	for type: StringName in summary.heirlooms:
+		heirlooms[type] += summary.heirlooms[type]
 	var party := run.party
 	var defeated := run.defeated
 	run = null
@@ -366,7 +378,7 @@ func _refresh_board() -> void:
 	for region in def.regions:
 		for i in CampaignRules.MISSIONS_PER_REGION:
 			var random_tier: int = tiers[rng.randi_range(0, tiers.size() - 1)]
-			var length := rng.randi_range(0, CampaignRules.FIGHTS.size() - 1)
+			var length := rng.randi_range(0, CampaignRules.LENGTH_NAMES.size() - 1)
 			board.append(_make_mission(forced.get(board.size(), random_tier), length, region))
 
 
@@ -379,17 +391,6 @@ func _make_mission(tier: int, length: int, region: RegionDef = null) -> Mission:
 	mission.tier = tier as CampaignRules.Tier
 	mission.length = length as CampaignRules.Length
 	mission.heirloom = CampaignRules.HEIRLOOMS[rng.randi_range(0, CampaignRules.HEIRLOOMS.size() - 1)]
-	var fights: int = CampaignRules.FIGHTS[length]
-	var previous: EncounterDef = null
-	for i in fights:
-		var finale := i == fights - 1 and length != CampaignRules.Length.SHORT and not region.finales.is_empty()
-		var options: Array[EncounterDef] = []
-		options.assign((region.finales if finale else region.encounters).filter(
-				func(e: EncounterDef) -> bool: return e != previous))
-		if options.is_empty():
-			options.assign(region.finales if finale else region.encounters)
-		previous = options[rng.randi_range(0, options.size() - 1)]
-		mission.encounters.append(previous)
 	return mission
 
 
@@ -440,8 +441,23 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 		var party: Array[HeroRecord] = []
 		for index in data.run.party:
 			party.append(campaign.heroes[int(index)])
-		campaign.run = MissionRun.from_dict(data.run, party, campaign.rng)
+		var run_data: Dictionary = data.run
+		if int(data.version) < 3:
+			run_data = campaign._run_before_maps(run_data)
+		campaign.run = MissionRun.from_dict(run_data, party, campaign.rng)
 	return campaign
+
+
+## A mission saved mid-way before missions had maps carries on at the start of
+## a freshly drawn map, keeping the party's state and the gold earned.
+func _run_before_maps(data: Dictionary) -> Dictionary:
+	var mission := Mission.from_dict(data.mission)
+	var map := _draw_map(mission)
+	var upgraded := data.duplicate()
+	upgraded.mission = mission.to_dict()
+	upgraded.map = map.to_dict()
+	upgraded.merge({room_id = -1, room_done = true, heirlooms_earned = {}, pending = "", pending_kind = 0})
+	return upgraded
 
 
 func save(path: String) -> Error:

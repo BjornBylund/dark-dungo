@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="EventDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/event_choice_def.gd" id="1_lri2k"]
+[ext_resource type="Script" path="res://src/core/defs/event_outcome_def.gd" id="2_5g7ah"]
+[ext_resource type="Resource" path="res://content/heroes/plaguebearer.tres" id="3_mlm36"]
+[ext_resource type="Script" path="res://src/core/defs/event_def.gd" id="4_4neir"]
+
+[sub_resource type="Resource" id="Resource_al3qs"]
+script = ExtResource("2_5g7ah")
+kind = 1
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_bvh3j"]
+script = ExtResource("2_5g7ah")
+amount = 0.25
+
+[sub_resource type="Resource" id="Resource_1fa05"]
+script = ExtResource("1_lri2k")
+label = "Eat it"
+chance = 0.5
+success = Array[ExtResource("2_5g7ah")]([SubResource("Resource_bvh3j")])
+success_text = "Warmth floods your limbs."
+failure = Array[ExtResource("2_5g7ah")]([SubResource("Resource_al3qs")])
+failure_text = "The visions do not stop for hours."
+
+[sub_resource type="Resource" id="Resource_bo4v4"]
+script = ExtResource("2_5g7ah")
+amount = 0.2
+
+[sub_resource type="Resource" id="Resource_sapiw"]
+script = ExtResource("1_lri2k")
+label = "Distil it"
+requires = ExtResource("3_mlm36")
+success = Array[ExtResource("2_5g7ah")]([SubResource("Resource_bo4v4")])
+success_text = "The Plaguebearer boils it down to something almost medicinal."
+
+[sub_resource type="Resource" id="Resource_hsghg"]
+script = ExtResource("2_5g7ah")
+kind = 1
+amount = -1.0
+
+[sub_resource type="Resource" id="Resource_bogr0"]
+script = ExtResource("1_lri2k")
+label = "Burn it"
+success = Array[ExtResource("2_5g7ah")]([SubResource("Resource_hsghg")])
+success_text = "It shrieks as it burns. The tunnel feels a little emptier."
+
+[resource]
+script = ExtResource("4_4neir")
+id = &"glowing_bloom"
+title = "The Glowing Bloom"
+text = "Pale fungus carpets the tunnel walls, pulsing with a soft green light. The air tastes sweet, and the ghouls give it a wide berth."
+choices = Array[ExtResource("1_lri2k")]([SubResource("Resource_1fa05"), SubResource("Resource_sapiw"), SubResource("Resource_bogr0")])

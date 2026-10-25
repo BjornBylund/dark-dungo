@@ -8,9 +8,13 @@ extends Resource
 @export var arrivals: Array[UnitDef] = []
 ## Places on the expedition map, each with its own enemy groups.
 @export var regions: Array[RegionDef] = []
+## Events that can happen in any region.
+@export var events: Array[EventDef] = []
 ## Scene behind the fights.
 @export var battle_background: Texture2D
 ## The hamlet panorama for the town screen.
 @export var town_background: Texture2D
 ## The map of the surroundings for choosing a mission.
 @export var expedition_background: Texture2D
+## Behind every mission map.
+@export var map_background: Texture2D

@@ -67,7 +67,7 @@ func _autoplay_embark() -> void:
 				party.append(hero)
 		if campaign.can_embark(mission, party) == "" and campaign.embark(mission, party):
 			Game.save()
-			Game.go_to_battle()
+			Game.go_to_map()
 			return
 
 
