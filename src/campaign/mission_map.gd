@@ -1,4 +1,4 @@
-## A mission's map: rooms in columns, played left to right like a Slay the
+## One map of a mission: rooms in columns, played left to right like a Slay the
 ## Spire act. Random walks through a grid of MAP_ROWS rows make the routes, and
 ## every route ends at the region's finale. Room types follow Slay the Spire's
 ## placement rules (docs/design.md, Mission maps).
@@ -15,34 +15,27 @@ var columns := 0
 
 
 ## Draws maps until one passes layout_problems() and type_problems(), then fills the rooms.
-static func generate(region: RegionDef, length: int, events: Array[EventDef], rng: RandomNumberGenerator) -> MissionMap:
+static func generate(region: RegionDef, events: Array[EventDef], rng: RandomNumberGenerator) -> MissionMap:
 	var map := MissionMap.new()
-	map.columns = CampaignRules.MAP_COLUMNS[length]
+	map.columns = CampaignRules.MAP_COLUMNS
 	for attempt in ATTEMPTS:
 		map.rooms.clear()
 		map._lay_out(rng)
 		if not map.layout_problems().is_empty():
 			continue
 		map._assign_types(rng)
-		if map.needs_elite():
-			map._add_elite(rng)
+		map._add_elite(rng)
 		if map.type_problems().is_empty():
 			break
 	map._fill(region, events, rng)
 	return map
 
 
-## Medium and long maps always hold at least one elite.
-func needs_elite() -> bool:
-	return columns >= CampaignRules.MAP_COLUMNS[CampaignRules.Length.MEDIUM]
-
-
 ## Rules the room types must keep beyond the placement rules, as readable
-## problems: medium and long maps have an elite, and some route reaches the
-## finale without one.
+## problems: every map has an elite, and some route reaches the finale without one.
 func type_problems() -> Array[String]:
 	var problems: Array[String] = []
-	if needs_elite() and not rooms.any(func(r: MapRoom) -> bool: return r.type == MapRoom.Type.ELITE):
+	if not rooms.any(func(r: MapRoom) -> bool: return r.type == MapRoom.Type.ELITE):
 		problems.append("no elite")
 	if not _route_avoiding(MapRoom.Type.ELITE):
 		problems.append("every route goes through an elite")
@@ -163,20 +156,17 @@ static func _crosses(links: Array, a: int, b: int) -> bool:
 	return false
 
 
-## The first column is all fights and the middle column of medium and long maps
-## all rests; every other room is rolled from ROOM_WEIGHTS and re-rolled while it
-## breaks a placement rule.
+## Fixed columns, after Slay the Spire's: the first is all fights, CACHE_COLUMN
+## all caches and REST_COLUMN (just before the finale) all rests. Every other
+## room is rolled from ROOM_WEIGHTS and re-rolled while it breaks a placement rule.
 func _assign_types(rng: RandomNumberGenerator) -> void:
-	var middle := _middle_column()
 	var typed := {}
 	for spot in rooms:
+		var fixed := _fixed_type(spot.column)
 		if spot.type == MapRoom.Type.FINALE:
 			typed[spot.id] = true
-		elif spot.column == 0:
-			spot.type = MapRoom.Type.FIGHT
-			typed[spot.id] = true
-		elif spot.column == middle:
-			spot.type = MapRoom.Type.REST
+		elif fixed >= 0:
+			spot.type = fixed as MapRoom.Type
 			typed[spot.id] = true
 	for spot in rooms:
 		if typed.has(spot.id):
@@ -185,20 +175,29 @@ func _assign_types(rng: RandomNumberGenerator) -> void:
 		typed[spot.id] = true
 
 
-## The all-rest column of medium and long maps, or -1.
-func _middle_column() -> int:
-	return floori((columns - 1) / 2.0) if needs_elite() else -1
+## The type every room in `column` has, or -1 for a column that is rolled.
+static func _fixed_type(column: int) -> int:
+	match column:
+		0:
+			return MapRoom.Type.FIGHT
+		CampaignRules.CACHE_COLUMN:
+			return MapRoom.Type.CACHE
+		CampaignRules.REST_COLUMN:
+			return MapRoom.Type.REST
+	return -1
 
 
-## Turns one open room into an elite where the placement rules allow it and a
-## route around it remains, trying fight rooms first so the map keeps its
-## events, rests and caches.
+## Makes sure the map has an elite: if none was rolled, turns an open room into
+## one where the placement rules allow it and a route around it remains, trying
+## fight rooms first so the map keeps its events, rests and caches.
 func _add_elite(rng: RandomNumberGenerator) -> void:
+	if rooms.any(func(r: MapRoom) -> bool: return r.type == MapRoom.Type.ELITE):
+		return
 	var typed := {}
 	for spot in rooms:
 		typed[spot.id] = true
 	var open := rooms.filter(func(r: MapRoom) -> bool:
-		return r.column != 0 and r.column != _middle_column() and r.type != MapRoom.Type.FINALE)
+		return _fixed_type(r.column) < 0 and r.type != MapRoom.Type.FINALE)
 	var fights := open.filter(func(r: MapRoom) -> bool: return r.type == MapRoom.Type.FIGHT)
 	var others := open.filter(func(r: MapRoom) -> bool: return r.type != MapRoom.Type.FIGHT)
 	for pool: Array in [fights, others]:
@@ -247,11 +246,10 @@ func _roll_type(spot: MapRoom, typed: Dictionary, rng: RandomNumberGenerator) ->
 
 
 func _allowed(spot: MapRoom, type: MapRoom.Type, typed: Dictionary) -> bool:
-	var grid_columns := columns - 1
 	var spaced := type == MapRoom.Type.ELITE or type == MapRoom.Type.REST
-	if spaced and spot.column < ceili(grid_columns / 3.0):
+	if spaced and spot.column < CampaignRules.EARLY_COLUMNS:
 		return false
-	if type == MapRoom.Type.REST and spot.column == grid_columns - 1:
+	if type == MapRoom.Type.REST and spot.column == CampaignRules.REST_COLUMN - 1:
 		return false
 	for parent in parents(spot):
 		if spaced and typed.has(parent.id) and parent.type == type:

@@ -2,7 +2,7 @@
 ## and crashes, and prints win rates as a rough balance signal.
 extends TestCase
 
-const RUNS := 200
+const RUNS := 50
 const MAX_ROUNDS := 60
 
 

@@ -1,5 +1,6 @@
 ## Sensible choices on a mission map, for autoplay and the balance tests: rest
-## when hurt or stressed, take elites only when healthy, otherwise prefer loot.
+## when hurt or stressed, take elites only when healthy, skip fights when badly
+## hurt, otherwise prefer loot.
 class_name MapAutoPlayer
 extends RefCounted
 
@@ -17,7 +18,7 @@ static func choose_room(run: MissionRun) -> int:
 			MapRoom.Type.CACHE:
 				score = 2.0
 			MapRoom.Type.FIGHT:
-				score = 1.5
+				score = 1.5 if hp >= 0.5 else 0.8
 			MapRoom.Type.EVENT:
 				score = 1.2
 			MapRoom.Type.ELITE:

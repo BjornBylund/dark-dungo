@@ -1,5 +1,6 @@
 ## Headless test runner. Runs every `test_*` method in every `res://tests/test_*.gd`.
-## Usage: godot --headless --path . --script res://tests/run_tests.gd
+## Usage: godot --headless --path . --script res://tests/run_tests.gd [-- --only=text]
+## --only runs just the tests whose file or method name contains the text.
 ## A test fails on a failed assertion or on any engine/script error it causes.
 ## Exit code is non-zero when any test fails.
 extends SceneTree
@@ -23,6 +24,10 @@ class ErrorRecorder extends Logger:
 func _initialize() -> void:
 	var recorder := ErrorRecorder.new()
 	OS.add_logger(recorder)
+	var only := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=")
 	var passed := 0
 	var failed := 0
 	var files := Array(DirAccess.get_files_at(TEST_DIR))
@@ -40,16 +45,18 @@ func _initialize() -> void:
 			continue
 		for method in script.get_script_method_list():
 			var method_name: String = method["name"]
-			if not method_name.begins_with("test_"):
+			if not method_name.begins_with("test_") or not (only.is_empty() or only in file or only in method_name):
 				continue
 			recorder.errors.clear()
+			var started := Time.get_ticks_msec()
 			var suite: TestCase = script.new()
 			suite.call(method_name)
+			var seconds := (Time.get_ticks_msec() - started) / 1000.0
 			var problems: Array[String] = suite.failures.duplicate()
 			problems.append_array(recorder.errors)
 			if problems.is_empty():
 				passed += 1
-				print("  ok    %s::%s" % [file, method_name])
+				print("  ok    %s::%s%s" % [file, method_name, "   (%.1fs)" % seconds if seconds >= 0.5 else ""])
 			else:
 				failed += 1
 				print("  FAIL  %s::%s" % [file, method_name])

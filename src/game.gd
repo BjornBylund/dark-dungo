@@ -37,6 +37,8 @@ func continue_campaign() -> bool:
 	return true
 
 
+## Called in town and after each fight. Other rooms on a mission map aren't
+## saved: quitting goes back to the last fight, or to the town before embarking.
 func save() -> void:
 	if campaign:
 		var error := campaign.save(SAVE_PATH)

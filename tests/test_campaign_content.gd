@@ -1,11 +1,12 @@
 ## Checks the campaign's content and plays whole mission maps with random
-## parties from the cast, printing how often each class's parties complete them.
+## parties from the cast. The samples are small enough to keep the suite quick;
+## for win rates use scripts/balance.ps1 and tools/balance_probe.gd.
 extends TestCase
 
 const CAMPAIGN_PATH := "res://content/campaign.tres"
-const RUNS := 160
+const RUNS := 40
 const MAX_ROUNDS := 60
-const ELITE_RUNS := 100
+const ELITE_RUNS := 20
 
 
 func _def() -> CampaignDef:
@@ -84,9 +85,8 @@ func test_encounters_fit_in_four_ranks() -> void:
 
 
 ## Fresh random parties of level-0 heroes against each region's elite group at Apprentice.
-func test_elite_fights_are_hard_but_winnable() -> void:
+func test_elite_fights_are_winnable() -> void:
 	var cast := _cast()
-	var rates: Array[String] = []
 	for region in _def().regions:
 		var wins := 0
 		for seed_value in ELITE_RUNS:
@@ -112,14 +112,11 @@ func test_elite_fights_are_hard_but_winnable() -> void:
 					var choice := AutoPlayer.sensible(battle)
 					battle.submit(choice[0], choice[1])
 			wins += int(battle.state == Battle.State.VICTORY)
-		rates.append("%s %d%%" % [region.elites[0].display_name, roundi(100.0 * wins / ELITE_RUNS)])
-	print("        elite fights, fresh random parties at Apprentice: %s" % ", ".join(rates))
+		assert_true(wins > 0, "nobody beats %s" % region.elites[0].display_name)
 
 
 func test_random_parties_finish_apprentice_missions() -> void:
 	var stalled := 0
-	var completed := 0
-	var by_class := {}
 	for seed_value in RUNS:
 		var campaign := Campaign.create(_def(), seed_value)
 		for hero in campaign.heroes:
@@ -137,15 +134,4 @@ func test_random_parties_finish_apprentice_missions() -> void:
 		var run := campaign.embark(mission, party)
 		if not MapAutoPlayer.play(run, MAX_ROUNDS):
 			stalled += 1
-		var won := run.outcome == MissionRun.Outcome.COMPLETED
-		if won:
-			completed += 1
-		for hero in party:
-			var entry: Array = by_class.get(hero.display_name, [0, 0])
-			by_class[hero.display_name] = [entry[0] + int(won), entry[1] + 1]
-	var rates: Array[String] = []
-	for name: String in by_class:
-		rates.append("%s %d%%" % [name, roundi(100.0 * by_class[name][0] / by_class[name][1])])
-	print("        medium Apprentice, random parties: completed %d%%; by class: %s" % [
-			roundi(100.0 * completed / RUNS), ", ".join(rates)])
 	assert_eq(stalled, 0, "battles that hit %d rounds" % MAX_ROUNDS)

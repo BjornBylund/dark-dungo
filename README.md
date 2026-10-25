@@ -1,6 +1,6 @@
 # Darko Dungo
 
-A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions of a few fights, and spend the gold and heirlooms on gear, skills, stress relief and buildings. A combat sandbox (four heroes against three waves) is still there for testing fights.
+A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across one to three maps of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. A combat sandbox (four heroes against three waves) is still there for testing fights.
 
 - Design decisions: [docs/design.md](docs/design.md)
 - DD2 combat research: [docs/research/darkest-dungeon-combat.md](docs/research/darkest-dungeon-combat.md)
@@ -13,7 +13,7 @@ Open the folder in Godot 4.7 and press Play, or from a terminal:
 godot --path .
 ```
 
-The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every room of a mission.
+The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight of a mission.
 
 - **Town:** click a building to open it (Stagecoach, Blacksmith, Guild, Abbey), or a hero in the roster for their sheet. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
@@ -96,7 +96,9 @@ Other art, all replaceable:
 - **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**.
 - **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size and room odds) are constants in `src/campaign/campaign_rules.gd`.
-- **Balance check:** `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
+- **Balance checks:**
+  - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, maps cleared, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size.
+  - `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
 
 ## Test it
 
@@ -104,7 +106,7 @@ Other art, all replaceable:
 powershell -File scripts/test.ps1
 ```
 
-Runs every `tests/test_*.gd` headless, including simulated sandbox runs and campaign missions that print win rates. Set `GODOT` to the Godot console executable if it isn't found automatically.
+Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the project first only when a file changed since the last run. `-Only text` runs just the tests whose file or method name contains the text, for example `-Only mission_map`. Tests slower than half a second show their time. Win rates come from the balance checks above, not the tests. Set `GODOT` to the Godot console executable if it isn't found automatically.
 
 ## Layout
 
@@ -119,7 +121,8 @@ Runs every `tests/test_*.gd` headless, including simulated sandbox runs and camp
 | `art/` | Unit sprites, skill and token icons, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |
-| `scripts/` | `test.ps1` runs the tests, `serve_web.ps1` serves the web export locally |
+| `scripts/` | `test.ps1` runs the tests, `balance.ps1` plays missions in parallel for balance numbers, `serve_web.ps1` serves the web export locally |
 | `tests/` | Headless tests and the runner |
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
 | `tools/balance_probe.gd` | Fresh random parties against every enemy group: win rate, HP lost, stress |
+| `tools/mission_probe.gd` | Random parties play whole missions; `scripts/balance.ps1` runs it in parallel |

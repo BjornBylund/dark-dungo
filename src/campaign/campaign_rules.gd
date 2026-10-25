@@ -15,7 +15,9 @@ const MISSIONS_PER_REGION := 2
 # Missions, indexed [tier] or [length].
 const TIER_LEVELS := [1, 3, 5]
 ## Half a mission's gold divided by this is the fight share, paid for every fight won.
-const FIGHT_SHARES := [2, 3, 4]
+## About the shares a full clear earns from fights, elites, caches and events
+## (scripts/balance.ps1 measures it).
+const FIGHT_SHARES := [6, 12, 18]
 const GOLD := [3000, 4500, 7500]
 const TIER_GOLD_MULTIPLIER := [1.0, 1.5, 2.0]
 const XP := [2, 3, 4]
@@ -24,11 +26,20 @@ const TIER_XP_MULTIPLIER := [1, 2, 4]
 const TIER_UNLOCK_LEVEL := [0, 2, 4]
 
 # Mission maps, indexed [length] or [tier].
-## Columns of rooms, counting the final room.
-const MAP_COLUMNS := [4, 6, 8]
-const MAP_ROWS := 4
+## Maps the party crosses in one mission, like Slay the Spire's acts.
+const MAP_LAYERS := [1, 2, 3]
+## Columns of rooms per map, counting the final room: 9 floors and the finale,
+## shorter than a Slay the Spire act's 15 floors and the boss.
+const MAP_COLUMNS := 10
+const MAP_ROWS := 5
 ## Random walks from the first column that make up the routes.
-const MAP_WALKS := 3
+const MAP_WALKS := 4
+## Fixed columns (0-based), after Slay the Spire's: all caches a little past the
+## middle, like its treasure floor, and all rests just before the finale.
+const CACHE_COLUMN := 5
+const REST_COLUMN := 8
+## No elite or rest in this many first columns.
+const EARLY_COLUMNS := 4
 ## Odds for rooms the placement rules leave open, by MapRoom.Type: fight, event, rest, elite, cache.
 const ROOM_WEIGHTS := [50, 22, 12, 8, 8]
 const ELITE_HEIRLOOMS := [2, 3, 4]

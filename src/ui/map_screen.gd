@@ -57,6 +57,10 @@ func _ready() -> void:
 	_refresh()
 	if not run.room_done:
 		_open_room()
+	elif run.new_map:
+		_show_panel("Map %d of %d" % [run.layer + 1, run.layers],
+				"The way leads deeper. The party binds its wounds before pressing on: every hero is back to full HP.",
+				[["Onward", _close_panel]])
 	if _autoplay:
 		_autoplay_step()
 
@@ -85,7 +89,8 @@ func _refresh() -> void:
 	var run := _run()
 	var mission := run.mission
 	_week.text = "Week %d" % Game.campaign.week
-	_header.text = "%s%s" % [mission.region.display_name + "   " if mission.region else "", mission.title()]
+	_header.text = "%s%s%s" % [mission.region.display_name + "   " if mission.region else "", mission.title(),
+			"   Map %d/%d" % [run.layer + 1, run.layers] if run.layers > 1 else ""]
 	for child in _rooms.get_children():
 		child.queue_free()
 	_buttons.clear()
@@ -105,7 +110,7 @@ func _refresh() -> void:
 			state = RoomButton.State.PASSED_BY
 		var button := RoomButton.new()
 		button.setup(room, state, _describe(room))
-		var grow := PHONE_ROOM_SCALE if Device.phone else 1.0
+		var grow := _room_scale()
 		button.scale = Vector2(grow, grow)
 		button.position = _room_center(room) - button.size * grow / 2.0
 		button.pressed.connect(_on_room_pressed.bind(room))
@@ -113,6 +118,14 @@ func _refresh() -> void:
 		_buttons[room.id] = button
 	_paths.queue_redraw()
 	_refresh_party()
+
+
+## Room buttons grow on phones, but no further than leaves a gap between columns.
+func _room_scale() -> float:
+	if not Device.phone:
+		return 1.0
+	var spacing := MAP_AREA.size.x / float(_run().map.columns - 1)
+	return minf(PHONE_ROOM_SCALE, spacing * 0.8 / RoomButton.SIZE)
 
 
 func _room_center(room: MapRoom) -> Vector2:
@@ -146,7 +159,7 @@ func _dashed(from: Vector2, to: Vector2, color: Color, width: float) -> void:
 	var step := 16.0
 	var length := from.distance_to(to)
 	var direction := (to - from) / length
-	var gap := 44.0 * (PHONE_ROOM_SCALE if Device.phone else 1.0)
+	var gap := 44.0 * _room_scale()
 	var start := gap
 	while start < length - gap:
 		_paths.draw_line(from + direction * start, from + direction * minf(start + step * 0.6, length - gap), color,
@@ -185,7 +198,6 @@ func _enter(room: MapRoom) -> void:
 	if run.enter(room.id) != "":
 		return
 	_confirm_retreat = false
-	Game.save()
 	if run.has_pending_fight():
 		Game.go_to_battle()
 		return
@@ -195,7 +207,8 @@ func _enter(room: MapRoom) -> void:
 
 # --- Rooms that open a panel ---
 
-## `entered` is false when reopening a room after loading, so a cache isn't announced twice.
+## `entered` is false when reopening a room (after loading, or after the quit
+## question), so a cache isn't announced twice.
 func _open_room(entered: bool = false) -> void:
 	var run := _run()
 	var room := run.current_room()
@@ -227,7 +240,6 @@ func _open_room(entered: bool = false) -> void:
 
 func _rest(heal: bool) -> void:
 	_run().rest(heal)
-	Game.save()
 	_show_panel("Rest", "The party heals." if heal else "The party's nerves steady.", [["Continue", _close_panel]])
 	_refresh()
 
@@ -238,7 +250,6 @@ func _choose(index: int) -> void:
 	var result := run.choose(index)
 	if result.is_empty():
 		return
-	Game.save()
 	var text: String = result.text
 	if not result.lines.is_empty():
 		text += "\n\n" + "\n".join(result.lines)
@@ -320,6 +331,22 @@ func _on_retreat() -> void:
 	_show_panel(text[0], text[1], [["Return to town", Game.go_to_town]])
 
 
+## The game saves only in town and after fights, so quitting asks first.
+func _on_quit() -> void:
+	_show_panel("Quit to the menu?",
+			"The game saves in town and after each fight. Rooms since the last fight are lost.", [
+		["Quit to the menu", Game.go_to_menu],
+		["Keep going", _keep_going],
+	])
+
+
+## Back from the quit question, to the room's own panel if it is still open.
+func _keep_going() -> void:
+	_close_panel()
+	if not _run().room_done:
+		_open_room()
+
+
 # --- Autoplay ---
 
 ## With `-- --autoplay`: pick rooms, rests and event choices with MapAutoPlayer.
@@ -399,14 +426,12 @@ func _build() -> void:
 	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(_header)
 	_menu = Button.new()
-	_menu.text = "Quit" if Device.phone else "Save and quit"
+	_menu.text = "Quit"
 	_menu.focus_mode = Control.FOCUS_NONE
 	_menu.custom_minimum_size = Vector2(80, 44) if Device.phone else Vector2.ZERO
 	_menu.size = _menu.custom_minimum_size
 	_menu.add_theme_font_size_override("font_size", 18 if Device.phone else 15)
-	_menu.pressed.connect(func() -> void:
-		Game.save()
-		Game.go_to_menu())
+	_menu.pressed.connect(_on_quit)
 	if Device.phone:
 		_ui.add_child(_menu)
 	else:

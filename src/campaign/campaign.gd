@@ -282,7 +282,7 @@ func wait_week() -> String:
 	return reason
 
 
-## Draws the mission's map. Heroes below the mission level start it stressed.
+## Draws the mission's first map. Heroes below the mission level start it stressed.
 func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 	if can_embark(mission, party) != "":
 		return null
@@ -291,16 +291,23 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 		if short > 0:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
 	run = MissionRun.new(mission, _draw_map(mission), party, rng)
+	run.events = _events_for(mission)
 	return run
 
 
 func _draw_map(mission: Mission) -> MissionMap:
 	if mission.region == null:
 		mission.region = def.regions[0]
+	return MissionMap.generate(mission.region, _events_for(mission), rng)
+
+
+## The shared events and the mission's region's own.
+func _events_for(mission: Mission) -> Array[EventDef]:
 	var events: Array[EventDef] = []
 	events.append_array(def.events)
-	events.append_array(mission.region.events)
-	return MissionMap.generate(mission.region, mission.length, events, rng)
+	if mission.region:
+		events.append_array(mission.region.events)
+	return events
 
 
 ## Settles a finished mission and ends the week. Returns a summary for the
@@ -445,6 +452,7 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 		if int(data.version) < 3:
 			run_data = campaign._run_before_maps(run_data)
 		campaign.run = MissionRun.from_dict(run_data, party, campaign.rng)
+		campaign.run.events = campaign._events_for(campaign.run.mission)
 	return campaign
 
 
