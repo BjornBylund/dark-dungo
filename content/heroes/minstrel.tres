@@ -87,7 +87,6 @@ self_move = -3
 script = ExtResource("1_t46oa")
 id = &"minstrel"
 display_name = "Minstrel"
-role = "Morale and tempo"
 color = Color(0.42352942, 0.29803923, 0.5568628, 1)
 max_hp = 28
 speed = 6

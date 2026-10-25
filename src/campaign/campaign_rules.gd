@@ -10,7 +10,7 @@ const TIER_NAMES := ["Apprentice", "Veteran", "Champion"]
 const LENGTH_NAMES := ["Short", "Medium", "Long"]
 
 const STARTING_GOLD := 5000
-const MISSIONS_PER_WEEK := 3
+const MISSIONS_PER_REGION := 2
 
 # Missions, indexed [tier] or [length].
 const TIER_LEVELS := [1, 3, 5]

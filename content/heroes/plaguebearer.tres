@@ -99,7 +99,6 @@ effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_yuwjr")])
 script = ExtResource("1_5hqwy")
 id = &"plaguebearer"
 display_name = "Plaguebearer"
-role = "Alchemist"
 color = Color(0.43137255, 0.47843137, 0.1882353, 1)
 max_hp = 26
 speed = 5

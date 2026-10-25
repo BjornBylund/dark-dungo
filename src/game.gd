@@ -5,6 +5,7 @@ const CAMPAIGN: CampaignDef = preload("res://content/campaign.tres")
 const SAVE_PATH := "user://campaign.json"
 const MAIN_MENU := "res://src/ui/main_menu.tscn"
 const TOWN := "res://src/ui/town_screen.tscn"
+const EXPEDITION := "res://src/ui/expedition_screen.tscn"
 const BATTLE := "res://src/ui/combat_screen.tscn"
 
 ## Null in the main menu and the combat sandbox.
@@ -42,6 +43,11 @@ func save() -> void:
 
 func go_to_town() -> void:
 	get_tree().change_scene_to_file(TOWN)
+
+
+## The map for choosing a mission and lining up the party.
+func go_to_expedition() -> void:
+	get_tree().change_scene_to_file(EXPEDITION)
 
 
 func go_to_battle() -> void:

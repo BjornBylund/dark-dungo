@@ -95,7 +95,6 @@ cooldown = 2
 script = ExtResource("1_wwxfv")
 id = &"penitent"
 display_name = "Penitent"
-role = "Self-harming berserker"
 color = Color(0.45490196, 0.20392157, 0.30980393, 1)
 max_hp = 34
 speed = 4

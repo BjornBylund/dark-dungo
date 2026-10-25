@@ -7,7 +7,8 @@ extends RefCounted
 
 enum Eligibility { OK, UNDERLEVELED, WILL_NOT_GO, WOUNDED, BUSY, NOT_RECRUITED }
 
-const SAVE_VERSION := 1
+## 2 added regions to missions; version 1 saves still load.
+const SAVE_VERSION := 2
 
 var def: CampaignDef
 var week := 1
@@ -351,29 +352,42 @@ func _advance_week(party: Array[HeroRecord]) -> void:
 	_refresh_board()
 
 
+## Two missions per region at random unlocked tiers and lengths, but always at
+## least one at the highest unlocked tier and one at Apprentice.
 func _refresh_board() -> void:
 	board.clear()
 	var tiers := available_tiers()
-	for i in CampaignRules.MISSIONS_PER_WEEK:
-		# The first mission is always at the highest unlocked tier.
-		var tier: int = tiers.back() if i == 0 else tiers[rng.randi_range(0, tiers.size() - 1)]
-		board.append(_make_mission(tier, rng.randi_range(0, CampaignRules.FIGHTS.size() - 1)))
+	var count := def.regions.size() * CampaignRules.MISSIONS_PER_REGION
+	var forced := {}
+	var highest := rng.randi_range(0, count - 1)
+	forced[highest] = tiers.back()
+	if tiers.back() != CampaignRules.Tier.APPRENTICE:
+		forced[(highest + rng.randi_range(1, count - 1)) % count] = CampaignRules.Tier.APPRENTICE
+	for region in def.regions:
+		for i in CampaignRules.MISSIONS_PER_REGION:
+			var random_tier: int = tiers[rng.randi_range(0, tiers.size() - 1)]
+			var length := rng.randi_range(0, CampaignRules.FIGHTS.size() - 1)
+			board.append(_make_mission(forced.get(board.size(), random_tier), length, region))
 
 
-func _make_mission(tier: int, length: int) -> Mission:
+## A mission in `region` (the first region if none is given).
+func _make_mission(tier: int, length: int, region: RegionDef = null) -> Mission:
+	if region == null:
+		region = def.regions[0]
 	var mission := Mission.new()
+	mission.region = region
 	mission.tier = tier as CampaignRules.Tier
 	mission.length = length as CampaignRules.Length
 	mission.heirloom = CampaignRules.HEIRLOOMS[rng.randi_range(0, CampaignRules.HEIRLOOMS.size() - 1)]
 	var fights: int = CampaignRules.FIGHTS[length]
 	var previous: EncounterDef = null
 	for i in fights:
-		var finale := i == fights - 1 and length != CampaignRules.Length.SHORT and not def.finales.is_empty()
+		var finale := i == fights - 1 and length != CampaignRules.Length.SHORT and not region.finales.is_empty()
 		var options: Array[EncounterDef] = []
-		options.assign((def.finales if finale else def.encounters).filter(
+		options.assign((region.finales if finale else region.encounters).filter(
 				func(e: EncounterDef) -> bool: return e != previous))
 		if options.is_empty():
-			options.assign(def.finales if finale else def.encounters)
+			options.assign(region.finales if finale else region.encounters)
 		previous = options[rng.randi_range(0, options.size() - 1)]
 		mission.encounters.append(previous)
 	return mission
@@ -416,8 +430,12 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	campaign.rng.state = String(data.rng_state).to_int()
 	for hero_data: Dictionary in data.heroes:
 		campaign.heroes.append(HeroRecord.from_dict(hero_data))
-	for mission_data: Dictionary in data.board:
-		campaign.board.append(Mission.from_dict(mission_data))
+	if int(data.version) < 2:
+		# Saves from before regions: deal a fresh board with them.
+		campaign._refresh_board()
+	else:
+		for mission_data: Dictionary in data.board:
+			campaign.board.append(Mission.from_dict(mission_data))
 	if data.run != null:
 		var party: Array[HeroRecord] = []
 		for index in data.run.party:
@@ -439,6 +457,6 @@ static func load_from(path: String, campaign_def: CampaignDef) -> Campaign:
 	if not FileAccess.file_exists(path):
 		return null
 	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not data is Dictionary or int(data.get("version", 0)) != SAVE_VERSION:
+	if not data is Dictionary or int(data.get("version", 0)) not in range(1, SAVE_VERSION + 1):
 		return null
 	return from_dict(data, campaign_def)

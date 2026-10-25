@@ -1,4 +1,4 @@
-## A hero in a town list: portrait, name, level and role, stress pips and an
+## A hero in a town list: portrait, name, level, stress pips and an
 ## optional status tag. Toggles to show selection.
 class_name HeroBadge
 extends BaseButton
@@ -25,6 +25,14 @@ func setup(record: HeroRecord, tag_text: String = "", color: Color = UiStyle.GRE
 	toggled.connect(func(_on: bool) -> void: queue_redraw())
 
 
+## Heroes can be dragged onto the Mission Board's lineup.
+func _get_drag_data(_at_position: Vector2) -> Variant:
+	if disabled:
+		return null
+	set_drag_preview(FormationSlot.drag_preview(hero))
+	return {hero = hero}
+
+
 func _draw() -> void:
 	var border := UiStyle.GOLD if button_pressed else (UiStyle.GOLD.darkened(0.4) if is_hovered() else Color("3a3430"))
 	draw_style_box(UiStyle.box(Color("1a1416") if not is_hovered() else Color("221a1b"), border,
@@ -39,8 +47,8 @@ func _draw() -> void:
 	var display := UiStyle.DISPLAY_FONT
 	var body := UiStyle.BODY_FONT
 	draw_string(display, Vector2(70, 26), hero.display_name, HORIZONTAL_ALIGNMENT_LEFT, size.x - 150, 22, UiStyle.GOLD)
-	draw_string(body, Vector2(70, 44), "Level %d  %s" % [hero.level(), hero.def.role], HORIZONTAL_ALIGNMENT_LEFT,
-			size.x - 80, 13, UiStyle.TEXT_DIM)
+	draw_string(body, Vector2(70, 44), "Level %d" % hero.level(), HORIZONTAL_ALIGNMENT_LEFT, size.x - 80, 13,
+			UiStyle.TEXT_DIM)
 	for i in Rules.STRESS_MAX:
 		draw_rect(Rect2(70 + i * 9, 51, 7, 7), UiStyle.STRESS_ON if i < hero.stress else UiStyle.STRESS_OFF)
 	if tag != "":

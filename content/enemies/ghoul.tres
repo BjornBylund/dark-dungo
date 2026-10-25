@@ -37,7 +37,6 @@ stress = 1
 script = ExtResource("1_ksmfu")
 id = &"ghoul"
 display_name = "Ghoul"
-role = "Melee"
 color = Color(0.36862746, 0.41960785, 0.32156864, 1)
 max_hp = 26
 corpse_hp = 12

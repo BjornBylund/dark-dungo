@@ -4,8 +4,6 @@ extends Resource
 
 @export var id: StringName
 @export var display_name: String
-## One line shown in the UI, e.g. "Front-line tank".
-@export var role: String
 ## Placeholder body colour until there is art.
 @export var color: Color = Color.GRAY
 ## Ranks occupied; large enemies are 2.

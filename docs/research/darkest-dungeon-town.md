@@ -675,6 +675,15 @@ The boss appears at 100%. Excess carries over to the next boss. (wiki)
 - **Darkest Dungeon and *Wolves at the Door*:** retreating or abandoning kills one hero to cover the rest. (wiki)
 - **Total party kill:** loot lost; equipped trinkets lost (recoverable from the Shrieker later); quest reward still granted if the goal was complete. (wiki)
 
+### 7.8 The expedition screen
+
+- **Two stages:** the expedition map, where you pick a quest and set the party lineup, then the provisions shop. Embark moves through both into the dungeon; Escape goes back. (Blindest Dungeon accessibility mod README)
+- **The map** is a painted panorama of the estate: the ruined manor on its cliff, the Courtyard gate, the Ruins, the Weald, the Warrens, the Cove and the hamlet by the water. Quests are grouped by location. (wiki, Quest map locations image)
+- **Quests** show difficulty by colour: Apprentice green, Veteran orange, Champion red. Each objective and length has its own icon. Selecting a quest shows its goal, description and rewards. (wiki; Blindest Dungeon README)
+- **Party lineup:** 4 horizontal slots, **slot 1 on the far right**, matching the dungeon. Heroes are dragged in from the roster, which stays on the right, and can be picked up and dropped in another slot to rearrange. (Blindest Dungeon README; community)
+- **Skill position dots** (character sheet and skill tooltips): yellow dots mark where the hero must stand to use the skill, red dots whom it can hit, grey dots neither; joined red dots hit every enemy in those ranks. (wiki, Getting Started)
+- **Not confirmed:** the exact screen layout (where the quest panel and party slots sit) and the per-objective icon designs. I read it from memory of the game, not a source.
+
 ---
 
 ## 8. Economy
@@ -973,6 +982,8 @@ Keep this logic in a pure "estate core" with its own seeded RNG and an event str
 - Trinkets: https://darkestdungeon.wiki.gg/wiki/Trinkets_(Darkest_Dungeon)
 - Quirks: https://darkestdungeon.wiki.gg/wiki/Quirks_(Darkest_Dungeon)
 - Disease: https://darkestdungeon.wiki.gg/wiki/Disease_(Darkest_Dungeon)
+- Locations, with the Quest map locations image: https://darkestdungeon.wiki.gg/wiki/Locations_(Darkest_Dungeon)
+- Blindest Dungeon accessibility mod README (expedition screens): https://github.com/Vicorin/Blindest-Dungeon
 - Backer heroes (search excerpt only): https://darkestdungeon.wiki.gg/wiki/Backer_heroes
 
 ### Patch notes (Red Hook, mirrored on wiki.gg)

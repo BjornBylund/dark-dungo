@@ -35,10 +35,21 @@ func test_every_hero_can_act_from_every_rank() -> void:
 			assert_true(usable, "%s from rank %d" % [hero.display_name, rank])
 
 
+func test_regions_have_fights_a_finale_and_a_place_on_the_map() -> void:
+	var regions := _def().regions
+	assert_eq(regions.size(), 3)
+	for region in regions:
+		assert_true(region.encounters.size() >= 2, "%s encounters" % region.id)
+		assert_true(region.finales.size() >= 1, "%s finale" % region.id)
+		assert_true(region.map_position != Vector2.ZERO, "%s map position" % region.id)
+	assert_true(_def().expedition_background != null)
+
+
 func test_encounters_fit_in_four_ranks() -> void:
 	var groups: Array[EncounterDef] = []
-	groups.append_array(_def().encounters)
-	groups.append_array(_def().finales)
+	for region in _def().regions:
+		groups.append_array(region.encounters)
+		groups.append_array(region.finales)
 	assert_true(groups.size() >= 5)
 	for group in groups:
 		var ranks := 0
@@ -62,7 +73,8 @@ func test_random_parties_finish_apprentice_missions() -> void:
 			var pick := pool[campaign.rng.randi_range(0, pool.size() - 1)]
 			if pick not in party:
 				party.append(pick)
-		var mission := campaign._make_mission(CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM)
+		var region := campaign.def.regions[seed_value % campaign.def.regions.size()]
+		var mission := campaign._make_mission(CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM, region)
 		campaign.board.append(mission)
 		var run := campaign.embark(mission, party)
 		while run.has_next_fight():

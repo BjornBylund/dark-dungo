@@ -1,4 +1,4 @@
-## The campaign's content: the cast and the enemy groups missions draw from.
+## The campaign's content: the cast and the regions missions go to.
 class_name CampaignDef
 extends Resource
 
@@ -6,11 +6,11 @@ extends Resource
 @export var starting_heroes: Array[UnitDef] = []
 ## Heroes arriving at the Stagecoach, one per week from week 2, in this order.
 @export var arrivals: Array[UnitDef] = []
-## Enemy groups for every fight but a medium or long mission's last.
-@export var encounters: Array[EncounterDef] = []
-## Tougher groups that end medium and long missions.
-@export var finales: Array[EncounterDef] = []
+## Places on the expedition map, each with its own enemy groups.
+@export var regions: Array[RegionDef] = []
 ## Scene behind the fights.
 @export var battle_background: Texture2D
 ## The hamlet panorama for the town screen.
 @export var town_background: Texture2D
+## The map of the surroundings for choosing a mission.
+@export var expedition_background: Texture2D

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <!-- Placeholder expedition map: the land beyond the hamlet, one landmark per region.
+       Quest markers sit at each region's map_position (content/regions/*.tres):
+       Graveyard (700, 300), Burrows (1060, 360), Chapel (1390, 150). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e0b12"/>
+      <stop offset="0.4" stop-color="#281c2c"/>
+      <stop offset="0.62" stop-color="#4a2e2c"/>
+    </linearGradient>
+    <radialGradient id="sunset" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e07a3a" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#e07a3a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="green" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8ad04a" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#8ad04a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violet" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#b070e0" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#b070e0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cold" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#60c8d0" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#60c8d0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a201e"/>
+      <stop offset="1" stop-color="#070505"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="0.5" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.9"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="1400" cy="430" r="420" fill="url(#sunset)"/>
+
+  <!-- the manor on its cliff, far off -->
+  <path d="M1500 560 L1560 360 L1700 330 L1800 380 L1860 560 Z" fill="#1a1320"/>
+  <path d="M1600 350 L1600 250 L1625 225 L1650 250 L1650 345 Z M1690 340 L1690 280 L1720 250 L1745 278 L1745 350 Z" fill="#150f19"/>
+
+  <!-- rolling hills -->
+  <path d="M0 520 Q300 440 560 500 Q820 430 1080 500 Q1320 440 1560 510 Q1760 470 1920 520 L1920 760 L0 760 Z" fill="#211822"/>
+  <path d="M0 600 Q380 540 760 590 Q1140 540 1500 600 Q1720 570 1920 610 L1920 760 L0 760 Z" fill="#1b1419"/>
+
+  <!-- ground and the road out of the hamlet -->
+  <rect y="660" width="1920" height="420" fill="url(#ground)"/>
+  <path d="M760 1080 Q820 900 900 820 Q980 740 1060 640 Q1120 600 1180 590 L1210 600 Q1150 620 1100 660 Q1020 760 960 840 Q900 930 900 1080 Z" fill="#30261e"/>
+  <path d="M960 840 Q860 760 720 640 L700 650 Q820 770 930 860 Z" fill="#2c231c"/>
+  <path d="M1100 660 Q1240 560 1360 520 L1372 534 Q1260 580 1120 680 Z" fill="#2c231c"/>
+
+  <g stroke="#0b0809" stroke-width="5" stroke-linejoin="round">
+    <!-- The Graveyard: a crypt, headstones and crosses behind a broken fence -->
+    <path d="M600 600 L600 470 L680 420 L760 470 L760 600 Z" fill="#3a3a40"/>
+    <path d="M584 476 L680 410 L776 476" fill="none" stroke="#26262c" stroke-width="14"/>
+    <path d="M655 600 L655 520 Q680 494 705 520 L705 600 Z" fill="#141418"/>
+    <path d="M520 640 L520 590 Q540 570 560 590 L560 640 Z M790 640 L790 586 Q812 564 834 586 L834 640 Z M860 650 L860 604 Q878 588 896 604 L896 650 Z" fill="#4a4a50"/>
+    <path d="M576 650 L576 600 M562 614 L590 614 M820 668 L820 626 M808 638 L832 638" fill="none" stroke="#4a4a50" stroke-width="8"/>
+    <path d="M470 680 L940 680 M490 650 L490 700 M560 646 L560 700 M630 650 L630 700 M780 650 L780 700 M850 652 L850 700 M920 654 L920 700" fill="none" stroke="#1e1a1e" stroke-width="7"/>
+    <path d="M520 600 Q500 520 470 470 M498 530 Q470 520 450 500 M492 500 Q520 470 530 440" fill="none" stroke="#120e12" stroke-width="10"/>
+
+    <!-- The Burrows: a mound split by a cave mouth that glows sick green -->
+    <path d="M920 640 Q960 500 1060 470 Q1170 450 1220 560 Q1240 610 1250 640 Z" fill="#2e2a22"/>
+    <path d="M1010 640 Q1020 560 1066 540 Q1112 556 1122 640 Z" fill="#0e140a"/>
+    <path d="M960 600 Q990 580 1000 540 M1150 520 Q1180 540 1200 590 M1040 470 Q1060 440 1050 410" fill="none" stroke="#3a3326" stroke-width="8"/>
+    <path d="M940 640 Q930 620 944 600 M1236 640 Q1250 620 1240 596" fill="none" stroke="#1c1914" stroke-width="10"/>
+
+    <!-- The Chapel: a ruined church on the rise, its spire broken -->
+    <path d="M1250 560 Q1330 470 1400 470 Q1480 470 1540 560 Z" fill="#241c26"/>
+    <path d="M1300 500 L1300 380 L1390 320 L1480 380 L1480 500 Z" fill="#35303a"/>
+    <path d="M1360 330 L1372 230 L1392 210 L1400 260 L1418 330 Z" fill="#2a2530"/>
+    <path d="M1440 380 L1462 360 L1470 392 L1452 400 Z" fill="#1a1620"/>
+    <circle cx="1390" cy="420" r="26" fill="#c08ae8" opacity="0.85"/>
+    <path d="M1390 394 L1390 446 M1364 420 L1416 420" fill="none" stroke="#35303a" stroke-width="5"/>
+    <path d="M1372 500 L1372 462 Q1390 446 1408 462 L1408 500 Z" fill="#141018"/>
+  </g>
+
+  <!-- region glows -->
+  <circle cx="680" cy="560" r="110" fill="url(#cold)" opacity="0.6"/>
+  <circle cx="1066" cy="600" r="120" fill="url(#green)"/>
+  <circle cx="1390" cy="420" r="110" fill="url(#violet)"/>
+
+  <!-- dead trees framing the view -->
+  <g fill="none" stroke="#060405" stroke-linecap="round">
+    <path d="M150 1080 Q170 760 120 520 Q100 380 40 250" stroke-width="46"/>
+    <path d="M130 600 Q240 520 330 360 Q360 300 420 250 M140 460 Q60 400 0 380 M300 410 Q360 380 420 400 M110 380 Q160 260 140 120" stroke-width="18"/>
+    <path d="M1790 1080 Q1760 780 1810 560 Q1840 420 1900 300" stroke-width="44"/>
+    <path d="M1800 620 Q1700 540 1620 420 Q1590 370 1540 330 M1830 480 Q1890 430 1920 420 M1650 460 Q1600 430 1550 440" stroke-width="16"/>
+  </g>
+
+  <!-- foreground -->
+  <g fill="#050304">
+    <path d="M0 1080 L0 880 Q80 850 130 900 Q190 840 250 900 Q320 860 380 920 L440 1080 Z"/>
+    <path d="M1920 1080 L1920 860 Q1840 840 1800 890 Q1740 840 1680 900 Q1620 870 1560 930 L1500 1080 Z"/>
+  </g>
+  <rect width="1920" height="1080" fill="url(#vignette)"/>
+</svg>

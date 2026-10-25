@@ -50,7 +50,6 @@ condition_token = &"strength"
 script = ExtResource("1_iwlvb")
 id = &"brute"
 display_name = "Brute"
-role = "Large, big hits"
 color = Color(0.41960785, 0.2901961, 0.22745098, 1)
 size = 2
 max_hp = 75

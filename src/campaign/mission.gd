@@ -1,7 +1,10 @@
-## A mission on the board: a chain of fights at one difficulty tier, with its rewards.
+## A mission on the board: a chain of fights in one region at one difficulty
+## tier, with its rewards.
 class_name Mission
 extends RefCounted
 
+## Null only for missions from saves made before regions.
+var region: RegionDef
 var tier: CampaignRules.Tier
 var length: CampaignRules.Length
 ## Heirloom type paid on completion.
@@ -45,13 +48,15 @@ func heirloom_amount() -> int:
 
 func to_dict() -> Dictionary:
 	return {
-		tier = tier, length = length, heirloom = heirloom,
+		region = region.resource_path if region else "", tier = tier, length = length, heirloom = heirloom,
 		encounters = encounters.map(func(e: EncounterDef) -> String: return e.resource_path),
 	}
 
 
 static func from_dict(data: Dictionary) -> Mission:
 	var mission := Mission.new()
+	if data.get("region", "") != "":
+		mission.region = load(data.region)
 	mission.tier = int(data.tier) as CampaignRules.Tier
 	mission.length = int(data.length) as CampaignRules.Length
 	mission.heirloom = StringName(data.heirloom)

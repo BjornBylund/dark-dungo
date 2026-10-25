@@ -1,6 +1,7 @@
 ## The hamlet, DD1-style: click a building to open its window, the roster runs
 ## down the right, and the week, gold and heirlooms sit along the top. Every
-## action goes through Game.campaign and is saved straight away.
+## action goes through Game.campaign and is saved straight away. Embark (or the
+## mission board) opens the expedition map.
 ## Authored for 1920x1080 on a centred stage, like the combat screen.
 extends Control
 
@@ -11,15 +12,13 @@ const BUILDINGS := [
 	[&"blacksmith", "Blacksmith", Rect2(390, 420, 300, 300)],
 	[&"guild", "Guild", Rect2(720, 320, 280, 410)],
 	[&"abbey", "Abbey", Rect2(1040, 260, 260, 480)],
-	[&"board", "Mission Board", Rect2(1330, 560, 240, 250)],
+	[&"board", "Embark", Rect2(1330, 560, 240, 250)],
 ]
 const ABBEY_UPGRADES := ["More stress relief", "Prices -15%", "A second slot per activity",
 		"More stress relief", "Prices -15% more", "A third slot per activity"]
 
 var _stage: Control
-var _week_label: Label
-var _gold_label: Label
-var _heirloom_labels: Dictionary[StringName, Label] = {}
+var _bar: EstateBar
 var _roster: VBoxContainer
 var _hover_label: Label
 var _window: PanelContainer
@@ -28,10 +27,8 @@ var _window_message: Label
 var _window_body: VBoxContainer
 ## Rebuilds whichever window is open, after an action changes the campaign.
 var _rebuild_window: Callable
-## The hero picked in a building window, the mission picked on the board, and the party.
+## The hero picked in a building window.
 var _selected: HeroRecord
-var _mission: Mission
-var _party: Array[HeroRecord] = []
 
 
 func _ready() -> void:
@@ -95,10 +92,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh() -> void:
 	var campaign := _campaign()
-	_week_label.text = "Week %d" % campaign.week
-	_gold_label.text = _gold(campaign.gold)
-	for heirloom in CampaignRules.HEIRLOOMS:
-		_heirloom_labels[heirloom].text = str(campaign.heirlooms[heirloom])
+	_bar.refresh(campaign)
 	for child in _roster.get_children():
 		child.queue_free()
 	for hero in campaign.roster():
@@ -160,9 +154,7 @@ func _open_building(id: StringName) -> void:
 		&"abbey":
 			_open("Abbey", _build_abbey)
 		&"board":
-			_mission = null
-			_party.clear()
-			_open("Mission Board", _build_board)
+			Game.go_to_expedition()
 
 
 func _open_hero(hero: HeroRecord) -> void:
@@ -240,7 +232,7 @@ func _build_guild() -> void:
 			var cost := campaign.skill_cost(hero, skill)
 			var reason := campaign.can_upgrade_skill(hero, skill)
 			if cost > 0:
-				var button := _action("Train  %s gold" % _gold(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
+				var button := _action("Train  %s gold" % UiStyle.gold_text(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
 				button.disabled = reason != ""
 				button.tooltip_text = reason
 				row.add_child(button)
@@ -271,7 +263,7 @@ func _build_abbey() -> void:
 				_after("")))
 		if _selected:
 			var hero := _selected
-			var button := _action("Send %s  %s gold" % [hero.display_name, _gold(campaign.abbey_price(hero, activity))],
+			var button := _action("Send %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.abbey_price(hero, activity))],
 					func() -> void: _after(campaign.send_to_abbey(hero, activity)))
 			var reason := campaign.can_send_to_abbey(hero, activity)
 			button.disabled = reason != ""
@@ -283,85 +275,11 @@ func _build_abbey() -> void:
 		_section("Wounded")
 		_text("Wounded heroes sit out this week, or can be treated now.", 16, UiStyle.TEXT_DIM)
 		for hero: HeroRecord in wounded:
-			_window_body.add_child(_action("Treat %s  %s gold" % [hero.display_name, _gold(campaign.treatment_price(hero))],
+			_window_body.add_child(_action("Treat %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.treatment_price(hero))],
 					func() -> void: _after(campaign.treat(hero))))
 	var level := campaign.buildings[&"abbey"]
 	_section("Abbey")
 	_upgrade_row(&"abbey", ABBEY_UPGRADES[level] if level < ABBEY_UPGRADES.size() else "")
-
-
-func _build_board() -> void:
-	var campaign := _campaign()
-	var columns := _columns()
-	var left: VBoxContainer = columns[0]
-	left.add_child(_label("Missions this week", 22, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-	for mission in campaign.board:
-		var groups := ", ".join(mission.encounters.map(func(e: EncounterDef) -> String: return e.display_name))
-		var card := _action("%s, %d fights\n%s\n%s gold, %d %s, %d XP" % [mission.title(), mission.fights(), groups,
-				_gold(mission.gold()), mission.heirloom_amount(), CampaignRules.HEIRLOOM_NAMES[mission.heirloom],
-				mission.xp()], func() -> void:
-			_mission = mission
-			_after(""))
-		card.toggle_mode = true
-		card.button_pressed = mission == _mission
-		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		card.custom_minimum_size = Vector2(440, 0)
-		card.size_flags_horizontal = Control.SIZE_FILL
-		left.add_child(card)
-	if campaign.can_wait() == "":
-		left.add_child(_label("Nobody is fit to go. Treat the wounded at the Abbey, or let the week pass.", 16,
-				UiStyle.TEXT_DIM))
-		left.add_child(_action("Wait out the week", func() -> void: _after(campaign.wait_week())))
-	var right: VBoxContainer = columns[1]
-	if _mission == null:
-		right.add_child(_label("Choose a mission.", 18, UiStyle.TEXT_DIM))
-		return
-	right.add_child(_label("Party (rank 1 first): " + (", ".join(_party.map(
-			func(h: HeroRecord) -> String: return h.display_name)) if not _party.is_empty() else "nobody yet"), 18))
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 8)
-	right.add_child(grid)
-	for hero in campaign.roster():
-		var tag := _eligibility_tag(hero, _mission)
-		var blocked := campaign.eligibility(hero, _mission) not in [Campaign.Eligibility.OK, Campaign.Eligibility.UNDERLEVELED]
-		var badge := HeroBadge.new()
-		badge.setup(hero, tag[0], tag[1], blocked)
-		badge.button_pressed = hero in _party
-		badge.disabled = blocked
-		badge.pressed.connect(func() -> void:
-			if hero in _party:
-				_party.erase(hero)
-			elif _party.size() < 4:
-				_party.append(hero)
-			_after(""))
-		grid.add_child(badge)
-	var reason := campaign.can_embark(_mission, _party)
-	var embark := _action("Embark", func() -> void:
-		if campaign.embark(_mission, _party):
-			Game.save()
-			Game.go_to_battle())
-	embark.custom_minimum_size = Vector2(220, 52)
-	embark.add_theme_font_size_override("font_size", 22)
-	embark.disabled = reason != ""
-	right.add_child(embark)
-	if reason != "":
-		right.add_child(_label(reason, 16, UiStyle.TEXT_DIM))
-
-
-func _eligibility_tag(hero: HeroRecord, mission: Mission) -> Array:
-	match _campaign().eligibility(hero, mission):
-		Campaign.Eligibility.WOUNDED:
-			return ["WOUNDED", UiStyle.DAMAGE]
-		Campaign.Eligibility.BUSY:
-			return ["AT THE ABBEY", UiStyle.GOLD]
-		Campaign.Eligibility.WILL_NOT_GO:
-			return ["WILL NOT GO", UiStyle.GREY]
-		Campaign.Eligibility.UNDERLEVELED:
-			return ["+%d STRESS" % (_campaign().levels_short(hero, mission) * CampaignRules.UNDERLEVEL_STRESS),
-					UiStyle.STRESS_TEXT]
-	return ["", UiStyle.GREY]
 
 
 func _build_hero_sheet() -> void:
@@ -378,7 +296,7 @@ func _build_hero_sheet() -> void:
 	row.add_child(info)
 	var level := hero.level()
 	var next_xp := "max level" if level >= CampaignRules.MAX_LEVEL else "%d / %d XP" % [hero.xp, CampaignRules.LEVEL_XP[level]]
-	info.add_child(_label("%s, level %d   (%s)" % [hero.def.role, level, next_xp], 20, UiStyle.TEXT_DIM))
+	info.add_child(_label("Level %d   (%s)" % [level, next_xp], 20, UiStyle.TEXT_DIM))
 	var status: String = _status(hero)[0]
 	info.add_child(_label("Stress %d / %d%s" % [hero.stress, Rules.STRESS_MAX, "   " + status if status != "" else ""], 20))
 	info.add_child(_label("Max HP %d   Speed %d" % [hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank),
@@ -454,7 +372,7 @@ func _rank_button(parent: VBoxContainer, rank: int, cost: int, reason: String, n
 		return
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	var button := _action("Rank %d  %s gold" % [rank + 1, _gold(cost)], action)
+	var button := _action("Rank %d  %s gold" % [rank + 1, UiStyle.gold_text(cost)], action)
 	button.disabled = reason != ""
 	row.add_child(button)
 	row.add_child(_label(reason if reason != "" else next_text, 16, UiStyle.TEXT_DIM))
@@ -489,15 +407,6 @@ func _cost_text(cost: Dictionary) -> String:
 	for heirloom: StringName in cost:
 		parts.append("%d %s" % [cost[heirloom], CampaignRules.HEIRLOOM_NAMES[heirloom]])
 	return ", ".join(parts)
-
-
-func _gold(amount: int) -> String:
-	var digits := str(absi(amount))
-	var grouped := ""
-	while digits.length() > 3:
-		grouped = "," + digits.right(3) + grouped
-		digits = digits.left(digits.length() - 3)
-	return ("-" if amount < 0 else "") + digits + grouped
 
 
 func _label(text: String, font_size: int, color: Color = UiStyle.TEXT, font: Font = null) -> Label:
@@ -559,43 +468,21 @@ func _build() -> void:
 	_hover_label.hide()
 	_stage.add_child(_hover_label)
 
-	# Top band: week, gold and heirlooms, and a way back to the menu.
-	var band := ColorRect.new()
-	band.color = Color(0, 0, 0, 0.75)
-	band.size = Vector2(STAGE_SIZE.x, 64)
-	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stage.add_child(band)
-	var top := HBoxContainer.new()
-	top.position = Vector2(28, 8)
-	top.size = Vector2(STAGE_SIZE.x - 56, 48)
-	top.add_theme_constant_override("separation", 18)
-	_stage.add_child(top)
-	_week_label = _label("", 34, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
-	top.add_child(_week_label)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(spacer)
-	top.add_child(_label("Gold", 18, UiStyle.TEXT_DIM))
-	_gold_label = _label("", 26, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
-	top.add_child(_gold_label)
-	for heirloom in CampaignRules.HEIRLOOMS:
-		var icon := TextureRect.new()
-		icon.texture = load("res://art/heirlooms/%s.svg" % heirloom)
-		icon.custom_minimum_size = Vector2(34, 34)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = CampaignRules.HEIRLOOM_NAMES[heirloom]
-		top.add_child(icon)
-		var count := _label("0", 24, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
-		_heirloom_labels[heirloom] = count
-		top.add_child(count)
+	# Top band: week, gold and heirlooms, Embark, and a way back to the menu.
+	_bar = EstateBar.new()
+	_stage.add_child(_bar)
+	var embark := _action("Embark", Game.go_to_expedition)
+	embark.custom_minimum_size = Vector2(150, 44)
+	embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
+	embark.add_theme_font_size_override("font_size", 26)
+	_bar.add_button(embark)
 	var menu := Button.new()
 	menu.text = "Save and quit"
 	menu.focus_mode = Control.FOCUS_NONE
 	menu.pressed.connect(func() -> void:
 		Game.save()
 		Game.go_to_menu())
-	top.add_child(menu)
+	_bar.add_button(menu)
 
 	# Roster down the right.
 	var roster_panel := PanelContainer.new()

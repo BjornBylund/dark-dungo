@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="1_encounter"]
+[ext_resource type="Resource" path="res://content/encounters/coven.tres" id="2_coven"]
+[ext_resource type="Resource" path="res://content/encounters/acolytes.tres" id="3_acolytes"]
+[ext_resource type="Resource" path="res://content/encounters/wave_3.tres" id="4_the_brute"]
+[ext_resource type="Script" path="res://src/core/defs/region_def.gd" id="5_region"]
+
+[resource]
+script = ExtResource("5_region")
+id = &"chapel"
+display_name = "The Chapel"
+encounters = Array[ExtResource("1_encounter")]([ExtResource("2_coven"), ExtResource("3_acolytes")])
+finales = Array[ExtResource("1_encounter")]([ExtResource("4_the_brute")])
+map_position = Vector2(1390, 150)

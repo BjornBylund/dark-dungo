@@ -100,7 +100,6 @@ effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_utgjx"), SubResou
 script = ExtResource("1_a1ut3")
 id = &"cutthroat"
 display_name = "Cutthroat"
-role = "Bleed and Combo skirmisher"
 color = Color(0.47843137, 0.23137255, 0.23137255, 1)
 max_hp = 32
 speed = 6

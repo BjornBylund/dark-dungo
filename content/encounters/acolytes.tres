@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_unit"]
+[ext_resource type="Resource" path="res://content/enemies/ghoul.tres" id="2_ghoul"]
+[ext_resource type="Resource" path="res://content/enemies/cultist.tres" id="3_cultist"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="4_encounter"]
+
+[resource]
+script = ExtResource("4_encounter")
+display_name = "Acolytes"
+enemies = Array[ExtResource("1_unit")]([ExtResource("2_ghoul"), ExtResource("2_ghoul"), ExtResource("3_cultist"), ExtResource("3_cultist")])

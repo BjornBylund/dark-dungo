@@ -112,7 +112,6 @@ uses_per_battle = 1
 script = ExtResource("3_tf0sh")
 id = &"warden"
 display_name = "Warden"
-role = "Bodyguard"
 color = Color(0.30980393, 0.41568628, 0.50980395, 1)
 max_hp = 38
 corpse_hp = 20

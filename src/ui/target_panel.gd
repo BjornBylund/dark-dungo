@@ -33,8 +33,8 @@ func _draw() -> void:
 	var body := UiStyle.BODY_FONT
 	var name_color := UiStyle.GOLD if unit.is_hero else UiStyle.BLUE.lightened(0.15)
 	draw_string(display, Vector2(0, 40), unit.display_name, HORIZONTAL_ALIGNMENT_RIGHT, right, 32, name_color)
-	var kind := "Corpse" if unit.is_corpse else unit.def.role
-	draw_string(body, Vector2(0, 66), kind, HORIZONTAL_ALIGNMENT_RIGHT, right, 17, UiStyle.GREY)
+	if unit.is_corpse:
+		draw_string(body, Vector2(0, 66), "Corpse", HORIZONTAL_ALIGNMENT_RIGHT, right, 17, UiStyle.GREY)
 
 	var max_hp := unit.def.corpse_hp if unit.is_corpse else unit.max_hp
 	var bar := Rect2(right - 160.0, 84.0, 160.0, 8.0)

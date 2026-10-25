@@ -80,7 +80,6 @@ self_move = -1
 script = ExtResource("1_gw7sh")
 id = &"marksman"
 display_name = "Marksman"
-role = "Back-row ranged"
 color = Color(0.24705882, 0.41960785, 0.2901961, 1)
 max_hp = 30
 speed = 4

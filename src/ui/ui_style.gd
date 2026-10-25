@@ -163,6 +163,16 @@ static func percent(value: float) -> String:
 	return "%d%%" % roundi(value * 100.0)
 
 
+## Gold with thousands separators: 12,500.
+static func gold_text(amount: int) -> String:
+	var digits := str(absi(amount))
+	var grouped := ""
+	while digits.length() > 3:
+		grouped = "," + digits.right(3) + grouped
+		digits = digits.left(digits.length() - 3)
+	return ("-" if amount < 0 else "") + digits + grouped
+
+
 ## Draws a texture clipped to a diamond (or any convex polygon) inside `rect`.
 static func draw_clipped(canvas: CanvasItem, texture: Texture2D, points: PackedVector2Array, rect: Rect2,
 		source: Rect2, flip: bool = false, modulate: Color = Color.WHITE) -> void:
@@ -283,7 +293,7 @@ static func skill_bbcode(skill: SkillDef) -> String:
 ## Multi-line stat sheet for a unit tooltip.
 static func describe_unit(unit: Combatant) -> String:
 	var lines: Array[String] = []
-	lines.append("%s - %s" % [unit.display_name, unit.def.role])
+	lines.append(unit.display_name)
 	if unit.is_corpse:
 		lines.append("Corpse: %d HP, decays in %d rounds" % [unit.hp, unit.corpse_rounds])
 		return "\n".join(lines)

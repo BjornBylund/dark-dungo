@@ -15,7 +15,8 @@ godot --path .
 
 The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight.
 
-- **Town:** click a building to open it (Stagecoach, Blacksmith, Guild, Abbey, Mission Board), or a hero in the roster for their sheet. `Esc` closes a window.
+- **Town:** click a building to open it (Stagecoach, Blacksmith, Guild, Abbey), or a hero in the roster for their sheet. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
+- **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
 - **Combat:** click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for its stats.
 
 Launch options go after `--`:
@@ -71,12 +72,14 @@ Other art, all replaceable:
 - **Token and status icons:** `art/tokens/<token>.svg`, e.g. `block.svg` or `bleed.svg`. Replace a file to change its icon.
 - **Battle backgrounds:** **Battle Background** in `content/campaign.tres` and **Background** in `content/sandbox.tres`, 1920×1080 with the ground line at y ≈ 680.
 - **Town:** **Town Background** in `content/campaign.tres` (`art/backgrounds/hamlet.svg`). The clickable building areas are the `BUILDINGS` rectangles at the top of `src/ui/town_screen.gd`; move them if the buildings move.
+- **Expedition map:** **Expedition Background** in `content/campaign.tres` (`art/backgrounds/expedition_map.svg`). Each region's quest markers sit at its **Map Position** in `content/regions/`; move them if the landmarks move.
 - **Heirlooms:** `art/heirlooms/<bust|portrait|deed|crest>.svg`.
 
 ## Add content
 
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Arrivals** (one arrives per week, in order).
-- **Enemy groups:** `content/encounters/`. Missions draw their fights from the campaign's **Encounters**; medium and long missions end with one of its **Finales**.
+- **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. Each region offers two missions a week.
+- **Enemy groups:** `content/encounters/`. A mission draws its fights from its region's **Encounters**; medium and long missions end with one of the region's **Finales**.
 - **Campaign numbers** (rewards, prices, XP, upgrade costs) are constants in `src/campaign/campaign_rules.gd`.
 
 ## Test it
@@ -95,8 +98,8 @@ Runs every `tests/test_*.gd` headless, including simulated sandbox runs and camp
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `SandboxDef`, `CampaignDef` |
 | `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd` and `mission_run.gd` (a chain of fights), `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
-| `src/ui/` | Title, town and combat screens |
-| `content/` | Heroes, enemies, encounters, the campaign and the sandbox as `.tres` files |
+| `src/ui/` | Title, town, expedition and combat screens |
+| `content/` | Heroes, enemies, encounters, regions, the campaign and the sandbox as `.tres` files |
 | `art/` | Unit sprites, skill and token icons, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |

@@ -6,16 +6,11 @@
 [ext_resource type="Resource" path="res://content/heroes/minstrel.tres" id="4_ebf00"]
 [ext_resource type="Resource" path="res://content/heroes/penitent.tres" id="5_dpfic"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/ruined_road.svg" id="6_17eji"]
-[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="7_r1g03"]
-[ext_resource type="Resource" path="res://content/encounters/wave_1.tres" id="8_o0wxw"]
-[ext_resource type="Resource" path="res://content/encounters/wave_2.tres" id="9_quwf6"]
-[ext_resource type="Resource" path="res://content/encounters/graveyard_watch.tres" id="10_ildsm"]
-[ext_resource type="Resource" path="res://content/encounters/rot_nest.tres" id="11_3iccj"]
-[ext_resource type="Resource" path="res://content/encounters/hungry_dead.tres" id="12_0rwix"]
-[ext_resource type="Resource" path="res://content/encounters/coven.tres" id="13_8qppy"]
-[ext_resource type="Resource" path="res://content/encounters/skirmish.tres" id="14_1a6f0"]
-[ext_resource type="Resource" path="res://content/encounters/wave_3.tres" id="15_p5bjc"]
-[ext_resource type="Resource" path="res://content/encounters/brute_and_bones.tres" id="16_0i4br"]
+[ext_resource type="Script" path="res://src/core/defs/region_def.gd" id="7_region"]
+[ext_resource type="Resource" path="res://content/regions/graveyard.tres" id="8_graveyard"]
+[ext_resource type="Resource" path="res://content/regions/burrows.tres" id="9_burrows"]
+[ext_resource type="Resource" path="res://content/regions/chapel.tres" id="10_chapel"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/expedition_map.svg" id="11_map"]
 [ext_resource type="Script" path="res://src/core/defs/campaign_def.gd" id="17_30rl4"]
 [ext_resource type="Resource" path="res://content/heroes/vanguard.tres" id="18_3gi35"]
 [ext_resource type="Resource" path="res://content/heroes/cutthroat.tres" id="19_rqh1u"]
@@ -27,7 +22,7 @@
 script = ExtResource("17_30rl4")
 starting_heroes = Array[ExtResource("1_rwgop")]([ExtResource("18_3gi35"), ExtResource("19_rqh1u"), ExtResource("20_q6xh7"), ExtResource("21_ahiah")])
 arrivals = Array[ExtResource("1_rwgop")]([ExtResource("2_vuitf"), ExtResource("3_5fm3x"), ExtResource("4_ebf00"), ExtResource("5_dpfic")])
-encounters = Array[ExtResource("7_r1g03")]([ExtResource("8_o0wxw"), ExtResource("9_quwf6"), ExtResource("10_ildsm"), ExtResource("11_3iccj"), ExtResource("12_0rwix"), ExtResource("13_8qppy"), ExtResource("14_1a6f0")])
-finales = Array[ExtResource("7_r1g03")]([ExtResource("15_p5bjc"), ExtResource("16_0i4br")])
+regions = Array[ExtResource("7_region")]([ExtResource("8_graveyard"), ExtResource("9_burrows"), ExtResource("10_chapel")])
 battle_background = ExtResource("6_17eji")
 town_background = ExtResource("22_vuitf")
+expedition_background = ExtResource("11_map")

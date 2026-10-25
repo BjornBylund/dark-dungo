@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RegionDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="1_encounter"]
+[ext_resource type="Resource" path="res://content/encounters/graveyard_watch.tres" id="2_watch"]
+[ext_resource type="Resource" path="res://content/encounters/wave_2.tres" id="3_bone_line"]
+[ext_resource type="Resource" path="res://content/encounters/skirmish.tres" id="4_skirmish"]
+[ext_resource type="Resource" path="res://content/encounters/brute_and_bones.tres" id="5_brute_and_bones"]
+[ext_resource type="Script" path="res://src/core/defs/region_def.gd" id="6_region"]
+
+[resource]
+script = ExtResource("6_region")
+id = &"graveyard"
+display_name = "The Graveyard"
+encounters = Array[ExtResource("1_encounter")]([ExtResource("2_watch"), ExtResource("3_bone_line"), ExtResource("4_skirmish")])
+finales = Array[ExtResource("1_encounter")]([ExtResource("5_brute_and_bones")])
+map_position = Vector2(700, 300)

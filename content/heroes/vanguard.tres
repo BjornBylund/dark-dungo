@@ -84,7 +84,6 @@ uses_per_battle = 1
 script = ExtResource("1_h4n3i")
 id = &"vanguard"
 display_name = "Vanguard"
-role = "Front-line tank"
 color = Color(0.5411765, 0.56078434, 0.6, 1)
 max_hp = 40
 speed = 2

@@ -39,7 +39,6 @@ self_move = -1
 script = ExtResource("1_tkdb7")
 id = &"spitter"
 display_name = "Spitter"
-role = "Blight"
 color = Color(0.43529412, 0.49803922, 0.16470589, 1)
 max_hp = 15
 speed = 6

@@ -45,7 +45,6 @@ condition_token = &"riposte"
 script = ExtResource("3_eka7n")
 id = &"bone_spearman"
 display_name = "Bone Spearman"
-role = "Melee, blocks"
 color = Color(0.72156864, 0.6901961, 0.6039216, 1)
 max_hp = 24
 speed = 4

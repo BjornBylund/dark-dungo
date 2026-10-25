@@ -30,7 +30,6 @@ effects = Array[ExtResource("3_v7daq")]([SubResource("Resource_oec5t")])
 script = ExtResource("1_a33lh")
 id = &"cultist"
 display_name = "Cultist"
-role = "Stress and debuffs"
 color = Color(0.29411766, 0.22745098, 0.41960785, 1)
 max_hp = 18
 speed = 5

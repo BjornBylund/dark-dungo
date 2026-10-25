@@ -86,7 +86,6 @@ effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_hrv8o"), SubResou
 script = ExtResource("1_k35l2")
 id = &"mender"
 display_name = "Mender"
-role = "Healer and support"
 color = Color(0.7882353, 0.7176471, 0.47843137, 1)
 max_hp = 28
 corpse_hp = 14

@@ -8,9 +8,21 @@ func _def(arrivals: Array = []) -> CampaignDef:
 	for id: String in HEROES:
 		def.starting_heroes.append(load("res://content/heroes/%s.tres" % id))
 	def.arrivals.assign(arrivals)
-	def.encounters.assign([load("res://content/encounters/wave_1.tres"), load("res://content/encounters/wave_2.tres")])
-	def.finales.assign([load("res://content/encounters/wave_3.tres")])
+	def.regions.assign([
+		_region(&"first", ["wave_1", "wave_2"], ["wave_3"]),
+		_region(&"second", ["graveyard_watch", "rot_nest"], ["brute_and_bones"]),
+	])
 	return def
+
+
+func _region(id: StringName, encounters: Array, finales: Array) -> RegionDef:
+	var region := RegionDef.new()
+	region.id = id
+	for name: String in encounters:
+		region.encounters.append(load("res://content/encounters/%s.tres" % name))
+	for name: String in finales:
+		region.finales.append(load("res://content/encounters/%s.tres" % name))
+	return region
 
 
 func _campaign(seed_value: int = 1, arrivals: Array = []) -> Campaign:
@@ -66,10 +78,33 @@ func test_new_campaign_starts_with_four_heroes_and_three_missions() -> void:
 	assert_eq(campaign.week, 1)
 	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD)
 	assert_eq(campaign.roster().size(), 4)
-	assert_eq(campaign.board.size(), CampaignRules.MISSIONS_PER_WEEK)
+	assert_eq(campaign.board.size(), 2 * CampaignRules.MISSIONS_PER_REGION)
 	for mission in campaign.board:
 		assert_eq(mission.tier, CampaignRules.Tier.APPRENTICE)
 		assert_eq(mission.fights(), CampaignRules.FIGHTS[mission.length])
+
+
+func test_the_board_has_two_missions_per_region_at_both_ends_of_the_tiers() -> void:
+	for seed_value in 30:
+		var campaign := _campaign(seed_value)
+		campaign.roster()[0].xp = CampaignRules.LEVEL_XP[3]
+		campaign._refresh_board()
+		for region in campaign.def.regions:
+			assert_eq(campaign.board.filter(func(m: Mission) -> bool: return m.region == region).size(),
+					CampaignRules.MISSIONS_PER_REGION, "seed %d" % seed_value)
+		var tiers := campaign.board.map(func(m: Mission) -> int: return m.tier)
+		assert_true(CampaignRules.Tier.CHAMPION in tiers, "seed %d has a Champion mission" % seed_value)
+		assert_true(CampaignRules.Tier.APPRENTICE in tiers, "seed %d has an Apprentice mission" % seed_value)
+
+
+func test_missions_fight_their_regions_enemies() -> void:
+	var campaign := _campaign()
+	for i in 20:
+		campaign._refresh_board()
+		for mission in campaign.board:
+			for fight in mission.encounters:
+				assert_true(fight in mission.region.encounters or fight in mission.region.finales,
+						"%s in %s" % [fight.display_name, mission.region.id])
 
 
 func test_levels_follow_the_dd1_xp_table() -> void:
@@ -306,6 +341,29 @@ func test_save_and_load_round_trip() -> void:
 	assert_eq(loaded.run.fight_index, 1)
 	assert_eq(loaded.run.combatants[0].hp, run.combatants[0].hp)
 	assert_eq(loaded.rng.randi(), campaign.rng.randi(), "random sequence continues identically")
+
+
+func test_saves_keep_each_missions_region() -> void:
+	var campaign := Campaign.create(load("res://content/campaign.tres"), 4)
+	var loaded := Campaign.from_dict(JSON.parse_string(JSON.stringify(campaign.to_dict())), campaign.def)
+	assert_eq(loaded.board.size(), campaign.board.size())
+	for i in campaign.board.size():
+		assert_true(loaded.board[i].region != null)
+		assert_eq(loaded.board[i].region, campaign.board[i].region)
+
+
+func test_saves_from_before_regions_get_a_fresh_board() -> void:
+	var campaign := _campaign(6)
+	campaign.gold = 777
+	var data: Dictionary = JSON.parse_string(JSON.stringify(campaign.to_dict()))
+	data.version = 1
+	for mission: Dictionary in data.board:
+		mission.erase("region")
+	var loaded := Campaign.from_dict(data, campaign.def)
+	assert_eq(loaded.gold, 777)
+	assert_eq(loaded.board.size(), campaign.board.size())
+	for mission in loaded.board:
+		assert_true(mission.region != null)
 
 
 func test_hero_growth_reaches_the_combatant() -> void:

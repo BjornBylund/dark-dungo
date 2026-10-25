@@ -224,7 +224,8 @@ func _start_fight() -> void:
 		_units[unit.uid] = unit
 	_rebuild_views()
 	var encounter := mission.encounters[_mission_run.fight_index]
-	_wave_label.text = "Week %d   %s   Fight %d/%d" % [Game.campaign.week, mission.title(),
+	var place := mission.region.display_name + "   " if mission.region else ""
+	_wave_label.text = "Week %d   %s%s   Fight %d/%d" % [Game.campaign.week, place, mission.title(),
 			_mission_run.fight_index + 1, mission.fights()]
 	_round_label.text = ""
 	_queue.show_units([])

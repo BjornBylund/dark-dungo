@@ -60,8 +60,9 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 ### Weeks and missions
 
 - **One mission is one week.** The week advances when the party returns, whether it won, retreated or wiped. Then: Abbey and wound treatments finish, idle heroes lose stress, a new hero may arrive, and the mission board refreshes.
-- **Mission board:** 3 missions per week, each with a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short 2 fights, medium 3, long 4). Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
-- **A mission is a chain of fights** drawn from a pool of enemy groups. Between fights you choose **Continue** or **Retreat**. HP, stress and Death's Door carry from fight to fight; the DD2 end-of-battle heal (up to 20% HP) still applies.
+- **Regions**, like DD1's Ruins, Weald, Warrens and Cove: three placeholder places, each with its own enemy groups and finale. **The Graveyard** has skeletons and cultists, **the Burrows** ghouls and spitters, and **the Chapel** cultists and the Brute (`content/regions/`).
+- **Missions:** 2 per region each week, so 6 to choose from, each with a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short 2 fights, medium 3, long 4). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
+- **A mission is a chain of fights** drawn from its region's enemy groups, ending with the region's finale on medium and long missions. Its goal is to win every fight; DD1's other quest goals (Explore, Gather, Activate, Boss) wait for a dungeon map. Between fights you choose **Continue** or **Retreat**. HP, stress and Death's Door carry from fight to fight; the DD2 end-of-battle heal (up to 20% HP) still applies.
 - **Party selection:** up to 4 heroes, rank 1 first in the order picked. Heroes who are Wounded or busy at the Abbey can't go. Heroes at least 2 levels above the mission level refuse it ("will not go"). Heroes more than one level below it start the mission with +2 stress per level short: level 0 is fine for Apprentice, level 2 for Veteran, level 4 for Champion.
 - **Nobody fit to go:** when every hero is Wounded or at the Abbey and nobody waits at the Stagecoach, the board offers **Wait out the week**, which ends the week without a mission. It keeps a wiped party that can't afford treatment from locking the campaign; DD1 never needs it because its Stagecoach always has recruits.
 - **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +50% HP and damage and +5% crit.
@@ -121,7 +122,9 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 
 ### Town screen and saving
 
-- DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms.
+- DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms, and **Embark**.
+- **Expedition screen**, DD1's quest map: Embark (or the noticeboard) opens a full-screen placeholder map of the land beyond the hamlet with one landmark per region. Each region's quests sit by its landmark as shields framed in the tier's colour (Apprentice green, Veteran orange, Champion red), with the mission level inside and one pip per length step. The chosen quest's region, title, level, goal and rewards show top left, the roster runs down the right, and the lineup and Embark button sit along the bottom. Embark goes straight to the first fight; DD1's provisioning shop is skipped because there are no supplies. Esc goes back to town.
+- **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
 - One autosave slot, written after every town action and every fight (`user://`, which is browser storage on the web build).
 - A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town hires arrivals, treats the wounded, and embarks on its own, and the fights play themselves.
 
@@ -258,7 +261,7 @@ To decide when we design it:
 ## Open / deferred
 
 - **Theme and setting**, and with it all names.
-- Town features after v1, roughly in DD1's priority: Abbey and Tavern side effects with quirks and the Sanitarium; trinkets and the Nomad Wagon; diseases; regions and bosses; town events; gradual building unlocks; discount upgrade lines; a dungeon map with supplies, light and camping (Survivalist).
+- Town features after v1, roughly in DD1's priority: Abbey and Tavern side effects with quirks and the Sanitarium; trinkets and the Nomad Wagon; diseases; region bosses, with DD1's per-region progress bar and dungeon levels; quest goals beyond winning every fight; town events; gradual building unlocks; discount upgrade lines; a dungeon map with supplies, light and camping (Survivalist).
 - Relationships, Paths, combat items, skill loadouts.
 - Real art, audio, controller support, multiple save slots.
 - DD2 screen features waiting on mechanics or writing: the Flame emblem at the top, speech-bubble barks, right-click enemy and hero inspect sheets.
