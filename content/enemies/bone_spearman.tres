@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="1_1b8rw"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_lgk6v"]
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="3_eka7n"]
+[ext_resource type="Texture2D" path="res://art/units/bone_spearman.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_8svmg"]
 script = ExtResource("2_lgk6v")
@@ -57,3 +58,4 @@ resist_move = 0.3
 resist_debuff = 0.3
 skills = Array[ExtResource("2_lgk6v")]([SubResource("Resource_5i1fy"), SubResource("Resource_dtneo")])
 riposte_skill = SubResource("Resource_8svmg")
+sprite = ExtResource("9_sprite")

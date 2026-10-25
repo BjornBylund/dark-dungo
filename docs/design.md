@@ -54,7 +54,7 @@ The research could not confirm these, so the engine does the following:
 ## Presentation & input
 
 - 2D side view at 1920×1080 (scales). Heroes on the left facing right, rank 1 nearest the centre; enemies mirrored on the right. Skill bar along the bottom.
-- Placeholder art: coloured shapes with name, HP bar, stress pips and token chips. Hover a unit for its full stat sheet.
+- Units show their `UnitDef.sprite` (drawn facing right, mirrored for enemies, fitted to the slot) or a coloured placeholder shape, plus name, HP bar, stress pips and token chips. Corpses are always a placeholder for now. Hover a unit for its full stat sheet.
 - The info panel shows what the selected skill does and a preview (hit chance, damage range, crit chance and crit damage) against the focused target.
 - Each action plays a short close-up of actor and target with floating numbers and token pop-ups. 2× speed toggle.
 - Toggleable combat log showing every roll, for balance work.

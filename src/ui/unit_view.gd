@@ -96,6 +96,9 @@ func _draw() -> void:
 
 
 func _draw_body(body: Rect2) -> void:
+	if unit.def.sprite and not unit.is_corpse:
+		_draw_sprite(unit.def.sprite, body)
+		return
 	var base := Color(0.24, 0.21, 0.2) if unit.is_corpse else unit.def.color
 	var style := StyleBoxFlat.new()
 	style.bg_color = base.darkened(0.2)
@@ -115,6 +118,29 @@ func _draw_body(body: Rect2) -> void:
 	# Shoulders.
 	var shoulders := Rect2(body.position.x + 22, body.position.y + 92, body.size.x - 44, 26)
 	draw_rect(shoulders, base.lightened(0.04))
+
+
+## Fits the sprite into the body slot, feet on the slot's bottom edge, with a
+## floor shadow that turns into a gold ring on the unit's turn.
+func _draw_sprite(texture: Texture2D, body: Rect2) -> void:
+	var feet := Vector2(body.get_center().x, body.end.y)
+	var ring := body.size.x * 0.45
+	draw_set_transform(feet, 0.0, Vector2(1.0, 0.22))
+	draw_circle(Vector2.ZERO, ring, Color(0, 0, 0, 0.4))
+	if is_active_turn:
+		draw_arc(Vector2.ZERO, ring, 0.0, TAU, 48, UiStyle.GOLD, 4.0)
+	elif unit.deaths_door:
+		draw_arc(Vector2.ZERO, ring, 0.0, TAU, 48, UiStyle.HP, 4.0)
+	draw_set_transform(Vector2.ZERO)
+
+	var fit := minf(body.size.x / texture.get_width(), body.size.y / texture.get_height()) * unit.def.sprite_scale
+	var drawn := texture.get_size() * fit
+	var rect := Rect2(feet.x - drawn.x / 2.0, feet.y - drawn.y, drawn.x, drawn.y)
+	if not unit.is_hero:
+		# A negative width mirrors the texture in place so enemies face the heroes.
+		rect.size.x = -rect.size.x
+	var tint := Color(1.0, 0.7, 0.7) if unit.deaths_door else Color.WHITE
+	draw_texture_rect(texture, rect, false, tint)
 
 
 func _draw_tokens(font: Font, width: float) -> void:

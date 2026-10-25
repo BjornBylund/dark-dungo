@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_a1ut3"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_phsca"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ffuty"]
+[ext_resource type="Texture2D" path="res://art/units/cutthroat.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_sxywe"]
 script = ExtResource("3_ffuty")
@@ -107,3 +108,4 @@ resist_move = 0.2
 resist_debuff = 0.3
 skills = Array[ExtResource("2_phsca")]([SubResource("Resource_kuc48"), SubResource("Resource_gyv13"), SubResource("Resource_t346e"), SubResource("Resource_3mj6x"), SubResource("Resource_fa6hs")])
 swap_offsets = Array[int]([-2, -1, 1, 2])
+sprite = ExtResource("9_sprite")

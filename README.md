@@ -17,6 +17,15 @@ Controls: click a skill, then a highlighted target. Keys: `1`–`8` skills, `Lef
 
 Watch it play itself: `godot --path . -- --autoplay --speed=2`.
 
+## Add art
+
+Units draw a coloured placeholder until they have a sprite.
+
+1. Put a transparent PNG in the project, e.g. `art/units/ghoul.png`. Draw every unit facing right with its feet on the bottom edge; enemies are mirrored automatically.
+2. Open the unit's `.tres` in `content/` and drag the PNG into its **Sprite** field (Art group). Adjust **Sprite Scale** if it should stand taller or shorter.
+
+Sprites are fitted into the unit's slot, keeping their aspect ratio. Work at about 2x the on-screen size, roughly 300×560 px for a normal unit and 680×560 px for a 2-rank one. Textures import with mipmaps so they stay smooth when scaled down.
+
 ## Test it
 
 ```bash

@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_k35l2"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_ga4xx"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ejcji"]
+[ext_resource type="Texture2D" path="res://art/units/mender.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_dmbhf"]
 script = ExtResource("2_ga4xx")
@@ -91,3 +92,4 @@ resist_burn = 0.2
 resist_move = 0.2
 resist_debuff = 0.4
 skills = Array[ExtResource("2_ga4xx")]([SubResource("Resource_dmbhf"), SubResource("Resource_qacnk"), SubResource("Resource_a1rxl"), SubResource("Resource_h30im"), SubResource("Resource_bxsfd")])
+sprite = ExtResource("9_sprite")

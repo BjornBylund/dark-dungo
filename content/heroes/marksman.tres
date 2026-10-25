@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_gw7sh"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_x03ae"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_yewb2"]
+[ext_resource type="Texture2D" path="res://art/units/marksman.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_bx3iw"]
 script = ExtResource("2_x03ae")
@@ -86,3 +87,4 @@ resist_burn = 0.2
 resist_move = 0.2
 resist_debuff = 0.3
 skills = Array[ExtResource("2_x03ae")]([SubResource("Resource_bx3iw"), SubResource("Resource_758ij"), SubResource("Resource_236uf"), SubResource("Resource_0berm"), SubResource("Resource_ricmk")])
+sprite = ExtResource("9_sprite")

@@ -35,6 +35,13 @@ extends Resource
 ## Relative positions a hero may Swap with: negative is towards rank 1.
 @export var swap_offsets: Array[int] = [-1, 1]
 
+@export_group("Art")
+## Drawn facing right with the feet at the bottom edge; enemies are mirrored.
+## Fitted into the unit's slot keeping its aspect ratio. Empty draws the coloured placeholder.
+@export var sprite: Texture2D
+## Extra scale on top of the automatic fit, for art that should stand taller or shorter.
+@export_range(0.25, 2.0, 0.05) var sprite_scale: float = 1.0
+
 
 func base_resist(kind: StringName) -> float:
 	return get("resist_%s" % kind)

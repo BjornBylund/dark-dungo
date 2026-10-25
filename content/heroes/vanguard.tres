@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_h4n3i"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_rnt5r"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_8wp1l"]
+[ext_resource type="Texture2D" path="res://art/units/vanguard.png" id="9_sprite"]
 
 [sub_resource type="Resource" id="Resource_rtyp6"]
 script = ExtResource("3_8wp1l")
@@ -90,3 +91,4 @@ resist_burn = 0.3
 resist_move = 0.5
 resist_debuff = 0.3
 skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_q45nm"), SubResource("Resource_qbys7"), SubResource("Resource_vmjb0"), SubResource("Resource_4egp0"), SubResource("Resource_r06bm")])
+sprite = ExtResource("9_sprite")
