@@ -21,9 +21,14 @@ const TOKEN_GAP := 6.0
 const DOT_SIZE := 18.0
 
 var unit: Combatant
-## HP and stress as currently shown; events update them in step with the pop-ups.
+## HP, stress, Death's Door and corpse as currently shown. The battle has
+## already resolved the whole action when playback starts, so these follow the
+## events instead of the combatant, or a unit killed by an attack would show as
+## a corpse for the whole close-up.
 var hp_shown: int
 var stress_shown: int
+var deaths_door_shown := false
+var corpse_shown := false
 var is_active_turn := false
 var highlight := Highlight.NONE
 var focused := false
@@ -48,12 +53,38 @@ func setup(combatant: Combatant) -> void:
 	refresh()
 
 
-## Re-reads everything from the combatant.
+## Catches up with the combatant completely, once its events have played.
 func refresh() -> void:
 	hp_shown = unit.hp
 	stress_shown = unit.stress
+	deaths_door_shown = unit.deaths_door
+	corpse_shown = unit.is_corpse
+	refresh_status()
+
+
+## Tokens, DoTs or buffs changed mid-playback: redraws them and the tooltip
+## without jumping ahead to HP, Death's Door or death that later events show.
+func refresh_status() -> void:
 	tooltip_text = UiStyle.describe_unit(unit)
 	queue_redraw()
+
+
+func set_deaths_door(value: bool) -> void:
+	deaths_door_shown = value
+	queue_redraw()
+
+
+## The figure fades out in red; a corpse, if the unit leaves one, then fades in.
+func play_death(corpse: bool, corpse_hp: int, speed: float) -> void:
+	deaths_door_shown = false
+	var tween := create_tween()
+	tween.tween_property(self, "modulate", Color(1.0, 0.25, 0.2, 0.0), 0.35 / speed)
+	tween.tween_callback(func() -> void:
+		corpse_shown = corpse
+		hp_shown = corpse_hp
+		refresh_status())
+	if corpse:
+		tween.tween_property(self, "modulate", Color.WHITE, 0.25 / speed)
 
 
 func set_hp(value: int) -> void:
@@ -80,7 +111,7 @@ func _has_point(point: Vector2) -> bool:
 
 
 func _process(delta: float) -> void:
-	if highlight != Highlight.NONE or is_active_turn or unit.deaths_door:
+	if highlight != Highlight.NONE or is_active_turn or deaths_door_shown:
 		_pulse += delta
 		queue_redraw()
 
@@ -100,7 +131,7 @@ func _fit_box() -> Vector2:
 
 
 func _figure_rect() -> Rect2:
-	if unit.is_corpse:
+	if corpse_shown:
 		return Rect2(feet.x - size.x * 0.35, feet.y - 50, size.x * 0.7, 70)
 	var texture := unit.def.sprite
 	var fit := _fit_box()
@@ -138,9 +169,9 @@ func _draw() -> void:
 	_draw_brackets()
 	_draw_dots()
 	_draw_hp_bar()
-	if unit.is_hero and not unit.is_corpse:
+	if unit.is_hero and not corpse_shown:
 		_draw_stress()
-	if not unit.is_corpse:
+	if not corpse_shown:
 		_draw_tokens()
 
 
@@ -149,7 +180,7 @@ func _draw_figure(figure: Rect2) -> void:
 	draw_set_transform(feet, 0.0, Vector2(1.0, 0.2))
 	draw_circle(Vector2.ZERO, figure.size.x * 0.45, Color(0, 0, 0, 0.45))
 	draw_set_transform(Vector2.ZERO)
-	if unit.is_corpse:
+	if corpse_shown:
 		var corpse := StyleBoxFlat.new()
 		corpse.bg_color = Color(0.16, 0.13, 0.12)
 		corpse.border_color = Color(0.3, 0.26, 0.22)
@@ -158,7 +189,7 @@ func _draw_figure(figure: Rect2) -> void:
 		draw_style_box(corpse, figure)
 		return
 	var texture := unit.def.sprite
-	var tint := Color(1.0, 0.7, 0.7) if unit.deaths_door else Color.WHITE
+	var tint := Color(1.0, 0.7, 0.7) if deaths_door_shown else Color.WHITE
 	if texture:
 		var rect := figure
 		if not unit.is_hero:
@@ -249,20 +280,20 @@ func _draw_hp_bar() -> void:
 	var frame := PackedVector2Array([Vector2(left, top), Vector2(left + width, top),
 			Vector2(left + width - slant, top + height), Vector2(left + slant, top + height)])
 	draw_colored_polygon(frame, UiStyle.HP_EMPTY)
-	var max_hp := unit.def.corpse_hp if unit.is_corpse else unit.max_hp
+	var max_hp := unit.def.corpse_hp if corpse_shown else unit.max_hp
 	var fraction := clampf(float(hp_shown) / maxf(max_hp, 1), 0.0, 1.0)
-	if unit.deaths_door:
+	if deaths_door_shown:
 		fraction = 0.0
 	if fraction > 0.0:
 		var fill_right := left + slant + (width - 2.0 * slant) * fraction
 		draw_colored_polygon(PackedVector2Array([Vector2(left, top), Vector2(fill_right + slant, top),
 				Vector2(fill_right, top + height), Vector2(left + slant, top + height)]),
-				UiStyle.CORPSE_FILL if unit.is_corpse else UiStyle.HP_FILL)
+				UiStyle.CORPSE_FILL if corpse_shown else UiStyle.HP_FILL)
 	for quarter in [0.25, 0.5, 0.75]:
 		var x: float = left + slant + (width - 2.0 * slant) * quarter
 		draw_line(Vector2(x, top + 2), Vector2(x, top + height - 2), Color(0, 0, 0, 0.6), 1.0)
 	var frame_color := UiStyle.HP_FRAME
-	if unit.deaths_door:
+	if deaths_door_shown:
 		frame_color = UiStyle.DAMAGE.lerp(UiStyle.HP_FRAME, 0.5 + 0.5 * sin(_pulse * 3.0))
 	var outline := frame.duplicate()
 	outline.append(frame[0])
@@ -295,7 +326,7 @@ func _draw_stress() -> void:
 
 func _draw_tokens() -> void:
 	var entries: Array[StringName] = []
-	if unit.deaths_door:
+	if deaths_door_shown:
 		entries.append(&"death_armor")  # the skull marks Death's Door
 	elif unit.death_armor > 0 and not unit.is_hero:
 		entries.append(&"death_armor")

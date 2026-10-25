@@ -626,7 +626,7 @@ func _apply_event(event: Dictionary) -> float:
 			for negated: StringName in event.negated:
 				_float(view, "[s]%s[/s]" % UiStyle.token_name(negated), UiStyle.GREY, 28)
 			if view:
-				view.refresh()
+				view.refresh_status()
 			return 0.2
 		&"resisted":
 			_float(view, "Resist", UiStyle.GREY, 56)
@@ -635,12 +635,12 @@ func _apply_event(event: Dictionary) -> float:
 			_float(view, "%s %s %d" % [UiStyle.icon_bbcode(event.dot, 30), String(event.dot).capitalize(), event.amount],
 					UiStyle.DOT_COLORS.get(event.dot, UiStyle.TEXT), 32)
 			if view:
-				view.refresh()
+				view.refresh_status()
 			return 0.25
 		&"cleansed":
 			_float(view, "Cleansed", UiStyle.GREEN, 36)
 			if view:
-				view.refresh()
+				view.refresh_status()
 			return 0.25
 		&"immobile":
 			_float(view, "Immobile", UiStyle.GREY, 36)
@@ -659,10 +659,12 @@ func _apply_event(event: Dictionary) -> float:
 		&"deaths_door":
 			_float(view, "Death's Door!", UiStyle.DAMAGE, 52)
 			if view:
-				view.refresh()
+				view.set_deaths_door(true)
 			return 0.8
 		&"left_deaths_door":
 			_float(view, "Saved", UiStyle.GREEN, 40)
+			if view:
+				view.set_deaths_door(false)
 			return 0.3
 		&"deathblow_resisted":
 			_float(view, "Deathblow Resisted", UiStyle.GOLD, 44)
@@ -673,11 +675,11 @@ func _apply_event(event: Dictionary) -> float:
 		&"death_armor":
 			_float(view, "Death Armor holds", Color("c0c0c0"), 36)
 			if view:
-				view.refresh()
+				view.refresh_status()
 			return 0.45
 		&"death":
 			if view:
-				view.refresh()
+				view.play_death(event.corpse, event.hp, _speed)
 			var fallen_hero := view != null and view.unit.is_hero and _mission_run != null
 			_float(view, "Defeated" if fallen_hero else "Slain", UiStyle.DAMAGE, 52)
 			return 0.7
