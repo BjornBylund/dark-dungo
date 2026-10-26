@@ -61,10 +61,6 @@ func _ready() -> void:
 		_show_panel("Setting out", "Some of the party set out at the end of their tether.\n\n" +
 				"\n".join(run.setting_out), [["Onward", _close_panel]])
 		run.setting_out.clear()
-	elif run.new_map:
-		_show_panel("Map %d of %d" % [run.layer + 1, run.layers],
-				"The way leads deeper. The party binds its wounds before pressing on: every hero is back to full HP.",
-				[["Onward", _close_panel]])
 	if _autoplay:
 		_autoplay_step()
 
@@ -93,8 +89,7 @@ func _refresh() -> void:
 	var run := _run()
 	var mission := run.mission
 	_week.text = "Week %d" % Game.campaign.week
-	_header.text = "%s%s%s" % [mission.region.display_name + "   " if mission.region else "", mission.title(),
-			"   Map %d/%d" % [run.layer + 1, run.layers] if run.layers > 1 else ""]
+	_header.text = "%s%s" % [mission.region.display_name + "   " if mission.region else "", mission.title()]
 	for child in _rooms.get_children():
 		child.queue_free()
 	_buttons.clear()
@@ -124,12 +119,14 @@ func _refresh() -> void:
 	_refresh_party()
 
 
-## Room buttons grow on phones, but no further than leaves a gap between columns.
+## Room buttons grow on phones, and shrink on long maps, so columns keep a gap
+## for the paths between them (a smaller one on phones, where rooms must stay
+## big enough to tap).
 func _room_scale() -> float:
-	if not Device.phone:
-		return 1.0
 	var spacing := MAP_AREA.size.x / float(_run().map.columns - 1)
-	return minf(PHONE_ROOM_SCALE, spacing * 0.8 / RoomButton.SIZE)
+	if Device.phone:
+		return minf(PHONE_ROOM_SCALE, spacing * 0.8 / RoomButton.SIZE)
+	return minf(1.0, spacing * 0.65 / RoomButton.SIZE)
 
 
 func _room_center(room: MapRoom) -> Vector2:

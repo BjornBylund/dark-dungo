@@ -125,11 +125,9 @@ func _refresh_quest() -> void:
 	if mission.region:
 		_quest.add_child(_label(mission.region.display_name, 20, UiStyle.TEXT_DIM, UiStyle.DISPLAY_FONT))
 	_quest.add_child(_label(mission.title(), 40, QuestMarker.tier_color(mission.tier), UiStyle.DISPLAY_FONT))
-	var maps: int = CampaignRules.MAP_LAYERS[mission.length]
-	_quest.add_child(_label("Level %d   %d %s" % [mission.level(), maps, "map" if maps == 1 else "maps"], 18))
+	_quest.add_child(_label("Level %d   %d columns" % [mission.level(), CampaignRules.MAP_COLUMNS[mission.length]], 18))
 	_quest.add_child(_heading("Goal"))
-	var goal := _label("Reach the end of the map and win the final fight." if maps == 1
-			else "Cross %d maps and win the final fight at the end of each." % maps, 18)
+	var goal := _label("Reach the end of the map and win the final fight.", 18)
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if Device.phone else TextServer.AUTOWRAP_OFF
 	_quest.add_child(goal)
 	_quest.add_child(_heading("Rewards"))

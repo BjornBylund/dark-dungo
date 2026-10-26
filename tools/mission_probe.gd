@@ -3,8 +3,9 @@
 ## get. scripts/balance.ps1 runs many of these in parallel and adds them up.
 ## Run: godot --headless --path . --script res://tools/mission_probe.gd --
 ##     [--length=0|1|2] [--tier=0|1|2] [--level=N] [--runs=N] [--first-seed=N]
-## Prints one line per length: RESULT length=.. runs=.. completed=.. maps=.. fights=.. clear_shares=..
+## Prints one line per length: RESULT length=.. runs=.. completed=.. depth=.. fights=.. clear_shares=..
 ## and one per hero class: CLASS<tab>length<tab>name<tab>completed<tab>runs
+## depth adds up how far each party got, in percent of the way to the finale;
 ## fights counts the fight shares of gold won (fights, elites, caches, events);
 ## clear_shares counts them in completed runs only.
 extends SceneTree
@@ -48,7 +49,7 @@ func _initialize() -> void:
 func _probe(length: int, tier: CampaignRules.Tier, level: int, runs: int, first_seed: int) -> void:
 	var def: CampaignDef = load("res://content/campaign.tres")
 	var completed := 0
-	var maps := 0
+	var depth := 0
 	var fights := 0
 	var clear_shares := 0
 	var by_class := {}
@@ -73,12 +74,13 @@ func _probe(length: int, tier: CampaignRules.Tier, level: int, runs: int, first_
 		var shares := roundi(float(run.gold_earned) / mission.fight_gold())
 		fights += shares
 		clear_shares += shares if won else 0
-		maps += run.layer + int(won)
+		var furthest := run.map.room(run.visited.back()).column if not run.visited.is_empty() else 0
+		depth += roundi(100.0 * furthest / (run.map.columns - 1))
 		completed += int(won)
 		for hero in party:
 			var entry: Array = by_class.get(hero.display_name, [0, 0])
 			by_class[hero.display_name] = [entry[0] + int(won), entry[1] + 1]
-	print("RESULT length=%d runs=%d completed=%d maps=%d fights=%d clear_shares=%d" % [length, runs, completed,
-			maps, fights, clear_shares])
+	print("RESULT length=%d runs=%d completed=%d depth=%d fights=%d clear_shares=%d" % [length, runs, completed,
+			depth, fights, clear_shares])
 	for name: String in by_class:
 		print("CLASS\t%d\t%s\t%d\t%d" % [length, name, by_class[name][0], by_class[name][1]])

@@ -1,7 +1,7 @@
-## One map of a mission: rooms in columns, played left to right like a Slay the
-## Spire act. Random walks through a grid of MAP_ROWS rows make the routes, and
-## every route ends at the region's finale. Room types follow Slay the Spire's
-## placement rules (docs/design.md, Mission maps).
+## A mission's map: rooms in columns, played left to right like a Slay the Spire
+## act, longer for longer missions. Random walks through a grid of MAP_ROWS rows
+## make the routes, and every route ends at the region's finale. Room types
+## follow Slay the Spire's placement rules (docs/design.md, Mission maps).
 class_name MissionMap
 extends RefCounted
 
@@ -12,12 +12,19 @@ const ATTEMPTS := 100
 var rooms: Array[MapRoom] = []
 ## Columns, counting the final room's.
 var columns := 0
+## The all-cache column and the number of first columns without elites or
+## rests, from the mission's length. Only needed while generating.
+var cache_column := 0
+var early_columns := 0
 
 
 ## Draws maps until one passes layout_problems() and type_problems(), then fills the rooms.
-static func generate(region: RegionDef, events: Array[EventDef], rng: RandomNumberGenerator) -> MissionMap:
+static func generate(region: RegionDef, length: CampaignRules.Length, events: Array[EventDef],
+		rng: RandomNumberGenerator) -> MissionMap:
 	var map := MissionMap.new()
-	map.columns = CampaignRules.MAP_COLUMNS
+	map.columns = CampaignRules.MAP_COLUMNS[length]
+	map.cache_column = CampaignRules.CACHE_COLUMN[length]
+	map.early_columns = CampaignRules.EARLY_COLUMNS[length]
 	for attempt in ATTEMPTS:
 		map.rooms.clear()
 		map._lay_out(rng)
@@ -156,9 +163,10 @@ static func _crosses(links: Array, a: int, b: int) -> bool:
 	return false
 
 
-## Fixed columns, after Slay the Spire's: the first is all fights, CACHE_COLUMN
-## all caches and REST_COLUMN (just before the finale) all rests. Every other
-## room is rolled from ROOM_WEIGHTS and re-rolled while it breaks a placement rule.
+## Fixed columns, after Slay the Spire's: the first is all fights, the cache
+## column all caches and the rest column (just before the finale) all rests.
+## Every other room is rolled from ROOM_WEIGHTS and re-rolled while it breaks a
+## placement rule.
 func _assign_types(rng: RandomNumberGenerator) -> void:
 	var typed := {}
 	for spot in rooms:
@@ -175,15 +183,19 @@ func _assign_types(rng: RandomNumberGenerator) -> void:
 		typed[spot.id] = true
 
 
+## The column of all rests, just before the finale.
+func rest_column() -> int:
+	return columns - 2
+
+
 ## The type every room in `column` has, or -1 for a column that is rolled.
-static func _fixed_type(column: int) -> int:
-	match column:
-		0:
-			return MapRoom.Type.FIGHT
-		CampaignRules.CACHE_COLUMN:
-			return MapRoom.Type.CACHE
-		CampaignRules.REST_COLUMN:
-			return MapRoom.Type.REST
+func _fixed_type(column: int) -> int:
+	if column == 0:
+		return MapRoom.Type.FIGHT
+	if column == cache_column:
+		return MapRoom.Type.CACHE
+	if column == rest_column():
+		return MapRoom.Type.REST
 	return -1
 
 
@@ -247,9 +259,9 @@ func _roll_type(spot: MapRoom, typed: Dictionary, rng: RandomNumberGenerator) ->
 
 func _allowed(spot: MapRoom, type: MapRoom.Type, typed: Dictionary) -> bool:
 	var spaced := type == MapRoom.Type.ELITE or type == MapRoom.Type.REST
-	if spaced and spot.column < CampaignRules.EARLY_COLUMNS:
+	if spaced and spot.column < early_columns:
 		return false
-	if type == MapRoom.Type.REST and spot.column == CampaignRules.REST_COLUMN - 1:
+	if type == MapRoom.Type.REST and spot.column == rest_column() - 1:
 		return false
 	for parent in parents(spot):
 		if spaced and typed.has(parent.id) and parent.type == type:

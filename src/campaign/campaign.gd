@@ -292,7 +292,6 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 		if short > 0:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
 	run = MissionRun.new(mission, _draw_map(mission), party, rng)
-	run.events = _events_for(mission)
 	run.bonds = bonds
 	run.set_out()
 	return run
@@ -301,7 +300,7 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 func _draw_map(mission: Mission) -> MissionMap:
 	if mission.region == null:
 		mission.region = def.regions[0]
-	return MissionMap.generate(mission.region, _events_for(mission), rng)
+	return MissionMap.generate(mission.region, mission.length, _events_for(mission), rng)
 
 
 ## The shared events and the mission's region's own.
@@ -470,7 +469,6 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 		if int(data.version) < 3:
 			run_data = campaign._run_before_maps(run_data)
 		campaign.run = MissionRun.from_dict(run_data, party, campaign.rng)
-		campaign.run.events = campaign._events_for(campaign.run.mission)
 		campaign.run.bonds = campaign.bonds
 		campaign.run.apply_bonds()
 	return campaign

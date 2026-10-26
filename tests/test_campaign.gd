@@ -99,7 +99,7 @@ func test_mission_rewards_follow_the_tables() -> void:
 	assert_eq(mission.gold(), 11250)
 	assert_eq(mission.xp(), 8)
 	assert_eq(mission.heirloom_amount(), 12)
-	assert_eq(mission.fight_gold(), 11250 / 2 / 18)
+	assert_eq(mission.fight_gold(), 11250 / 2 / 12)
 	assert_eq(mission.fight_gold() * CampaignRules.FIGHT_SHARES[mission.length] + mission.completion_gold(),
 			mission.gold())
 
@@ -108,10 +108,8 @@ func test_embarking_draws_the_missions_map() -> void:
 	var campaign := _campaign()
 	var mission := _mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM)
 	var run := campaign.embark(mission, _party(campaign))
-	assert_eq(run.map.columns, CampaignRules.MAP_COLUMNS)
-	assert_eq(run.layers, 2)
+	assert_eq(run.map.columns, CampaignRules.MAP_COLUMNS[CampaignRules.Length.MEDIUM])
 	assert_eq(run.map.final_room().encounter, load("res://content/encounters/wave_3.tres"))
-	assert_eq(run.events, campaign.def.events, "events for the maps still to come")
 
 
 func test_heroes_setting_out_at_max_stress_melt_down_or_turn_resolute() -> void:
@@ -364,7 +362,7 @@ func test_missions_saved_before_maps_resume_on_a_fresh_map() -> void:
 	assert_eq(loaded.run.room_id, -1)
 	assert_eq(loaded.run.gold_earned, 300)
 	assert_eq(loaded.run.combatants[1].hp, 9)
-	assert_eq(loaded.run.map.columns, CampaignRules.MAP_COLUMNS)
+	assert_eq(loaded.run.map.columns, CampaignRules.MAP_COLUMNS[CampaignRules.Length.MEDIUM])
 
 
 func test_saves_keep_each_missions_region() -> void:

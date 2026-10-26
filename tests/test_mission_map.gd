@@ -8,13 +8,23 @@ func _region() -> RegionDef:
 	return Fixtures.region(&"test", ["wave_1", "wave_2"], ["the_glutton"], ["wave_3"])
 
 
-func _map(seed_value: int, events: Array[EventDef] = [Fixtures.spring_event()]) -> MissionMap:
+func _map(seed_value: int, events: Array[EventDef] = [Fixtures.spring_event()],
+		length: CampaignRules.Length = CampaignRules.Length.SHORT) -> MissionMap:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
-	return MissionMap.generate(_region(), events, rng)
+	return MissionMap.generate(_region(), length, events, rng)
 
 
-## A run on `map` (or a generated one); short missions cross just that one map.
+## Maps of every length, for rules every map keeps.
+func _maps(seeds: int) -> Array[MissionMap]:
+	var maps: Array[MissionMap] = []
+	for length: CampaignRules.Length in CampaignRules.Length.values():
+		for seed_value in seeds:
+			maps.append(_map(seed_value, [Fixtures.spring_event()], length))
+	return maps
+
+
+## A run on `map`, or on a generated map of the mission's length.
 func _run(map: MissionMap = null, heroes: Array = ["vanguard", "cutthroat", "marksman", "mender"],
 		tier: int = CampaignRules.Tier.APPRENTICE, length: int = CampaignRules.Length.SHORT) -> MissionRun:
 	var mission := Mission.new()
@@ -27,7 +37,7 @@ func _run(map: MissionMap = null, heroes: Array = ["vanguard", "cutthroat", "mar
 		party.append(HeroRecord.new(load("res://content/heroes/%s.tres" % id)))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
-	return MissionRun.new(mission, map if map else _map(3), party, rng)
+	return MissionRun.new(mission, map if map else _map(3, [Fixtures.spring_event()], mission.length), party, rng)
 
 
 ## A one-column map: start rooms of the given types, all leading to the finale.
@@ -72,10 +82,10 @@ func _win(run: MissionRun) -> void:
 
 # --- Building maps ---
 
-func test_maps_have_nine_floors_and_end_in_one_finale() -> void:
-	for seed_value in 20:
-		var map := _map(seed_value)
-		assert_eq(map.columns, CampaignRules.MAP_COLUMNS)
+func test_longer_missions_get_longer_maps_that_end_in_one_finale() -> void:
+	for length: CampaignRules.Length in CampaignRules.Length.values():
+		assert_eq(_map(1, [Fixtures.spring_event()], length).columns, CampaignRules.MAP_COLUMNS[length])
+	for map in _maps(10):
 		var final := map.final_room()
 		assert_eq(final.type, MapRoom.Type.FINALE)
 		assert_eq(final.column, map.columns - 1)
@@ -84,8 +94,7 @@ func test_maps_have_nine_floors_and_end_in_one_finale() -> void:
 
 
 func test_every_room_is_on_a_route_from_the_start_to_the_finale() -> void:
-	for seed_value in 20:
-		var map := _map(seed_value)
+	for map in _maps(10):
 		var reached := {}
 		for room in map.in_column(0):
 			reached[room.id] = true
@@ -103,19 +112,17 @@ func test_every_room_is_on_a_route_from_the_start_to_the_finale() -> void:
 
 
 func test_maps_never_narrow_to_one_room_before_the_end() -> void:
-	for seed_value in 300:
-		var map := _map(seed_value)
-		assert_eq(map.layout_problems(), [] as Array[String], "seed %d" % seed_value)
+	for map in _maps(100):
+		assert_eq(map.layout_problems(), [] as Array[String], "%d columns" % map.columns)
 		for column in map.columns - 1:
 			assert_true(map.in_column(column).size() >= 2, "column %d has a choice" % column)
 
 
 func test_every_map_has_an_elite_with_a_way_around_it() -> void:
-	for seed_value in 300:
-		var map := _map(seed_value)
+	for map in _maps(100):
 		var elites := map.rooms.filter(func(r: MapRoom) -> bool: return r.type == MapRoom.Type.ELITE)
-		assert_true(not elites.is_empty(), "seed %d has an elite" % seed_value)
-		assert_eq(map.type_problems(), [] as Array[String], "seed %d" % seed_value)
+		assert_true(not elites.is_empty(), "%d columns: an elite" % map.columns)
+		assert_eq(map.type_problems(), [] as Array[String], "%d columns" % map.columns)
 		for elite: MapRoom in elites:
 			assert_true(elite.encounter in _region().elites)
 
@@ -153,8 +160,7 @@ func test_layout_problems_spot_a_choke_point() -> void:
 
 
 func test_routes_step_one_row_at_most_and_never_cross() -> void:
-	for seed_value in 40:
-		var map := _map(seed_value)
+	for map in _maps(20):
 		for column in map.columns - 2:
 			var links: Array[Vector2i] = []
 			for room in map.in_column(column):
@@ -167,20 +173,24 @@ func test_routes_step_one_row_at_most_and_never_cross() -> void:
 
 
 func test_room_types_follow_the_placement_rules() -> void:
-	var fixed_columns := [0, CampaignRules.CACHE_COLUMN, CampaignRules.REST_COLUMN]
-	for seed_value in 60:
-		var map := _map(seed_value)
+	for length: CampaignRules.Length in CampaignRules.Length.values():
+		var map := _map(1, [Fixtures.spring_event()], length)
+		assert_eq(map.cache_column, CampaignRules.CACHE_COLUMN[length])
+		assert_eq(map.early_columns, CampaignRules.EARLY_COLUMNS[length])
+		assert_eq(map.rest_column(), map.columns - 2)
+	for map in _maps(30):
+		var fixed_columns := [0, map.cache_column, map.rest_column()]
 		for room in map.rooms:
 			var spaced := room.type == MapRoom.Type.ELITE or room.type == MapRoom.Type.REST
 			if room.column == 0:
 				assert_eq(room.type, MapRoom.Type.FIGHT, "first column")
-			if room.column == CampaignRules.CACHE_COLUMN:
+			if room.column == map.cache_column:
 				assert_eq(room.type, MapRoom.Type.CACHE, "cache column")
-			if room.column == CampaignRules.REST_COLUMN:
+			if room.column == map.rest_column():
 				assert_eq(room.type, MapRoom.Type.REST, "rest before the finale")
 			if spaced:
-				assert_true(room.column >= CampaignRules.EARLY_COLUMNS, "no elite or rest early")
-			if room.column == CampaignRules.REST_COLUMN - 1:
+				assert_true(room.column >= map.early_columns, "no elite or rest early")
+			if room.column == map.rest_column() - 1:
 				assert_ne(room.type, MapRoom.Type.REST, "no rest just before the rest column")
 			for exit in room.exits:
 				if spaced:
@@ -229,13 +239,13 @@ func test_without_events_event_rooms_become_fights() -> void:
 
 func test_room_types_roughly_follow_the_weights() -> void:
 	var counts := [0, 0, 0, 0, 0, 0]
-	for seed_value in 200:
-		for room in _map(seed_value).rooms:
+	for map in _maps(70):
+		for room in map.rooms:
 			counts[room.type] += 1
 	var total := 0
 	for count: int in counts:
 		total += count
-	print("        room mix over 200 long maps: fight %d%%, event %d%%, rest %d%%, elite %d%%, cache %d%%" % [
+	print("        room mix over 210 maps: fight %d%%, event %d%%, rest %d%%, elite %d%%, cache %d%%" % [
 			100 * counts[0] / total, 100 * counts[1] / total, 100 * counts[2] / total, 100 * counts[3] / total,
 			100 * counts[4] / total])
 	assert_true(counts[MapRoom.Type.ELITE] > 0 and counts[MapRoom.Type.CACHE] > 0 and counts[MapRoom.Type.EVENT] > 0)
@@ -281,44 +291,6 @@ func test_winning_the_finale_completes_the_mission() -> void:
 	assert_eq(run.gold_earned, 2 * run.mission.fight_gold())
 
 
-func test_short_medium_and_long_missions_cross_one_two_and_three_maps() -> void:
-	for length in 3:
-		var run := _run(null, ["vanguard"], CampaignRules.Tier.APPRENTICE, length)
-		assert_eq(run.layers, CampaignRules.MAP_LAYERS[length])
-		assert_eq(run.layer, 0)
-
-
-func test_winning_a_maps_finale_leads_to_the_next_map_at_full_hp() -> void:
-	var run := _run(_map_of([MapRoom.Type.FIGHT]), ["vanguard", "cutthroat", "marksman", "mender"],
-			CampaignRules.Tier.APPRENTICE, CampaignRules.Length.MEDIUM)
-	run.events.assign([Fixtures.spring_event()])
-	run.enter(0)
-	_win(run)
-	run.enter(1)
-	for unit in run.formation:
-		unit.hp = 3
-		unit.stress = 4
-	_win(run)
-	assert_eq(run.outcome, MissionRun.Outcome.IN_PROGRESS, "one map to go")
-	assert_eq(run.layer, 1)
-	assert_true(run.new_map)
-	assert_eq(run.room_id, -1)
-	assert_eq(run.visited, [] as Array[int])
-	assert_eq(run.map.columns, CampaignRules.MAP_COLUMNS)
-	assert_eq(run.next_rooms(), run.map.in_column(0))
-	for unit in run.formation:
-		assert_eq(unit.hp, unit.max_hp, "healed between maps")
-		assert_eq(unit.stress, 4, "stress stays")
-	var copy := MissionRun.from_dict(JSON.parse_string(JSON.stringify(run.to_dict())), run.party, run.rng)
-	assert_eq(copy.layer, 1)
-	assert_true(copy.new_map)
-	run.map = _map_of([MapRoom.Type.FIGHT])
-	run.enter(0)
-	assert_false(run.new_map)
-	_win(run)
-	run.enter(1)
-	_win(run)
-	assert_eq(run.outcome, MissionRun.Outcome.COMPLETED, "the last map's finale completes the mission")
 
 
 func test_caches_pay_on_entry() -> void:

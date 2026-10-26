@@ -43,7 +43,7 @@ $tiers = "Apprentice", "Veteran", "Champion"
 Write-Output ("{0} missions, level {1} heroes, {2} runs per length, {3:N0}s" -f $tiers[$Tier], $Level,
     ($perJob * $Jobs), ((Get-Date) - $started).TotalSeconds)
 foreach ($length in 0, 1, 2) {
-    $totals = @{ runs = 0; completed = 0; maps = 0; fights = 0; clear_shares = 0 }
+    $totals = @{ runs = 0; completed = 0; depth = 0; fights = 0; clear_shares = 0 }
     $classes = [ordered]@{}
     foreach ($log in Get-ChildItem (Join-Path $out "$length-*.log")) {
         foreach ($line in Get-Content $log) {
@@ -60,8 +60,8 @@ foreach ($length in 0, 1, 2) {
         }
     }
     $runs = [math]::Max($totals.runs, 1)
-    Write-Output ("  {0,-6}  finished {1,3:N0}%   maps cleared {2:N2}   fight shares won {3:N1}, {4:N1} in a full clear" -f
-        $names[$length], (100 * $totals.completed / $runs), ($totals.maps / $runs), ($totals.fights / $runs),
+    Write-Output ("  {0,-6}  finished {1,3:N0}%   got {2,3:N0}% of the way   fight shares won {3:N1}, {4:N1} in a full clear" -f
+        $names[$length], (100 * $totals.completed / $runs), ($totals.depth / $runs), ($totals.fights / $runs),
         ($totals.clear_shares / [math]::Max($totals.completed, 1)))
     $rates = foreach ($name in $classes.Keys) { "{0} {1:N0}%" -f $name, (100 * $classes[$name][0] / $classes[$name][1]) }
     Write-Output ("          by class: " + ($rates -join ", "))

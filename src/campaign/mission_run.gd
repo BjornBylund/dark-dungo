@@ -1,4 +1,4 @@
-## A mission in progress: the party walking its maps room by room, their
+## A mission in progress: the party walking its map room by room, their
 ## combatants carried from fight to fight, what they have earned on the way and
 ## who has been defeated.
 ##
@@ -6,8 +6,7 @@
 ## by events) leave a pending fight: start_fight(), play the Battle, then
 ## finish_fight(). Rest rooms wait for rest(), event rooms for choose(); caches
 ## pay as soon as they are entered. Once a room is done the party moves on, or
-## retreats. Winning a map's finale leads to the next map, healed, like a new
-## Slay the Spire act; winning the last map's finale completes the mission.
+## retreats. Winning the finale completes the mission.
 class_name MissionRun
 extends RefCounted
 
@@ -16,14 +15,7 @@ enum Outcome { IN_PROGRESS, COMPLETED, RETREATED, FAILED }
 enum FightKind { NORMAL, ELITE, FINALE }
 
 var mission: Mission
-## The map the party is on: map number `layer` of `layers`.
 var map: MissionMap
-var layer := 0
-var layers := 1
-## Set on reaching a new map, until the first room of it is entered.
-var new_map := false
-## Events for drawing the next maps; not saved, the campaign sets them.
-var events: Array[EventDef] = []
 var party: Array[HeroRecord] = []
 ## Combatant per party member, in the same order; kept after defeat for their final stress.
 var combatants: Array[Combatant] = []
@@ -58,7 +50,6 @@ var rng: RandomNumberGenerator
 func _init(run_mission: Mission, run_map: MissionMap, members: Array[HeroRecord], random: RandomNumberGenerator) -> void:
 	mission = run_mission
 	map = run_map
-	layers = CampaignRules.MAP_LAYERS[mission.length]
 	party.assign(members)
 	rng = random
 	for record in party:
@@ -85,7 +76,6 @@ func enter(id: int) -> String:
 		return "The party can't go there now."
 	room_id = id
 	room_done = false
-	new_map = false
 	visited.append(id)
 	var room := current_room()
 	match room.type:
@@ -129,16 +119,14 @@ func start_fight() -> Battle:
 
 
 ## Call once the current battle has ended. A win pays the fight share (twice
-## that and heirlooms for an elite) and finishes the room; winning a finale
-## leads on to the next map, or completes the mission after the last one.
-## Losing any fight fails it.
+## that and heirlooms for an elite) and finishes the room; winning the finale
+## completes the mission. Losing any fight fails it.
 func finish_fight() -> void:
 	for i in party.size():
 		if combatants[i].dead and party[i] not in defeated:
 			defeated.append(party[i])
 	formation.assign(battle.heroes)
 	var helps := battle.helps
-	var won_finale := false
 	if battle.state == Battle.State.VICTORY:
 		match pending_kind:
 			FightKind.ELITE:
@@ -147,31 +135,14 @@ func finish_fight() -> void:
 			_:
 				gold_earned += mission.fight_gold()
 		room_done = true
-		won_finale = pending_kind == FightKind.FINALE
+		if pending_kind == FightKind.FINALE:
+			outcome = Outcome.COMPLETED
 	else:
 		outcome = Outcome.FAILED
 	pending = null
 	battle = null
-	if won_finale:
-		if layer + 1 < layers:
-			_next_map()
-		else:
-			outcome = Outcome.COMPLETED
 	_bond_over(helps)
 	apply_bonds()
-
-
-## The party moves on to a freshly drawn map, back at full HP as between Slay
-## the Spire's acts. Stress stays.
-func _next_map() -> void:
-	layer += 1
-	map = MissionMap.generate(mission.region, events, rng)
-	room_id = -1
-	visited.clear()
-	room_done = true
-	new_map = true
-	for unit in formation:
-		unit.heal(unit.max_hp)
 
 
 func _queue_fight(encounter: EncounterDef, kind: FightKind) -> void:
@@ -456,8 +427,7 @@ func to_dict() -> Dictionary:
 		states.append({hp = unit.hp, stress = unit.stress, dead = unit.dead, buffs = buffs, tokens = unit.tokens,
 				token_turns = unit.token_turns})
 	return {
-		mission = mission.to_dict(), map = map.to_dict(), layer = layer, new_map = new_map,
-		room_id = room_id, visited = visited, room_done = room_done,
+		mission = mission.to_dict(), map = map.to_dict(), room_id = room_id, visited = visited, room_done = room_done,
 		gold_earned = gold_earned, heirlooms_earned = heirlooms_earned,
 		pending = pending.resource_path if pending else "", pending_kind = pending_kind,
 		states = states, formation = formation.map(func(u: Combatant) -> int: return combatants.find(u)),
@@ -467,8 +437,6 @@ func to_dict() -> Dictionary:
 
 static func from_dict(data: Dictionary, members: Array[HeroRecord], random: RandomNumberGenerator) -> MissionRun:
 	var run := MissionRun.new(Mission.from_dict(data.mission), MissionMap.from_dict(data.map), members, random)
-	run.layer = int(data.get("layer", 0))
-	run.new_map = data.get("new_map", false)
 	run.room_id = int(data.room_id)
 	for id in data.get("visited", []):
 		run.visited.append(int(id))

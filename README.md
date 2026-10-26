@@ -1,6 +1,6 @@
 # Darko Dungo
 
-A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across one to three maps of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
+A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across a map of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
 
 - Design decisions: [docs/design.md](docs/design.md)
 - DD2 combat research: [docs/research/darkest-dungeon-combat.md](docs/research/darkest-dungeon-combat.md)
@@ -97,7 +97,7 @@ Other art, all replaceable:
 - **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
 - **Balance checks:**
-  - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, maps cleared, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size.
+  - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, how far parties get, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size.
   - `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
 
 ## Test it
