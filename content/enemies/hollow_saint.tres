@@ -36,8 +36,8 @@ id = &"wailing_choir"
 display_name = "Wailing Choir"
 launch_ranks = Array[int]([3, 4])
 multi_target = true
-damage_min = 4
-damage_max = 7
+damage_min = 3
+damage_max = 5
 crit_chance = 0.05
 ai_weight = 1.3
 

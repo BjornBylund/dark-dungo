@@ -82,7 +82,7 @@ func test_skills_used_on_allies_are_recorded_as_help() -> void:
 			assert_true(help[0].is_hero and help[1].is_hero, "heroes helping heroes")
 			assert_ne(help[0], help[1], "not themselves")
 		helps += battle.helps.size()
-	assert_true(helps > 0, "the Mender heals someone in ten fights")
+	assert_true(helps > 0, "the Vestal heals someone in ten fights")
 
 
 func test_helping_earns_at_most_one_point_per_pair_per_fight() -> void:

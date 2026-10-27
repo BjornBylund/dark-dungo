@@ -3,97 +3,118 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_k35l2"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_ga4xx"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ejcji"]
-[ext_resource type="Texture2D" path="res://art/skills/mend.svg" id="4_qacnk"]
-[ext_resource type="Texture2D" path="res://art/skills/purge.svg" id="5_a85gm"]
-[ext_resource type="Texture2D" path="res://art/skills/ward.svg" id="6_a1rxl"]
-[ext_resource type="Texture2D" path="res://art/skills/soothe.svg" id="7_h30im"]
-[ext_resource type="Texture2D" path="res://art/skills/hex.svg" id="8_hrv8o"]
+[ext_resource type="Texture2D" path="res://art/skills/divine_grace.svg" id="4_a1rxl"]
+[ext_resource type="Texture2D" path="res://art/skills/divine_comfort.svg" id="5_h30im"]
+[ext_resource type="Texture2D" path="res://art/skills/dazzling_light.svg" id="6_hrv8o"]
+[ext_resource type="Texture2D" path="res://art/skills/judgement.svg" id="7_bcmwp"]
+[ext_resource type="Texture2D" path="res://art/skills/mace_bash.svg" id="8_bxsfd"]
 [ext_resource type="Texture2D" path="res://art/units/mender.png" id="9_sprite"]
+[ext_resource type="Texture2D" path="res://art/skills/illumination.svg" id="9_u8l8g"]
+[ext_resource type="Texture2D" path="res://art/skills/hand_of_light.svg" id="10_x3mc2"]
 
-[sub_resource type="Resource" id="Resource_dmbhf"]
+[sub_resource type="Resource" id="Resource_a1rxl"]
 script = ExtResource("2_ga4xx")
-id = &"mend"
-display_name = "Mend"
-icon = ExtResource("4_qacnk")
+id = &"divine_grace"
+display_name = "Divine Grace"
+icon = ExtResource("4_a1rxl")
 launch_ranks = Array[int]([3, 4])
 side = 1
 heal_min = 4
 heal_max = 6
 
-[sub_resource type="Resource" id="Resource_m2orr"]
-script = ExtResource("3_ejcji")
-kind = 3
-
-[sub_resource type="Resource" id="Resource_8dh43"]
-script = ExtResource("3_ejcji")
-kind = 4
-
-[sub_resource type="Resource" id="Resource_qacnk"]
-script = ExtResource("2_ga4xx")
-id = &"purge"
-display_name = "Purge"
-icon = ExtResource("5_a85gm")
-launch_ranks = Array[int]([2, 3, 4])
-side = 1
-heal_min = 2
-heal_max = 2
-effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_m2orr"), SubResource("Resource_8dh43")])
-
-[sub_resource type="Resource" id="Resource_a85gm"]
-script = ExtResource("3_ejcji")
-token = &"block"
-stacks = 2
-
-[sub_resource type="Resource" id="Resource_a1rxl"]
-script = ExtResource("2_ga4xx")
-id = &"ward"
-display_name = "Ward"
-icon = ExtResource("6_a1rxl")
-launch_ranks = Array[int]([2, 3, 4])
-side = 1
-effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_a85gm")])
-
 [sub_resource type="Resource" id="Resource_h30im"]
 script = ExtResource("2_ga4xx")
-id = &"soothe"
-display_name = "Soothe"
-icon = ExtResource("7_h30im")
-launch_ranks = Array[int]([3, 4])
+id = &"divine_comfort"
+display_name = "Divine Comfort"
+icon = ExtResource("5_h30im")
+launch_ranks = Array[int]([2, 3, 4])
 side = 1
-stress = -2
+multi_target = true
+heal_min = 1
+heal_max = 3
 
 [sub_resource type="Resource" id="Resource_hrv8o"]
 script = ExtResource("3_ejcji")
-kind = 1
-dot = &"blight"
-amount = 2
+token = &"stun"
 
 [sub_resource type="Resource" id="Resource_bcmwp"]
-script = ExtResource("3_ejcji")
-token = &"weak"
+script = ExtResource("2_ga4xx")
+id = &"dazzling_light"
+display_name = "Dazzling Light"
+icon = ExtResource("6_hrv8o")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 1
+damage_max = 2
+crit_chance = 0.08
+effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_hrv8o")])
+cooldown = 1
 
 [sub_resource type="Resource" id="Resource_bxsfd"]
 script = ExtResource("2_ga4xx")
-id = &"hex"
-display_name = "Hex"
-icon = ExtResource("8_hrv8o")
+id = &"mace_bash"
+display_name = "Mace Bash"
+icon = ExtResource("8_bxsfd")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.03
+
+[sub_resource type="Resource" id="Resource_u8l8g"]
+script = ExtResource("2_ga4xx")
+id = &"judgement"
+display_name = "Judgement"
+icon = ExtResource("7_bcmwp")
+launch_ranks = Array[int]([3, 4])
 damage_min = 2
-damage_max = 4
-crit_chance = 0.05
-effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_hrv8o"), SubResource("Resource_bcmwp")])
+damage_max = 5
+crit_chance = 0.08
+self_heal_fraction = 0.1
+
+[sub_resource type="Resource" id="Resource_x3mc2"]
+script = ExtResource("3_ejcji")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_56q00"]
+script = ExtResource("2_ga4xx")
+id = &"illumination"
+display_name = "Illumination"
+icon = ExtResource("9_u8l8g")
+launch_ranks = Array[int]([1, 2, 3])
+damage_min = 1
+damage_max = 2
+effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_x3mc2")])
+
+[sub_resource type="Resource" id="Resource_1fqc8"]
+script = ExtResource("3_ejcji")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_7maly"]
+script = ExtResource("2_ga4xx")
+id = &"hand_of_light"
+display_name = "Hand of Light"
+icon = ExtResource("10_x3mc2")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 2
+damage_max = 3
+crit_chance = 0.04
+self_effects = Array[ExtResource("3_ejcji")]([SubResource("Resource_1fqc8")])
 
 [resource]
 script = ExtResource("1_k35l2")
 id = &"mender"
-display_name = "Mender"
+display_name = "Vestal"
 color = Color(0.7882353, 0.7176471, 0.47843137, 1)
-max_hp = 28
+max_hp = 29
+speed = 4
 corpse_hp = 14
-resist_stun = 0.2
-resist_bleed = 0.2
-resist_blight = 0.4
-resist_burn = 0.2
-resist_move = 0.2
-resist_debuff = 0.4
-skills = Array[ExtResource("2_ga4xx")]([SubResource("Resource_dmbhf"), SubResource("Resource_qacnk"), SubResource("Resource_a1rxl"), SubResource("Resource_h30im"), SubResource("Resource_bxsfd")])
+resist_stun = 0.3
+resist_bleed = 0.4
+resist_blight = 0.3
+resist_burn = 0.3
+resist_move = 0.3
+resist_debuff = 0.3
+skills = Array[ExtResource("2_ga4xx")]([SubResource("Resource_a1rxl"), SubResource("Resource_h30im"), SubResource("Resource_bcmwp"), SubResource("Resource_bxsfd"), SubResource("Resource_u8l8g"), SubResource("Resource_56q00"), SubResource("Resource_7maly")])
 sprite = ExtResource("9_sprite")

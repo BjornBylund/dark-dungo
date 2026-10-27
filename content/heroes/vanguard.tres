@@ -3,96 +3,118 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_h4n3i"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_rnt5r"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_8wp1l"]
-[ext_resource type="Texture2D" path="res://art/skills/shield_bash.svg" id="4_qtnyg"]
-[ext_resource type="Texture2D" path="res://art/skills/cleave.svg" id="5_gynor"]
-[ext_resource type="Texture2D" path="res://art/skills/hold_the_line.svg" id="6_vmjb0"]
-[ext_resource type="Texture2D" path="res://art/skills/shield_ally.svg" id="7_po4ow"]
-[ext_resource type="Texture2D" path="res://art/skills/rally.svg" id="8_4egp0"]
+[ext_resource type="Texture2D" path="res://art/skills/smite.svg" id="4_vmjb0"]
+[ext_resource type="Texture2D" path="res://art/skills/zealous_accusation.svg" id="5_po4ow"]
+[ext_resource type="Texture2D" path="res://art/skills/stunning_blow.svg" id="6_4egp0"]
+[ext_resource type="Texture2D" path="res://art/skills/battle_heal.svg" id="7_r06bm"]
+[ext_resource type="Texture2D" path="res://art/skills/bulwark_of_faith.svg" id="8_xvc06"]
+[ext_resource type="Texture2D" path="res://art/skills/holy_lance.svg" id="9_ek3ud"]
 [ext_resource type="Texture2D" path="res://art/units/vanguard.png" id="9_sprite"]
+[ext_resource type="Texture2D" path="res://art/skills/inspiring_cry.svg" id="10_clhwt"]
 
-[sub_resource type="Resource" id="Resource_rtyp6"]
-script = ExtResource("3_8wp1l")
-token = &"stun"
-
-[sub_resource type="Resource" id="Resource_q45nm"]
+[sub_resource type="Resource" id="Resource_vmjb0"]
 script = ExtResource("2_rnt5r")
-id = &"shield_bash"
-display_name = "Shield Bash"
-icon = ExtResource("4_qtnyg")
+id = &"smite"
+display_name = "Smite"
+icon = ExtResource("4_vmjb0")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2])
-damage_min = 3
-damage_max = 6
+damage_min = 5
+damage_max = 9
 crit_chance = 0.05
-effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_rtyp6")])
 
-[sub_resource type="Resource" id="Resource_qbys7"]
+[sub_resource type="Resource" id="Resource_po4ow"]
 script = ExtResource("2_rnt5r")
-id = &"cleave"
-display_name = "Cleave"
-icon = ExtResource("5_gynor")
+id = &"zealous_accusation"
+display_name = "Zealous Accusation"
+icon = ExtResource("5_po4ow")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2])
 multi_target = true
 damage_min = 3
 damage_max = 5
-crit_chance = 0.05
+crit_chance = 0.01
 
-[sub_resource type="Resource" id="Resource_qtnyg"]
+[sub_resource type="Resource" id="Resource_4egp0"]
 script = ExtResource("3_8wp1l")
-token = &"block_plus"
+token = &"stun"
 
-[sub_resource type="Resource" id="Resource_gynor"]
-script = ExtResource("3_8wp1l")
-token = &"taunt"
-stacks = 2
-
-[sub_resource type="Resource" id="Resource_vmjb0"]
+[sub_resource type="Resource" id="Resource_r06bm"]
 script = ExtResource("2_rnt5r")
-id = &"hold_the_line"
-display_name = "Hold the Line"
-icon = ExtResource("6_vmjb0")
-side = 2
-effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_qtnyg"), SubResource("Resource_gynor")])
+id = &"stunning_blow"
+display_name = "Stunning Blow"
+icon = ExtResource("6_4egp0")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 5
+crit_chance = 0.05
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_4egp0")])
 
-[sub_resource type="Resource" id="Resource_po4ow"]
+[sub_resource type="Resource" id="Resource_xvc06"]
+script = ExtResource("2_rnt5r")
+id = &"holy_lance"
+display_name = "Holy Lance"
+icon = ExtResource("9_ek3ud")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 5
+damage_max = 9
+crit_chance = 0.12
+self_move = 1
+
+[sub_resource type="Resource" id="Resource_ek3ud"]
+script = ExtResource("2_rnt5r")
+id = &"battle_heal"
+display_name = "Battle Heal"
+icon = ExtResource("7_r06bm")
+side = 1
+heal_min = 3
+heal_max = 4
+
+[sub_resource type="Resource" id="Resource_clhwt"]
 script = ExtResource("3_8wp1l")
 token = &"block"
 stacks = 2
 
-[sub_resource type="Resource" id="Resource_4egp0"]
-script = ExtResource("2_rnt5r")
-id = &"shield_ally"
-display_name = "Shield Ally"
-icon = ExtResource("7_po4ow")
-launch_ranks = Array[int]([1, 2])
-side = 1
-can_target_self = false
-effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_po4ow")])
+[sub_resource type="Resource" id="Resource_t2j34"]
+script = ExtResource("3_8wp1l")
+token = &"taunt"
+stacks = 2
 
-[sub_resource type="Resource" id="Resource_r06bm"]
+[sub_resource type="Resource" id="Resource_7vaou"]
 script = ExtResource("2_rnt5r")
-id = &"rally"
-display_name = "Rally"
-icon = ExtResource("8_4egp0")
-side = 1
-multi_target = true
-stress = -1
+id = &"bulwark_of_faith"
+display_name = "Bulwark of Faith"
+icon = ExtResource("8_xvc06")
+launch_ranks = Array[int]([1, 2])
+side = 2
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_clhwt"), SubResource("Resource_t2j34")])
 uses_per_battle = 1
+
+[sub_resource type="Resource" id="Resource_ap6p3"]
+script = ExtResource("2_rnt5r")
+id = &"inspiring_cry"
+display_name = "Inspiring Cry"
+icon = ExtResource("10_clhwt")
+side = 1
+heal_min = 1
+heal_max = 1
+stress = -1
 
 [resource]
 script = ExtResource("1_h4n3i")
 id = &"vanguard"
-display_name = "Vanguard"
+display_name = "Crusader"
 color = Color(0.5411765, 0.56078434, 0.6, 1)
 max_hp = 40
-speed = 2
+speed = 1
 corpse_hp = 22
 resist_stun = 0.4
 resist_bleed = 0.3
 resist_blight = 0.3
 resist_burn = 0.3
-resist_move = 0.5
+resist_move = 0.4
 resist_debuff = 0.3
-skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_q45nm"), SubResource("Resource_qbys7"), SubResource("Resource_vmjb0"), SubResource("Resource_4egp0"), SubResource("Resource_r06bm")])
+skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_vmjb0"), SubResource("Resource_po4ow"), SubResource("Resource_r06bm"), SubResource("Resource_xvc06"), SubResource("Resource_ek3ud"), SubResource("Resource_7vaou"), SubResource("Resource_ap6p3")])
 sprite = ExtResource("9_sprite")

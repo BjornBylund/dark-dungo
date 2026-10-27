@@ -20,20 +20,21 @@ func _cast() -> Array[UnitDef]:
 	return cast
 
 
-func test_cast_has_eight_heroes_with_five_skills_and_art() -> void:
+func test_cast_has_eight_heroes_with_seven_skills_and_art() -> void:
 	var cast := _cast()
 	assert_eq(cast.size(), 8)
 	for hero in cast:
-		assert_eq(hero.skills.size(), 5, hero.display_name)
+		assert_eq(hero.skills.size(), 7, hero.display_name)
 		assert_true(hero.sprite != null, hero.display_name + " sprite")
 		for skill in hero.skills:
 			assert_true(skill.icon != null, "%s/%s icon" % [hero.display_name, skill.id])
 
 
-func test_every_hero_can_act_from_every_rank() -> void:
+func test_every_hero_can_act_from_every_rank_with_the_starting_skills() -> void:
 	for hero in _cast():
+		var starting := hero.skills.slice(0, Rules.SKILL_SLOTS)
 		for rank in range(1, 5):
-			var usable := hero.skills.any(func(skill: SkillDef) -> bool: return rank in skill.launch_ranks)
+			var usable := starting.any(func(skill: SkillDef) -> bool: return rank in skill.launch_ranks)
 			assert_true(usable, "%s from rank %d" % [hero.display_name, rank])
 
 

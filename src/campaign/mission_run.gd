@@ -90,6 +90,18 @@ func enter(id: int) -> String:
 	return ""
 
 
+## Whether the party knows what the room holds: the final room always, and any
+## room that has been one of its next choices (the first column, and every exit
+## of a room it entered). The rest of the map shows only that rooms are there.
+func revealed(room: MapRoom) -> bool:
+	if room.type == MapRoom.Type.FINALE or room.column == 0 or room.id in visited:
+		return true
+	for id in visited:
+		if room.id in map.room(id).exits:
+			return true
+	return false
+
+
 func can_retreat() -> bool:
 	return outcome == Outcome.IN_PROGRESS and room_done
 

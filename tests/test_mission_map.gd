@@ -267,6 +267,18 @@ func test_the_party_starts_in_the_first_column_and_moves_along_exits() -> void:
 	assert_ne(run.enter(run.map.final_room().id), "", "can't skip ahead")
 
 
+func test_rooms_reveal_as_they_become_next_choices() -> void:
+	var run := _run()
+	for room in run.map.rooms:
+		assert_eq(run.revealed(room), room.column == 0 or room.type == MapRoom.Type.FINALE, "at the start")
+	var first := run.next_rooms()[0]
+	run.enter(first.id)
+	_win(run)
+	for room in run.map.rooms:
+		var choice := room.column == 0 or room.type == MapRoom.Type.FINALE or room.id in first.exits
+		assert_eq(run.revealed(room), choice, "room %d" % room.id)
+
+
 func test_fights_pay_the_fight_share_and_elites_double_plus_heirlooms() -> void:
 	var run := _run(_map_of([MapRoom.Type.FIGHT, MapRoom.Type.ELITE]), ["vanguard", "cutthroat", "marksman", "mender"],
 			CampaignRules.Tier.VETERAN)
@@ -355,15 +367,15 @@ func test_a_choice_can_need_a_class_in_the_party() -> void:
 	var without := _run(_map_of([MapRoom.Type.EVENT]), ["vanguard", "cutthroat", "marksman"])
 	without.enter(0)
 	var bless := without.event().choices[2]
-	assert_eq(without.choice_blocked(bless), "Needs the Mender.")
+	assert_eq(without.choice_blocked(bless), "Needs the Vestal.")
 	assert_eq(without.choose(2), {})
 	var with := _run(_map_of([MapRoom.Type.EVENT]))
 	with.enter(0)
-	var mender := with.formation[3]
-	mender.stress = 4
+	var vestal := with.formation[3]
+	vestal.stress = 4
 	with.formation[0].stress = 4
 	with.choose(2)
-	assert_eq(mender.stress, 2, "the chosen hero is the Mender")
+	assert_eq(vestal.stress, 2, "the chosen hero is the Vestal")
 	assert_eq(with.formation[0].stress, 4)
 
 
@@ -459,7 +471,7 @@ func test_choices_describe_what_they_do() -> void:
 	var event := Fixtures.spring_event()
 	assert_eq(run.describe_choice(event.choices[0]), "the party heals 20% HP")
 	assert_eq(run.describe_choice(event.choices[1]), "50%%: +%d gold; otherwise: a fight" % run.mission.fight_gold())
-	assert_eq(run.describe_choice(event.choices[2]), "the Mender -2 stress")
+	assert_eq(run.describe_choice(event.choices[2]), "the Vestal -2 stress")
 
 
 # --- Playing whole maps ---

@@ -38,7 +38,7 @@ static func choice(label: String, success: Array, chance: float = 1.0, failure: 
 
 
 ## An event with one choice of each kind: certain healing, a gamble between
-## gold and a fight, and one only the Mender can take.
+## gold and a fight, and one only the Vestal (mender) can take.
 static func spring_event() -> EventDef:
 	var event := EventDef.new()
 	event.id = &"spring"

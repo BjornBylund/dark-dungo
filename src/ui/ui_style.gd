@@ -273,6 +273,8 @@ static func mission_summary(summary: Dictionary) -> Array:
 		lines.append("%s is wounded and sits out next week." % hero.display_name)
 	if summary.recruit:
 		lines.append("With the region's boss defeated, a new hero will join you in town.")
+	if summary.get("opened", "") != "":
+		lines.append("A new region is open: %s." % summary.opened)
 	if not summary.town.is_empty():
 		lines.append("")
 		lines.append("In town:")
@@ -426,6 +428,8 @@ static func skill_bbcode(skill: SkillDef) -> String:
 		self_parts.append(("Forward %d" if skill.self_move > 0 else "Back %d") % absi(skill.self_move))
 	if skill.self_stress != 0:
 		self_parts.append("Stress %+d" % skill.self_stress)
+	if skill.self_heal_fraction > 0.0:
+		self_parts.append("[color=#%s]Heal %s HP[/color]" % [PALE_GREEN.to_html(false), percent(skill.self_heal_fraction)])
 	if skill.self_damage > 0:
 		self_parts.append("[color=#%s]-%d HP[/color]" % [DAMAGE.to_html(false), skill.self_damage])
 	if skill.kind == SkillDef.Kind.SWAP:
@@ -444,7 +448,22 @@ static func skill_bbcode(skill: SkillDef) -> String:
 				percent(skill.low_hp_bonus)])
 	if skill.multi_target:
 		lines.append("[color=#%s]Hits every target in range[/color]" % PALE_GREEN.to_html(false))
+	var limits := usage_text(skill)
+	if limits != "":
+		lines.append("[color=#%s]%s[/color]" % [GOLD.to_html(false), limits])
 	return "\n".join(lines)
+
+
+## "Cooldown 2 turns, 1 use per battle, only below 40% HP", or "" for a skill with no limits.
+static func usage_text(skill: SkillDef) -> String:
+	var parts: Array[String] = []
+	if skill.cooldown > 0:
+		parts.append("Cooldown %d turn%s" % [skill.cooldown, "" if skill.cooldown == 1 else "s"])
+	if skill.uses_per_battle > 0:
+		parts.append("%d use%s per battle" % [skill.uses_per_battle, "" if skill.uses_per_battle == 1 else "s"])
+	if skill.condition == SkillDef.Condition.SELF_HP_BELOW:
+		parts.append("only below %s HP" % percent(skill.condition_value))
+	return ", ".join(parts)
 
 
 ## Multi-line stat sheet for a unit tooltip.

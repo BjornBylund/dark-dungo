@@ -192,6 +192,8 @@ func skill_cost(hero: HeroRecord, skill: SkillDef) -> int:
 
 
 func can_upgrade_skill(hero: HeroRecord, skill: SkillDef) -> String:
+	if not hero.knows(skill):
+		return "Learn it first."
 	return _can_raise_rank(hero, hero.skill_rank(skill), &"guild", skill_cost(hero, skill))
 
 
@@ -201,6 +203,61 @@ func upgrade_skill(hero: HeroRecord, skill: SkillDef) -> String:
 		gold -= skill_cost(hero, skill)
 		hero.skill_ranks[skill.id] = hero.skill_rank(skill) + 1
 	return reason
+
+
+## Gold to learn a new skill, by the hero's level as with other services.
+func learn_price(hero: HeroRecord) -> int:
+	return roundi(CampaignRules.SKILL_LEARN_PRICE * CampaignRules.service_multiplier(hero.level()))
+
+
+func can_learn(hero: HeroRecord, skill: SkillDef) -> String:
+	if not hero.recruited:
+		return "Not in the roster."
+	if hero.knows(skill):
+		return "Already learned."
+	if gold < learn_price(hero):
+		return "Not enough gold."
+	return ""
+
+
+## Learns the skill at the Guild; it is equipped too while a slot is free.
+func learn(hero: HeroRecord, skill: SkillDef) -> String:
+	var reason := can_learn(hero, skill)
+	if reason == "":
+		gold -= learn_price(hero)
+		hero.known.append(skill.id)
+		if hero.equipped.size() < CampaignRules.SKILL_SLOTS:
+			equip(hero, skill)
+	return reason
+
+
+## Takes a learned skill into fights, if a slot is free. Mid-mission, between
+## fights, the hero's combatant changes too.
+func equip(hero: HeroRecord, skill: SkillDef) -> String:
+	if not hero.knows(skill):
+		return "Learn it first."
+	if hero.is_equipped(skill):
+		return "Already equipped."
+	if hero.equipped.size() >= CampaignRules.SKILL_SLOTS:
+		return "Only %d skills fit. Unequip one first." % CampaignRules.SKILL_SLOTS
+	hero.equipped.append(skill.id)
+	_refit(hero)
+	return ""
+
+
+func unequip(hero: HeroRecord, skill: SkillDef) -> String:
+	if not hero.is_equipped(skill):
+		return "Not equipped."
+	if hero.equipped.size() <= 1:
+		return "A hero needs at least one skill."
+	hero.equipped.erase(skill.id)
+	_refit(hero)
+	return ""
+
+
+func _refit(hero: HeroRecord) -> void:
+	if run and hero in run.party:
+		run.combatants[run.party.find(hero)].skills = hero.equipped_skills()
 
 
 ## Rank r + 1 needs the upgrade line at level r, the hero at the rank's level, and the gold.
@@ -404,14 +461,15 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 ## Settles a finished mission and ends the week. Returns a summary for the
 ## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups,
 ## bonds (level-up lines), wounded, town (the week's report), recruit (a new
-## hero may join)}. Completing pays everything, and counts towards the region's
-## boss; retreating keeps what was earned on the way. Every pair in the party
-## bonds a little, more for completing. Tavern perks for this mission end.
+## hero may join), opened (the name of a region the boss win opened, or "")}.
+## Completing pays everything, and counts towards the region's boss;
+## retreating keeps what was earned on the way. Every pair in the party bonds a
+## little, more for completing. Tavern perks for this mission end.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
 		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
-		bonds = run.new_bonds.duplicate(), recruit = false,
+		bonds = run.new_bonds.duplicate(), recruit = false, opened = "",
 	}
 	var bond_points := CampaignRules.BOND_COMPLETED_POINTS if run.outcome == MissionRun.Outcome.COMPLETED \
 			else CampaignRules.BOND_MISSION_POINTS
@@ -440,7 +498,10 @@ func finish_mission() -> Dictionary:
 				hero.xp += summary.xp
 				if hero.level() > before:
 					summary.level_ups.append(hero)
+			var open_before := open_regions().size()
 			summary.recruit = _region_progresses(mission)
+			if open_regions().size() > open_before:
+				summary.opened = open_regions().back().display_name
 		MissionRun.Outcome.RETREATED:
 			for hero in run.party:
 				hero.stress = mini(hero.stress + CampaignRules.RETREAT_STRESS, Rules.STRESS_MAX)
@@ -536,30 +597,47 @@ func _drink_together(at_bar: Array[HeroRecord]) -> void:
 				bonds.hold_boost(at_bar[i], at_bar[j])
 
 
-## Two missions per region at random unlocked tiers and lengths, but always at
-## least one at the highest unlocked tier and one at Apprentice.
+## Missions in each open region (two, or more while few are open) at random
+## unlocked tiers and lengths, but always at least one at the highest unlocked
+## tier and one at Apprentice.
 func _refresh_board() -> void:
 	board.clear()
 	var tiers := available_tiers()
-	var count := def.regions.size() * CampaignRules.MISSIONS_PER_REGION
+	var regions := open_regions()
+	var per_region := maxi(CampaignRules.MISSIONS_PER_REGION,
+			ceili(float(CampaignRules.MIN_BOARD_MISSIONS) / regions.size()))
+	var count := regions.size() * per_region
 	var forced := {}
 	var highest := rng.randi_range(0, count - 1)
 	forced[highest] = tiers.back()
 	if tiers.back() != CampaignRules.Tier.APPRENTICE:
 		forced[(highest + rng.randi_range(1, count - 1)) % count] = CampaignRules.Tier.APPRENTICE
-	for region in def.regions:
-		for i in CampaignRules.MISSIONS_PER_REGION:
+	for region in regions:
+		for i in per_region:
 			var random_tier: int = tiers[rng.randi_range(0, tiers.size() - 1)]
 			var length := rng.randi_range(0, CampaignRules.LENGTH_NAMES.size() - 1)
 			board.append(_make_mission(forced.get(board.size(), random_tier), length, region))
-	for region in def.regions:
+	for region in regions:
 		if boss_ready(region):
 			var mission := _make_mission(boss_tier(region), CampaignRules.Length.LONG, region)
 			mission.boss = true
 			board.append(mission)
 
 
-# --- Region bosses ---
+# --- Regions and their bosses ---
+
+## Regions open one at a time, in the campaign's order: the first from the
+## start, each next one once the boss before it has fallen.
+func region_open(region: RegionDef) -> bool:
+	var index := def.regions.find(region)
+	return index == 0 or (index > 0 and boss_tier(def.regions[index - 1]) > 0)
+
+
+func open_regions() -> Array[RegionDef]:
+	var result: Array[RegionDef] = []
+	result.assign(def.regions.filter(region_open))
+	return result
+
 
 ## The tier the region's boss comes at next, or 3 once all three are beaten.
 func boss_tier(region: RegionDef) -> int:
@@ -662,6 +740,9 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	else:
 		for mission_data: Dictionary in data.board:
 			campaign.board.append(Mission.from_dict(mission_data))
+		# Saves from before regions opened one by one may offer missions in closed ones.
+		if campaign.board.any(func(m: Mission) -> bool: return m.region and not campaign.region_open(m.region)):
+			campaign._refresh_board()
 	campaign.bonds = Bonds.from_dict(data.get("bonds", {}))
 	if data.run != null:
 		var party: Array[HeroRecord] = []

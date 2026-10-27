@@ -46,7 +46,7 @@ script = ExtResource("1_mbl0s")
 label = "Sing a hymn"
 requires = ExtResource("3_jf0ga")
 success = Array[ExtResource("2_jwa6t")]([SubResource("Resource_3yrp5")])
-success_text = "The Minstrel's voice fills the nave, and the ash settles."
+success_text = "The Jester's voice fills the nave, and the ash settles."
 
 [resource]
 script = ExtResource("4_wykuh")

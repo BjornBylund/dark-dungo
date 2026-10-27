@@ -3,113 +3,138 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_a1ut3"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_phsca"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_ffuty"]
-[ext_resource type="Texture2D" path="res://art/skills/slice.svg" id="4_gyv13"]
-[ext_resource type="Texture2D" path="res://art/skills/twin_strike.svg" id="5_t346e"]
+[ext_resource type="Texture2D" path="res://art/skills/shadow_fade.svg" id="5_hj6tn"]
 [ext_resource type="Texture2D" path="res://art/skills/lunge.svg" id="6_hj6tn"]
-[ext_resource type="Texture2D" path="res://art/skills/fade.svg" id="7_rdd2t"]
-[ext_resource type="Texture2D" path="res://art/skills/hamstring.svg" id="8_3mj6x"]
+[ext_resource type="Texture2D" path="res://art/skills/thrown_dagger.svg" id="6_rdd2t"]
+[ext_resource type="Texture2D" path="res://art/skills/pick_to_the_face.svg" id="7_3mj6x"]
+[ext_resource type="Texture2D" path="res://art/skills/flashing_daggers.svg" id="8_utgjx"]
+[ext_resource type="Texture2D" path="res://art/skills/poison_dart.svg" id="9_qhby1"]
 [ext_resource type="Texture2D" path="res://art/units/cutthroat.png" id="9_sprite"]
+[ext_resource type="Texture2D" path="res://art/skills/toxin_trickery.svg" id="10_fa6hs"]
 
-[sub_resource type="Resource" id="Resource_sxywe"]
-script = ExtResource("3_ffuty")
-kind = 1
-dot = &"bleed"
-amount = 2
-
-[sub_resource type="Resource" id="Resource_kuc48"]
-script = ExtResource("2_phsca")
-id = &"slice"
-display_name = "Slice"
-icon = ExtResource("4_gyv13")
-launch_ranks = Array[int]([1, 2, 3])
-target_ranks = Array[int]([1, 2])
-damage_min = 4
-damage_max = 7
-crit_chance = 0.1
-effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_sxywe")])
-
-[sub_resource type="Resource" id="Resource_nvqkj"]
-script = ExtResource("3_ffuty")
-token = &"combo"
-
-[sub_resource type="Resource" id="Resource_gyv13"]
-script = ExtResource("2_phsca")
-id = &"twin_strike"
-display_name = "Twin Strike"
-icon = ExtResource("5_t346e")
-launch_ranks = Array[int]([1, 2])
-target_ranks = Array[int]([1, 2, 3])
-damage_min = 3
-damage_max = 5
-crit_chance = 0.05
-combo_damage_bonus = 0.5
-effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_nvqkj")])
-
-[sub_resource type="Resource" id="Resource_t346e"]
+[sub_resource type="Resource" id="Resource_hj6tn"]
 script = ExtResource("2_phsca")
 id = &"lunge"
 display_name = "Lunge"
 icon = ExtResource("6_hj6tn")
 launch_ranks = Array[int]([3, 4])
-target_ranks = Array[int]([1, 2])
-damage_min = 5
-damage_max = 8
-crit_chance = 0.05
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 6
+damage_max = 11
+crit_chance = 0.16
 self_move = 2
-
-[sub_resource type="Resource" id="Resource_hj6tn"]
-script = ExtResource("3_ffuty")
-token = &"dodge_plus"
 
 [sub_resource type="Resource" id="Resource_rdd2t"]
 script = ExtResource("3_ffuty")
 token = &"stealth"
-stacks = 2
 
 [sub_resource type="Resource" id="Resource_3mj6x"]
-script = ExtResource("2_phsca")
-id = &"fade"
-display_name = "Fade"
-icon = ExtResource("7_rdd2t")
-side = 2
-effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_hj6tn"), SubResource("Resource_rdd2t")])
-cooldown = 1
+script = ExtResource("3_ffuty")
+token = &"strength"
 
 [sub_resource type="Resource" id="Resource_utgjx"]
 script = ExtResource("3_ffuty")
-kind = 1
-dot = &"bleed"
-amount = 3
+token = &"dodge"
 
 [sub_resource type="Resource" id="Resource_qhby1"]
-script = ExtResource("3_ffuty")
-token = &"vulnerable"
+script = ExtResource("2_phsca")
+id = &"shadow_fade"
+display_name = "Shadow Fade"
+icon = ExtResource("5_hj6tn")
+launch_ranks = Array[int]([1, 2])
+side = 2
+effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_rdd2t"), SubResource("Resource_3mj6x"), SubResource("Resource_utgjx")])
+self_move = -2
+cooldown = 2
 
 [sub_resource type="Resource" id="Resource_fa6hs"]
 script = ExtResource("2_phsca")
-id = &"hamstring"
-display_name = "Hamstring"
-icon = ExtResource("8_3mj6x")
+id = &"thrown_dagger"
+display_name = "Thrown Dagger"
+icon = ExtResource("6_rdd2t")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 4
+damage_max = 7
+crit_chance = 0.16
+combo_damage_bonus = 0.25
+
+[sub_resource type="Resource" id="Resource_u8ukv"]
+script = ExtResource("2_phsca")
+id = &"pick_to_the_face"
+display_name = "Pick to the Face"
+icon = ExtResource("7_3mj6x")
 launch_ranks = Array[int]([1, 2, 3])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 7
+crit_chance = 0.09
+
+[sub_resource type="Resource" id="Resource_6w5a8"]
+script = ExtResource("2_phsca")
+id = &"flashing_daggers"
+display_name = "Flashing Daggers"
+icon = ExtResource("8_utgjx")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([2, 3])
+multi_target = true
+damage_min = 3
+damage_max = 5
+crit_chance = 0.03
+
+[sub_resource type="Resource" id="Resource_hy35a"]
+script = ExtResource("3_ffuty")
+kind = 1
+dot = &"blight"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_sam3a"]
+script = ExtResource("2_phsca")
+id = &"poison_dart"
+display_name = "Poison Dart"
+icon = ExtResource("9_qhby1")
+launch_ranks = Array[int]([2, 3, 4])
 damage_min = 2
 damage_max = 3
-crit_chance = 0.05
-effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_utgjx"), SubResource("Resource_qhby1")])
+crit_chance = 0.16
+effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_hy35a")])
+
+[sub_resource type="Resource" id="Resource_d34c1"]
+script = ExtResource("3_ffuty")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_lhmfi"]
+script = ExtResource("3_ffuty")
+token = &"dodge"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_h62yi"]
+script = ExtResource("3_ffuty")
+token = &"speed"
+
+[sub_resource type="Resource" id="Resource_nl0im"]
+script = ExtResource("2_phsca")
+id = &"toxin_trickery"
+display_name = "Toxin Trickery"
+icon = ExtResource("10_fa6hs")
+side = 2
+effects = Array[ExtResource("3_ffuty")]([SubResource("Resource_d34c1"), SubResource("Resource_lhmfi"), SubResource("Resource_h62yi")])
+uses_per_battle = 1
 
 [resource]
 script = ExtResource("1_a1ut3")
 id = &"cutthroat"
-display_name = "Cutthroat"
+display_name = "Grave Robber"
 color = Color(0.47843137, 0.23137255, 0.23137255, 1)
-max_hp = 32
-speed = 6
+max_hp = 28
+speed = 8
 corpse_hp = 18
 resist_stun = 0.2
 resist_bleed = 0.3
-resist_blight = 0.3
-resist_burn = 0.2
+resist_blight = 0.5
+resist_burn = 0.3
 resist_move = 0.2
 resist_debuff = 0.3
-skills = Array[ExtResource("2_phsca")]([SubResource("Resource_kuc48"), SubResource("Resource_gyv13"), SubResource("Resource_t346e"), SubResource("Resource_3mj6x"), SubResource("Resource_fa6hs")])
+skills = Array[ExtResource("2_phsca")]([SubResource("Resource_hj6tn"), SubResource("Resource_qhby1"), SubResource("Resource_fa6hs"), SubResource("Resource_u8ukv"), SubResource("Resource_6w5a8"), SubResource("Resource_sam3a"), SubResource("Resource_nl0im")])
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_sprite")

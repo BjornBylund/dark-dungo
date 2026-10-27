@@ -1,6 +1,7 @@
 ## A room on the mission map: a dark disc with the room's icon. Rooms the party
 ## can reach next glow gold, the current room carries the party's banner, rooms
-## already passed through are lit, and the rest are dimmed.
+## already passed through are lit, and the rest are dimmed. A room not yet
+## revealed is a blank disc.
 class_name RoomButton
 extends BaseButton
 
@@ -19,12 +20,15 @@ const RING_COLORS := {
 
 var room: MapRoom
 var state := State.AHEAD
+## Not yet revealed: drawn as a blank disc.
+var unknown := false
 var _pulse := 0.0
 
 
-func setup(map_room: MapRoom, room_state: State, tooltip: String) -> void:
+func setup(map_room: MapRoom, room_state: State, tooltip: String, is_unknown: bool = false) -> void:
 	room = map_room
 	state = room_state
+	unknown = is_unknown
 	var side := FINALE_SIZE if room.type == MapRoom.Type.FINALE else SIZE
 	custom_minimum_size = Vector2(side, side)
 	size = custom_minimum_size
@@ -54,6 +58,10 @@ func _draw() -> void:
 		var glow := 0.35 + 0.25 * sin(_pulse)
 		draw_circle(middle, radius + 9.0, Color(UiStyle.GOLD, glow * (1.4 if is_hovered() else 1.0)))
 	draw_circle(middle, radius, Color("1a1416") if lit else Color("110d0e"))
+	if unknown:
+		draw_arc(middle, radius, 0.0, TAU, 40, Color("4a3e34", 0.7), 3.0, true)
+		draw_circle(middle, 4.0, Color("4a3e34"))
+		return
 	var ring: Color = RING_COLORS[room.type]
 	draw_arc(middle, radius, 0.0, TAU, 40, ring if lit else Color(ring, 0.45), 4.0 if state == State.REACHABLE else 3.0, true)
 	var icon: Texture2D = ICONS[room.type]

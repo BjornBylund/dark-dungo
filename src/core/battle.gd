@@ -131,7 +131,7 @@ func turn_order() -> Array[Combatant]:
 ## Every action the unit could take this turn, usable or not.
 func actions_for(unit: Combatant) -> Array[SkillDef]:
 	var actions: Array[SkillDef] = []
-	actions.assign(unit.def.skills)
+	actions.assign(unit.skills)
 	if unit.is_hero:
 		actions.append(BasicSkills.swap)
 		if can_use(unit, BasicSkills.recover):
@@ -338,7 +338,7 @@ func _enemy_act(unit: Combatant) -> void:
 	# Nothing usable: step towards the nearest rank some skill launches from.
 	var rank := rank_of(unit)
 	var nearest := 0
-	for skill in unit.def.skills:
+	for skill in unit.skills:
 		for launch in skill.launch_ranks:
 			if nearest == 0 or absi(launch - rank) < absi(nearest - rank):
 				nearest = launch
@@ -442,6 +442,8 @@ func _resolve(actor: Combatant, skill: SkillDef, primary: Combatant, is_riposte:
 			_move(actor, skill.self_move)
 		if skill.self_stress != 0:
 			_add_stress(actor, skill.self_stress)
+		if skill.self_heal_fraction > 0.0:
+			_heal(actor, roundi(skill.self_heal_fraction * actor.max_hp), false)
 		_hurt_self(actor, skill.self_damage)
 	if crit and hit_living:
 		_crit_stress(actor, crit_victims)

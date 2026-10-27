@@ -12,6 +12,11 @@ var weapon_rank := 1
 var armor_rank := 1
 ## Skill id -> rank 2-5. Skills not listed are rank 1.
 var skill_ranks: Dictionary[StringName, int] = {}
+## Skill ids the hero has learned, as in DD1: their class's first
+## CampaignRules.SKILL_SLOTS to start with, the rest at the Guild.
+var known: Array[StringName] = []
+## The learned skills taken into fights, at most SKILL_SLOTS, in the order chosen.
+var equipped: Array[StringName] = []
 ## Sits out this week's mission after being defeated.
 var wounded := false
 ## The Abbey or Tavern activity (CampaignRules.ACTIVITIES) the hero spends this
@@ -29,6 +34,7 @@ var display_name: String:
 
 func _init(unit_def: UnitDef) -> void:
 	def = unit_def
+	_start_with_first_skills()
 
 
 func level() -> int:
@@ -37,6 +43,31 @@ func level() -> int:
 
 func skill_rank(skill: SkillDef) -> int:
 	return skill_ranks.get(skill.id, 1)
+
+
+func knows(skill: SkillDef) -> bool:
+	return skill.id in known
+
+
+func is_equipped(skill: SkillDef) -> bool:
+	return skill.id in equipped
+
+
+## The equipped skills, in the order chosen.
+func equipped_skills() -> Array[SkillDef]:
+	var result: Array[SkillDef] = []
+	for id in equipped:
+		for skill in def.skills:
+			if skill.id == id:
+				result.append(skill)
+	return result
+
+
+func _start_with_first_skills() -> void:
+	known.clear()
+	for skill in def.skills.slice(0, CampaignRules.SKILL_SLOTS):
+		known.append(skill.id)
+	equipped = known.duplicate()
 
 
 ## Recruited, not wounded, and not busy in town.
@@ -52,8 +83,9 @@ func is_busy() -> bool:
 func to_dict() -> Dictionary:
 	return {
 		def = def.resource_path, recruited = recruited, xp = xp, stress = stress,
-		weapon_rank = weapon_rank, armor_rank = armor_rank, skill_ranks = skill_ranks,
-		wounded = wounded, activity = activity, away_weeks = away_weeks, next_mission = next_mission,
+		weapon_rank = weapon_rank, armor_rank = armor_rank, skill_ranks = skill_ranks, known = known,
+		equipped = equipped, wounded = wounded, activity = activity, away_weeks = away_weeks,
+		next_mission = next_mission,
 	}
 
 
@@ -66,6 +98,22 @@ static func from_dict(data: Dictionary) -> HeroRecord:
 	record.armor_rank = int(data.armor_rank)
 	for id: String in data.skill_ranks:
 		record.skill_ranks[StringName(id)] = int(data.skill_ranks[id])
+	# Only skills the class still has; saves from before loadouts keep the
+	# starting four, plus any skill they had already trained.
+	var skill_ids := record.def.skills.map(func(skill: SkillDef) -> StringName: return skill.id)
+	for id: String in data.get("known", []):
+		if StringName(id) in skill_ids and StringName(id) not in record.known:
+			record.known.append(StringName(id))
+	for id: StringName in record.skill_ranks:
+		if id in skill_ids and id not in record.known:
+			record.known.append(id)
+	if data.has("equipped"):
+		record.equipped.clear()
+		for id: String in data.equipped:
+			if StringName(id) in record.known:
+				record.equipped.append(StringName(id))
+	if record.equipped.is_empty():
+		record.equipped = record.known.slice(0, CampaignRules.SKILL_SLOTS)
 	record.wounded = data.wounded
 	if data.has("abbey_activity"):
 		# Saves from before the Tavern kept an Abbey activity index.

@@ -72,6 +72,9 @@ const RECOVER_COOLDOWN := 3
 # After a won battle heroes are healed up to at least this fraction of max HP.
 const BATTLE_END_MIN_HP := 0.2
 
+## Skills a hero takes into a fight, as in DD1. Without a chosen loadout, the first ones.
+const SKILL_SLOTS := 4
+
 # Skill ranks 2-5 (Guild upgrades): each rank above 1 adds these.
 const SKILL_RANK_POWER := 0.1   # damage or healing
 const SKILL_RANK_CRIT := 0.01

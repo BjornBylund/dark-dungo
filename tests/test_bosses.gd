@@ -1,5 +1,6 @@
 ## Region bosses: missions completed in a region open its boss mission, the
-## first win lets a new hero join, and the boss returns a tier harder.
+## first win lets a new hero join and opens the next region, and the boss
+## returns a tier harder.
 extends TestCase
 
 
@@ -12,6 +13,15 @@ func _def() -> CampaignDef:
 	var region := Fixtures.region(&"first", ["wave_1", "wave_2"], ["brute_and_bones"], ["wave_3"])
 	region.boss = load("res://content/encounters/the_glutton.tres")
 	def.regions.assign([region])
+	return def
+
+
+## The fixture region and a second one behind it.
+func _two_regions() -> CampaignDef:
+	var def := _def()
+	var second := Fixtures.region(&"second", ["wave_1", "wave_2"], ["brute_and_bones"], ["wave_3"])
+	second.boss = load("res://content/encounters/the_glutton.tres")
+	def.regions.append(second)
 	return def
 
 
@@ -100,6 +110,36 @@ func test_the_boss_returns_a_tier_harder_without_another_recruit() -> void:
 	campaign.region_progress[region.id] = CampaignRules.BOSS_UNLOCK_MISSIONS
 	campaign._refresh_board()
 	assert_eq(_boss_on_board(campaign), null, "no boss after the Champion one")
+
+
+func test_only_the_first_region_is_open_until_its_boss_falls() -> void:
+	var campaign := Campaign.create(_two_regions(), 7)
+	var first := campaign.def.regions[0]
+	var second := campaign.def.regions[1]
+	assert_true(campaign.region_open(first))
+	assert_false(campaign.region_open(second))
+	assert_true(campaign.board.all(func(m: Mission) -> bool: return m.region == first))
+	assert_eq(campaign.board.size(), CampaignRules.MIN_BOARD_MISSIONS, "the first region alone offers more")
+	campaign.region_progress[first.id] = CampaignRules.BOSS_UNLOCK_MISSIONS
+	campaign._refresh_board()
+	var summary := _finish(campaign, _boss_on_board(campaign))
+	assert_eq(summary.opened, second.display_name)
+	assert_true(campaign.region_open(second))
+	for region in campaign.def.regions:
+		assert_eq(campaign.board.filter(func(m: Mission) -> bool: return m.region == region).size(),
+				CampaignRules.MISSIONS_PER_REGION, region.id)
+	campaign.region_progress[first.id] = CampaignRules.BOSS_UNLOCK_MISSIONS
+	campaign._refresh_board()
+	assert_eq(_finish(campaign, _boss_on_board(campaign)).opened, "", "only the first win opens a region")
+
+
+func test_saves_offering_missions_in_closed_regions_get_a_new_board() -> void:
+	var campaign := Campaign.create(load("res://content/campaign.tres"), 8)
+	var regions := campaign.def.regions
+	campaign.board.append(campaign._make_mission(CampaignRules.Tier.APPRENTICE, CampaignRules.Length.SHORT, regions[2]))
+	var loaded := Campaign.from_dict(JSON.parse_string(JSON.stringify(campaign.to_dict())), campaign.def)
+	assert_false(loaded.board.is_empty())
+	assert_true(loaded.board.all(func(m: Mission) -> bool: return m.region == regions[0]))
 
 
 func test_no_recruit_when_everyone_has_joined() -> void:

@@ -720,6 +720,8 @@ func _show_damage(view: UnitView, event: Dictionary) -> void:
 	if cause != &"hit":
 		_float(view, "%s %d" % [UiStyle.icon_bbcode(cause, 36), event.amount], UiStyle.DOT_COLORS.get(cause, UiStyle.DAMAGE), 44)
 		return
+	if _in_closeup and view in _closeup_views and view.unit.is_active():
+		view.pose = Poses.hurt(view.unit.def)
 	var crit: bool = event.get("crit", false)
 	var unblocked: int = maxi(1, roundi(event.base * event.attack_mod * (Rules.WEAK_MULTIPLIER if event.weak else 1.0)))
 	var number := "%d" % event.amount
@@ -770,9 +772,10 @@ func _start_closeup(event: Dictionary) -> void:
 			tween.tween_property(view, "modulate:a", 1.0, time)
 			tween.tween_property(view, "scale", Vector2.ONE * scale_factor, time)
 			tween.tween_property(view, "position", Vector2(x - view.feet.x, GROUND_Y - view.feet.y), time)
-	# The attacker lunges towards its targets.
+	# The attacker takes the skill's attack pose and lunges towards its targets.
 	var actor: UnitView = _views.get(event.uid)
 	if actor:
+		actor.pose = Poses.attack(actor.unit.def, event.skill)
 		var lunge := 60.0 if actor.unit.is_hero else -60.0
 		var tween := actor.create_tween()
 		tween.tween_interval(time)
@@ -792,6 +795,7 @@ func _end_closeup() -> void:
 	var time := 0.2 / _speed
 	for view: UnitView in _views.values():
 		view.closeup = false
+		view.pose = null
 		view.queue_redraw()
 		var tween := view.create_tween().set_parallel()
 		tween.tween_property(view, "scale", Vector2.ONE, time)

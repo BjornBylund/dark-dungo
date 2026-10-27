@@ -302,30 +302,58 @@ func _build_guild() -> void:
 		right.add_child(_label("Choose a hero.", 18, UiStyle.TEXT_DIM))
 	else:
 		var hero := _selected
-		right.add_child(_label("Each rank: +10% damage or healing, +1% crit, +10% resistance pierce.", 16,
-				UiStyle.TEXT_DIM))
+		var intro := _label("Learn new skills, train them (each rank: +10% damage or healing, +1% crit, +10% resistance"
+				+ " pierce), and choose the %d a hero takes into fights." % CampaignRules.SKILL_SLOTS, 16, UiStyle.TEXT_DIM)
+		intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		right.add_child(intro)
+		right.add_child(_label("Equipped %d / %d" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 18, UiStyle.GOLD))
 		for skill in hero.def.skills:
-			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", 14)
-			var icon := TextureRect.new()
-			icon.texture = UiStyle.skill_icon(skill)
-			icon.custom_minimum_size = Vector2(52, 52)
-			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(icon)
-			var skill_label := _label("%s   rank %d/5" % [skill.display_name, hero.skill_rank(skill)], 19)
-			skill_label.custom_minimum_size = Vector2(300, 0)
-			row.add_child(skill_label)
-			var cost := campaign.skill_cost(hero, skill)
-			var reason := campaign.can_upgrade_skill(hero, skill)
-			if cost > 0:
-				var button := _action("Train  %s gold" % UiStyle.gold_text(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
-				button.disabled = reason != ""
-				button.tooltip_text = reason
-				row.add_child(button)
-				if reason != "":
-					row.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
-			right.add_child(row)
+			right.add_child(_skill_row(hero, skill, true))
+
+
+## A skill's icon, name and rank with the buttons that apply: learn it, train
+## it (at the Guild), and equip or unequip it.
+func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
+	var campaign := _campaign()
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 12)
+	var icon := TextureRect.new()
+	icon.texture = UiStyle.skill_icon(skill)
+	icon.custom_minimum_size = Vector2(48, 48)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.tooltip_text = skill.display_name
+	if not hero.knows(skill):
+		icon.modulate = Color(0.45, 0.45, 0.45)
+	row.add_child(icon)
+	var state := "rank %d/5" % hero.skill_rank(skill) if hero.knows(skill) else "not learned"
+	var title := _label("%s   %s%s" % [skill.display_name, state, "   EQUIPPED" if hero.is_equipped(skill) else ""], 18,
+			UiStyle.GOLD if hero.is_equipped(skill) else (UiStyle.TEXT if hero.knows(skill) else UiStyle.TEXT_DIM))
+	title.custom_minimum_size = Vector2(340, 0)
+	row.add_child(title)
+	if not hero.knows(skill):
+		if at_guild:
+			var learn := _action("Learn  %s gold" % UiStyle.gold_text(campaign.learn_price(hero)),
+					func() -> void: _after(campaign.learn(hero, skill)))
+			learn.disabled = campaign.can_learn(hero, skill) != ""
+			learn.tooltip_text = campaign.can_learn(hero, skill)
+			row.add_child(learn)
+		return row
+	if hero.is_equipped(skill):
+		row.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill))))
+	else:
+		var equip := _action("Equip", func() -> void: _after(campaign.equip(hero, skill)))
+		equip.disabled = hero.equipped.size() >= CampaignRules.SKILL_SLOTS
+		row.add_child(equip)
+	var cost := campaign.skill_cost(hero, skill)
+	if at_guild and cost > 0:
+		var reason := campaign.can_upgrade_skill(hero, skill)
+		var train := _action("Train  %s gold" % UiStyle.gold_text(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
+		train.disabled = reason != ""
+		row.add_child(train)
+		if reason != "":
+			row.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
+	return row
 
 
 ## The Abbey or the Tavern: its activities with who is there, a Send button
@@ -502,16 +530,11 @@ func _build_hero_sheet() -> void:
 	info.add_child(_label("Bonds", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	for line in _bond_lines(hero):
 		info.add_child(_label(line, 18))
-	info.add_child(_label("Skills", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	info.add_child(_label("Skills   %d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 24,
+			UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	for skill in hero.def.skills:
-		var skill_row := HBoxContainer.new()
-		var icon := TextureRect.new()
-		icon.texture = UiStyle.skill_icon(skill)
-		icon.custom_minimum_size = Vector2(40, 40)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		skill_row.add_child(icon)
-		skill_row.add_child(_label("  %s, rank %d" % [skill.display_name, hero.skill_rank(skill)], 18))
-		info.add_child(skill_row)
+		info.add_child(_skill_row(hero, skill, false))
+	info.add_child(_label("Learn and train skills at the Guild.", 16, UiStyle.TEXT_DIM))
 
 
 ## "Mender: Friendly, 7 / 12" for each hero this one has bonded with, closest first.

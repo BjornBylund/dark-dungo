@@ -17,6 +17,8 @@ static var _next_uid := 1
 var uid: int
 var def: UnitDef
 var is_hero: bool
+## The skills this unit fights with: its def's, or for a hero the ones equipped.
+var skills: Array[SkillDef] = []
 var hp: int
 var stress := 0
 ## Token id -> stacks.
@@ -74,6 +76,7 @@ func _init(unit_def: UnitDef, hero: bool) -> void:
 	_next_uid += 1
 	def = unit_def
 	is_hero = hero
+	skills.assign(unit_def.skills.slice(0, Rules.SKILL_SLOTS) if hero else unit_def.skills)
 	hp = unit_def.max_hp
 	death_armor = unit_def.death_armor
 

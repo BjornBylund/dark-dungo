@@ -38,6 +38,9 @@ var _overlay: Control
 var _panel_title: Label
 var _panel_text: Label
 var _panel_buttons: VBoxContainer
+## Extra content a panel may show between its text and buttons, like loadouts.
+var _panel_extra: VBoxContainer
+var _skills_button: Button
 ## Run with `-- --autoplay` to let the map play itself.
 var _autoplay := "--autoplay" in OS.get_cmdline_user_args()
 
@@ -108,7 +111,8 @@ func _refresh() -> void:
 		elif room.column <= furthest:
 			state = RoomButton.State.PASSED_BY
 		var button := RoomButton.new()
-		button.setup(room, state, _describe(room))
+		var known := run.revealed(room)
+		button.setup(room, state, _describe(room) if known else "Unknown", not known)
 		var grow := _room_scale()
 		button.scale = Vector2(grow, grow)
 		button.position = _room_center(room) - button.size * grow / 2.0
@@ -265,6 +269,9 @@ func _choose(index: int) -> void:
 func _show_panel(title: String, text: String, buttons: Array) -> void:
 	_panel_title.text = title
 	_panel_text.text = text
+	for child in _panel_extra.get_children():
+		_panel_extra.remove_child(child)
+		child.queue_free()
 	for child in _panel_buttons.get_children():
 		child.queue_free()
 	for entry: Array in buttons:
@@ -318,6 +325,36 @@ func _refresh_party() -> void:
 	_retreat.visible = run.can_retreat()
 	_retreat.text = "Retreat? +%d stress each. %s again" % [CampaignRules.RETREAT_STRESS,
 			"Tap" if Device.touch else "Click"] if _confirm_retreat else "Retreat"
+	_skills_button.visible = run.can_retreat()
+
+
+## Between rooms, each hero's learned skills as toggles: up to SKILL_SLOTS are
+## taken into the next fight.
+func _open_loadouts() -> void:
+	var run := _run()
+	_show_panel("Skills", "Choose up to %d skills for each hero. They apply from the next fight."
+			% CampaignRules.SKILL_SLOTS, [["Done", _close_panel]])
+	for unit in run.formation:
+		var hero := run.record_of(unit)
+		_panel_extra.add_child(_label("%s   %d / %d" % [hero.display_name, hero.equipped.size(), CampaignRules.SKILL_SLOTS],
+				22, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 8)
+		row.add_theme_constant_override("v_separation", 8)
+		for skill in hero.def.skills:
+			if not hero.knows(skill):
+				continue
+			var toggle := _action(skill.display_name, func() -> void:
+				if hero.is_equipped(skill):
+					Game.campaign.unequip(hero, skill)
+				else:
+					Game.campaign.equip(hero, skill)
+				_open_loadouts())
+			toggle.toggle_mode = true
+			toggle.button_pressed = hero.is_equipped(skill)
+			toggle.disabled = not hero.is_equipped(skill) and hero.equipped.size() >= CampaignRules.SKILL_SLOTS
+			row.add_child(toggle)
+		_panel_extra.add_child(row)
 
 
 func _on_retreat() -> void:
@@ -466,6 +503,10 @@ func _build() -> void:
 	_retreat.custom_minimum_size = Vector2(0, 48) if Device.phone else Vector2(300, 48)
 	_retreat.size_flags_horizontal = Control.SIZE_FILL if Device.phone else Control.SIZE_SHRINK_BEGIN
 	side.add_child(_retreat)
+	_skills_button = _action("Skills", _open_loadouts)
+	_skills_button.custom_minimum_size = _retreat.custom_minimum_size
+	_skills_button.size_flags_horizontal = _retreat.size_flags_horizontal
+	side.add_child(_skills_button)
 
 	# The room panel over the map.
 	_overlay = Control.new()
@@ -493,6 +534,9 @@ func _build() -> void:
 	_panel_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel_text.custom_minimum_size = Vector2(716 if Device.phone else 756, 0)
 	box.add_child(_panel_text)
+	_panel_extra = VBoxContainer.new()
+	_panel_extra.add_theme_constant_override("separation", 8)
+	box.add_child(_panel_extra)
 	_panel_buttons = VBoxContainer.new()
 	_panel_buttons.add_theme_constant_override("separation", 10)
 	box.add_child(_panel_buttons)

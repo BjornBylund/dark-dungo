@@ -108,7 +108,9 @@ func _refresh_map() -> void:
 				_mission = marker.mission
 				_refresh())
 			_map.add_child(marker)
-		var name_label := _label(region.display_name, roundi(30 * grow), UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+		var open := _campaign().region_open(region)
+		var name_label := _label(region.display_name, roundi(30 * grow), UiStyle.GOLD if open else UiStyle.TEXT_DIM,
+				UiStyle.DISPLAY_FONT)
 		name_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		name_label.add_theme_constant_override("outline_size", roundi(10 * grow))
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -116,7 +118,8 @@ func _refresh_map() -> void:
 		name_label.position = spot + Vector2(-160 * grow, marker_size.y / 2.0 + 4)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(name_label)
-		var progress := _label(_boss_progress(region), roundi(18 * grow), UiStyle.TEXT, UiStyle.DISPLAY_FONT)
+		var progress := _label(_boss_progress(region), roundi(18 * grow), UiStyle.TEXT if open else UiStyle.TEXT_DIM,
+				UiStyle.DISPLAY_FONT)
 		progress.add_theme_color_override("font_outline_color", Color.BLACK)
 		progress.add_theme_constant_override("outline_size", roundi(8 * grow))
 		progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -126,9 +129,13 @@ func _refresh_map() -> void:
 		_map.add_child(progress)
 
 
-## How close the region's next boss is, like DD1's region progress.
+## How close the region's next boss is, like DD1's region progress, or what
+## opens the region.
 func _boss_progress(region: RegionDef) -> String:
 	var campaign := _campaign()
+	if not campaign.region_open(region):
+		var before := campaign.def.regions[campaign.def.regions.find(region) - 1]
+		return "Opens when %s falls" % before.boss.display_name if before.boss else "Closed"
 	if region.boss == null or campaign.boss_tier(region) >= CampaignRules.TIER_NAMES.size():
 		return "Conquered"
 	if campaign.boss_ready(region):

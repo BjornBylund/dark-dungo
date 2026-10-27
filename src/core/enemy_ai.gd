@@ -8,7 +8,7 @@ extends RefCounted
 ## Returns {skill: SkillDef, target: Combatant}, or {} when nothing is usable.
 static func choose(battle: Battle, unit: Combatant) -> Dictionary:
 	var usable: Array[SkillDef] = []
-	for skill in unit.def.skills:
+	for skill in unit.skills:
 		if battle.can_use(unit, skill):
 			usable.append(skill)
 	if usable.is_empty():

@@ -18,12 +18,14 @@ func _all_units() -> Array[UnitDef]:
 	return units
 
 
-func test_sandbox_has_four_heroes_with_five_skills_and_three_waves() -> void:
+func test_sandbox_has_four_heroes_with_their_first_skills_and_three_waves() -> void:
 	var sandbox := _sandbox()
 	assert_eq(sandbox.party.size(), 4)
 	assert_eq(sandbox.waves.size(), 3)
-	for hero in sandbox.party:
-		assert_eq(hero.skills.size(), 5, hero.display_name)
+	var run := SandboxRun.new(sandbox, 1)
+	var battle := run.start_next_wave()
+	for hero in battle.heroes:
+		assert_eq(hero.skills, hero.def.skills.slice(0, Rules.SKILL_SLOTS), hero.display_name)
 
 
 func test_waves_fit_in_four_ranks() -> void:
@@ -58,5 +60,5 @@ func test_every_unit_can_act_from_its_starting_rank() -> void:
 		run.wave_index = sandbox.waves.find(wave) - 1
 		var battle := run.start_next_wave()
 		for unit in battle.all_units():
-			var usable := unit.def.skills.any(func(skill: SkillDef) -> bool: return battle.can_use(unit, skill))
+			var usable := unit.skills.any(func(skill: SkillDef) -> bool: return battle.can_use(unit, skill))
 			assert_true(usable, "%s in %s" % [unit.display_name, wave.display_name])

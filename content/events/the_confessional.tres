@@ -39,7 +39,7 @@ script = ExtResource("1_4pw7y")
 label = "Scourge yourself"
 requires = ExtResource("3_o11u5")
 success = Array[ExtResource("2_t0ukr")]([SubResource("Resource_kaob3"), SubResource("Resource_1xxjs")])
-success_text = "The Penitent bleeds for all of you."
+success_text = "The Flagellant bleeds for all of you."
 
 [sub_resource type="Resource" id="Resource_pcjeb"]
 script = ExtResource("2_t0ukr")

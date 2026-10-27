@@ -14,6 +14,7 @@ static func hero_combatant(record: HeroRecord) -> Combatant:
 	unit.speed_bonus = weapon_speed_bonus(record.weapon_rank) + roundi(record.next_mission.get(&"speed", 0.0))
 	unit.resist_bonus = CampaignRules.LEVEL_RESIST_BONUS * record.level()
 	unit.skill_ranks = record.skill_ranks.duplicate()
+	unit.skills = record.equipped_skills()
 	unit.stress = record.stress
 	return unit
 

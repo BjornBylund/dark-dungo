@@ -11,6 +11,9 @@ const LENGTH_NAMES := ["Short", "Medium", "Long"]
 
 const STARTING_GOLD := 5000
 const MISSIONS_PER_REGION := 2
+## Regular missions on the board at least, so the first region alone still
+## offers a choice: it gets 4 while it's the only one open.
+const MIN_BOARD_MISSIONS := 4
 ## Missions completed in a region before its boss mission appears (again, a
 ## tier harder, after each win), as with DD1's region progress.
 const BOSS_UNLOCK_MISSIONS := 3
@@ -82,6 +85,11 @@ const BOND_RESOLUTE := 0.15
 ## On reaching a new level: stress off both heroes, and a damage bonus for the rest of the mission.
 const BOND_BOOST_STRESS := 2
 const BOND_BOOST_DAMAGE := 0.1
+
+# Skills, as in DD1: a hero takes this many into a fight, from the ones learned.
+const SKILL_SLOTS := Rules.SKILL_SLOTS
+## Gold to learn another skill at the Guild, times the service multiplier by level.
+const SKILL_LEARN_PRICE := 500
 
 # Weapon, armour and skill ranks 2-5, indexed [rank - 2].
 const MAX_RANK := 5

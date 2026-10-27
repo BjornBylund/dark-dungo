@@ -3,13 +3,17 @@
 class_name AutoPlayer
 extends RefCounted
 
+## Past this round heroes stop healing and fight, so a heal that matches the
+## enemy's hits can't drag a fight on forever.
+const HEAL_UNTIL_ROUND := 20
+
 
 ## Heal the badly hurt, calm the badly stressed, otherwise hit hardest on the weakest foe.
 static func sensible(battle: Battle) -> Array:
 	var actor := battle.current
 	var usable := _usable(battle)
 	for skill in usable:
-		if skill.heals() and skill.side == SkillDef.TargetSide.ALLY:
+		if skill.heals() and skill.side == SkillDef.TargetSide.ALLY and battle.round_number <= HEAL_UNTIL_ROUND:
 			var hurt := battle.targets_for(actor, skill).filter(func(h: Combatant) -> bool: return h.hp_fraction() < 0.5)
 			if not hurt.is_empty():
 				hurt.sort_custom(func(a: Combatant, b: Combatant) -> bool: return a.hp_fraction() < b.hp_fraction())

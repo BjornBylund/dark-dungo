@@ -36,6 +36,12 @@ var focused := false
 var consumed_tokens: Array[StringName] = []
 ## In a close-up the status stack and markers are hidden.
 var closeup := false
+## Drawn instead of the unit's sprite during a close-up: its attack pose for the
+## skill in use, or its hurt pose once hit (see Poses). Null for the usual sprite.
+var pose: Texture2D:
+	set(value):
+		pose = value
+		queue_redraw()
 var _pulse := 0.0
 
 var feet: Vector2:
@@ -133,7 +139,7 @@ func _fit_box() -> Vector2:
 func _figure_rect() -> Rect2:
 	if corpse_shown:
 		return Rect2(feet.x - size.x * 0.35, feet.y - 50, size.x * 0.7, 70)
-	var texture := unit.def.sprite
+	var texture := _sprite()
 	var fit := _fit_box()
 	var drawn: Vector2
 	if texture:
@@ -142,6 +148,11 @@ func _figure_rect() -> Rect2:
 	else:
 		drawn = Vector2(fit.x * 0.6, fit.y * 0.9)
 	return Rect2(feet.x - drawn.x / 2.0, feet.y - drawn.y, drawn.x, drawn.y)
+
+
+## The pose if one is set, otherwise the unit's sprite (null without art).
+func _sprite() -> Texture2D:
+	return pose if pose else unit.def.sprite
 
 
 func _figure_height() -> float:
@@ -188,7 +199,7 @@ func _draw_figure(figure: Rect2) -> void:
 		corpse.set_corner_radius_all(18)
 		draw_style_box(corpse, figure)
 		return
-	var texture := unit.def.sprite
+	var texture := _sprite()
 	var tint := Color(1.0, 0.7, 0.7) if deaths_door_shown else Color.WHITE
 	if texture:
 		var rect := figure

@@ -48,6 +48,8 @@ enum TargetPreference { RANDOM, LOWEST_HP, HIGHEST_STRESS, HAS_COMBO }
 @export var heal_max: int = 0
 ## Heal as a fraction of the target's max HP, added to the rolled heal.
 @export var heal_fraction: float = 0.0
+## The user heals this fraction of their own max HP after using the skill.
+@export var self_heal_fraction: float = 0.0
 ## Stress given to each target; negative values relieve stress.
 @export var stress: int = 0
 @export var self_stress: int = 0

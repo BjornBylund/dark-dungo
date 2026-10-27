@@ -21,7 +21,7 @@ script = ExtResource("1_ww0en")
 label = "Tend him"
 requires = ExtResource("3_x4mst")
 success = Array[ExtResource("2_kkx2m")]([SubResource("Resource_b3mx6"), SubResource("Resource_ji3gi")])
-success_text = "The bleeding slows. He presses a signet into the Mender's palm before the fever takes his words."
+success_text = "The bleeding slows. He presses a signet into the Vestal's palm before the fever takes his words."
 
 [sub_resource type="Resource" id="Resource_w103l"]
 script = ExtResource("2_kkx2m")

@@ -75,7 +75,7 @@ func _get_tooltip(at_position: Vector2) -> String:
 	var index := _icon_at(at_position)
 	if index < 0:
 		return ""
-	var skill := hero.def.skills[index]
+	var skill := _skills()[index]
 	var ranks := ", ".join(skill.launch_ranks.map(func(r: int) -> String: return str(r)))
 	return "%s\nUsable from rank %s" % [skill.display_name, ranks]
 
@@ -122,8 +122,8 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, note_color if note != "" else UiStyle.TEXT_DIM)
 	var usable := 0
 	var attacks := 0
-	for i in hero.def.skills.size():
-		var skill := hero.def.skills[i]
+	for i in _skills().size():
+		var skill := _skills()[i]
 		var here := rank in skill.launch_ranks
 		usable += int(here)
 		attacks += int(here and skill.is_attack())
@@ -133,7 +133,7 @@ func _draw() -> void:
 			draw_texture_rect(icon, icon_rect, false, Color.WHITE if here else Color(0.35, 0.35, 0.35, 0.7))
 		draw_rect(icon_rect, UiStyle.GOLD if here else Color("3a3430"), false, 1.0)
 		_draw_pips(skill, Vector2(icon_rect.get_center().x, icon_rect.end.y + 9.0))
-	var summary := "%d of %d skills usable" % [usable, hero.def.skills.size()]
+	var summary := "%d of %d skills usable" % [usable, _skills().size()]
 	if attacks == 0:
 		summary = "No attacks from rank %d" % rank
 	draw_string(body, Vector2(0, size.y - 6), summary, HORIZONTAL_ALIGNMENT_CENTER, size.x, 14,
@@ -168,14 +168,19 @@ func _draw_pips(skill: SkillDef, center: Vector2) -> void:
 			draw_circle(point, PIP_RADIUS + 2.0, UiStyle.TEXT, false, 1.0)
 
 
+## The skills the hero takes into fights.
+func _skills() -> Array[SkillDef]:
+	return hero.equipped_skills()
+
+
 func _icon_rect(index: int) -> Rect2:
-	var count := hero.def.skills.size()
+	var count := _skills().size()
 	var left := (size.x - count * ICON - (count - 1) * ICON_GAP) / 2.0
 	return Rect2(left + index * (ICON + ICON_GAP), _figure.end.y + 52, ICON, ICON)
 
 
 func _icon_at(point: Vector2) -> int:
-	for i in hero.def.skills.size():
+	for i in _skills().size():
 		if _icon_rect(i).grow(3).has_point(point):
 			return i
 	return -1

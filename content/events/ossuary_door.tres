@@ -20,7 +20,7 @@ script = ExtResource("1_3abk6")
 label = "Force the door"
 requires = ExtResource("3_k4jgp")
 success = Array[ExtResource("2_ymyks")]([SubResource("Resource_fs8gr"), SubResource("Resource_7fq1c")])
-success_text = "The Warden sets a shoulder to the iron. It screams, then gives."
+success_text = "The Man-at-Arms sets a shoulder to the iron. It screams, then gives."
 
 [sub_resource type="Resource" id="Resource_k4dio"]
 script = ExtResource("2_ymyks")

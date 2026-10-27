@@ -3,92 +3,131 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_gw7sh"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_x03ae"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_yewb2"]
-[ext_resource type="Texture2D" path="res://art/skills/aimed_shot.svg" id="4_236uf"]
-[ext_resource type="Texture2D" path="res://art/skills/volley.svg" id="5_fu307"]
-[ext_resource type="Texture2D" path="res://art/skills/blinding_shot.svg" id="6_j3m5c"]
-[ext_resource type="Texture2D" path="res://art/skills/expose.svg" id="7_0berm"]
-[ext_resource type="Texture2D" path="res://art/skills/point_blank.svg" id="8_ricmk"]
+[ext_resource type="Texture2D" path="res://art/skills/sniper_shot.svg" id="4_j3m5c"]
+[ext_resource type="Texture2D" path="res://art/skills/snipers_mark.svg" id="5_0berm"]
+[ext_resource type="Texture2D" path="res://art/skills/suppressing_fire.svg" id="6_ricmk"]
+[ext_resource type="Texture2D" path="res://art/skills/battlefield_bandage.svg" id="7_fuf8h"]
+[ext_resource type="Texture2D" path="res://art/skills/bola.svg" id="8_s2yof"]
+[ext_resource type="Texture2D" path="res://art/skills/blindfire.svg" id="9_1f8xt"]
 [ext_resource type="Texture2D" path="res://art/units/marksman.png" id="9_sprite"]
-
-[sub_resource type="Resource" id="Resource_bx3iw"]
-script = ExtResource("2_x03ae")
-id = &"aimed_shot"
-display_name = "Aimed Shot"
-icon = ExtResource("4_236uf")
-launch_ranks = Array[int]([3, 4])
-target_ranks = Array[int]([2, 3, 4])
-damage_min = 5
-damage_max = 9
-crit_chance = 0.15
-
-[sub_resource type="Resource" id="Resource_758ij"]
-script = ExtResource("2_x03ae")
-id = &"volley"
-display_name = "Volley"
-icon = ExtResource("5_fu307")
-launch_ranks = Array[int]([3, 4])
-target_ranks = Array[int]([3, 4])
-multi_target = true
-damage_min = 2
-damage_max = 4
-crit_chance = 0.05
-
-[sub_resource type="Resource" id="Resource_4k77a"]
-script = ExtResource("3_yewb2")
-token = &"blind"
-
-[sub_resource type="Resource" id="Resource_236uf"]
-script = ExtResource("2_x03ae")
-id = &"blinding_shot"
-display_name = "Blinding Shot"
-icon = ExtResource("6_j3m5c")
-launch_ranks = Array[int]([2, 3, 4])
-damage_min = 2
-damage_max = 4
-crit_chance = 0.05
-effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_4k77a")])
-
-[sub_resource type="Resource" id="Resource_fu307"]
-script = ExtResource("3_yewb2")
-token = &"vulnerable"
+[ext_resource type="Texture2D" path="res://art/skills/rallying_flare.svg" id="10_y8qvl"]
 
 [sub_resource type="Resource" id="Resource_j3m5c"]
+script = ExtResource("2_x03ae")
+id = &"sniper_shot"
+display_name = "Sniper Shot"
+icon = ExtResource("4_j3m5c")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 4
+damage_max = 8
+crit_chance = 0.13
+combo_damage_bonus = 0.5
+
+[sub_resource type="Resource" id="Resource_0berm"]
 script = ExtResource("3_yewb2")
 token = &"combo"
 
-[sub_resource type="Resource" id="Resource_0berm"]
-script = ExtResource("2_x03ae")
-id = &"expose"
-display_name = "Expose"
-icon = ExtResource("7_0berm")
-launch_ranks = Array[int]([2, 3, 4])
-effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_fu307"), SubResource("Resource_j3m5c")])
-
 [sub_resource type="Resource" id="Resource_ricmk"]
+script = ExtResource("3_yewb2")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_fuf8h"]
 script = ExtResource("2_x03ae")
-id = &"point_blank"
-display_name = "Point Blank"
-icon = ExtResource("8_ricmk")
-launch_ranks = Array[int]([1, 2])
-target_ranks = Array[int]([1])
-damage_min = 6
-damage_max = 10
+id = &"snipers_mark"
+display_name = "Sniper's Mark"
+icon = ExtResource("5_0berm")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_0berm"), SubResource("Resource_ricmk")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_s2yof"]
+script = ExtResource("2_x03ae")
+id = &"battlefield_bandage"
+display_name = "Battlefield Bandage"
+icon = ExtResource("7_fuf8h")
+launch_ranks = Array[int]([3, 4])
+side = 1
+heal_min = 3
+heal_max = 4
+
+[sub_resource type="Resource" id="Resource_1f8xt"]
+script = ExtResource("3_yewb2")
+token = &"speed"
+
+[sub_resource type="Resource" id="Resource_y8qvl"]
+script = ExtResource("2_x03ae")
+id = &"blindfire"
+display_name = "Blindfire"
+icon = ExtResource("9_1f8xt")
+damage_min = 4
+damage_max = 7
+crit_chance = 0.08
+self_effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_1f8xt")])
+
+[sub_resource type="Resource" id="Resource_eh385"]
+script = ExtResource("3_yewb2")
+kind = 2
+amount = -1
+chance = 0.75
+
+[sub_resource type="Resource" id="Resource_w0qg7"]
+script = ExtResource("2_x03ae")
+id = &"bola"
+display_name = "Bola"
+icon = ExtResource("8_s2yof")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 2
+damage_max = 4
 crit_chance = 0.1
-self_move = -1
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_eh385")])
+
+[sub_resource type="Resource" id="Resource_uvgny"]
+script = ExtResource("3_yewb2")
+token = &"blind"
+
+[sub_resource type="Resource" id="Resource_88t0x"]
+script = ExtResource("2_x03ae")
+id = &"suppressing_fire"
+display_name = "Suppressing Fire"
+icon = ExtResource("6_ricmk")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 1
+damage_max = 2
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_uvgny")])
+
+[sub_resource type="Resource" id="Resource_1jfau"]
+script = ExtResource("3_yewb2")
+kind = 4
+
+[sub_resource type="Resource" id="Resource_v3qg3"]
+script = ExtResource("2_x03ae")
+id = &"rallying_flare"
+display_name = "Rallying Flare"
+icon = ExtResource("10_y8qvl")
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_yewb2")]([SubResource("Resource_1jfau")])
+cooldown = 2
 
 [resource]
 script = ExtResource("1_gw7sh")
 id = &"marksman"
-display_name = "Marksman"
+display_name = "Arbalest"
 color = Color(0.24705882, 0.41960785, 0.2901961, 1)
-max_hp = 30
-speed = 4
+max_hp = 32
 corpse_hp = 16
-resist_stun = 0.2
-resist_bleed = 0.2
+resist_stun = 0.4
+resist_bleed = 0.3
 resist_blight = 0.3
-resist_burn = 0.2
-resist_move = 0.2
+resist_burn = 0.3
+resist_move = 0.4
 resist_debuff = 0.3
-skills = Array[ExtResource("2_x03ae")]([SubResource("Resource_bx3iw"), SubResource("Resource_758ij"), SubResource("Resource_236uf"), SubResource("Resource_0berm"), SubResource("Resource_ricmk")])
+skills = Array[ExtResource("2_x03ae")]([SubResource("Resource_j3m5c"), SubResource("Resource_fuf8h"), SubResource("Resource_s2yof"), SubResource("Resource_y8qvl"), SubResource("Resource_w0qg7"), SubResource("Resource_88t0x"), SubResource("Resource_v3qg3")])
+swap_offsets = Array[int]([1, 2])
 sprite = ExtResource("9_sprite")

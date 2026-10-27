@@ -1,9 +1,10 @@
 # Darko Dungo
 
-A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes, send four on missions across a map of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
+A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes (Darkest Dungeon 1's classes, each with 7 skills to choose 4 from), send four on missions across a map of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
 
 - Design decisions: [docs/design.md](docs/design.md)
 - DD2 combat research: [docs/research/darkest-dungeon-combat.md](docs/research/darkest-dungeon-combat.md)
+- DD1 hero kits the cast is built from: [docs/research/darkest-dungeon-1-heroes.md](docs/research/darkest-dungeon-1-heroes.md)
 
 ## Run it
 
@@ -81,7 +82,7 @@ Sprites are fitted into the unit's slot, keeping their aspect ratio. Units stand
 
 Other art, all replaceable:
 
-- **Skill icons:** each skill's **Icon** field (square, e.g. `art/skills/slice.svg`). Swap, Pass and Recover use `art/skills/swap.svg`, `pass.svg` and `recover.svg`.
+- **Skill icons:** each skill's **Icon** field (square, e.g. `art/skills/smite.svg`). Swap, Pass and Recover use `art/skills/swap.svg`, `pass.svg` and `recover.svg`.
 - **Token and status icons:** `art/tokens/<token>.svg`, e.g. `block.svg` or `bleed.svg`. Replace a file to change its icon.
 - **Battle backgrounds:** **Battle Background** in `content/campaign.tres` and **Background** in `content/sandbox.tres`, 1920×1080 with the ground line at y ≈ 680.
 - **Town:** **Town Background** in `content/campaign.tres` (`art/backgrounds/hamlet.svg`). The clickable building areas are the `BUILDINGS` rectangles at the top of `src/ui/town_screen.gd`; move them if the buildings move.
@@ -92,7 +93,7 @@ Other art, all replaceable:
 ## Add content
 
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Recruits** (one joins, chosen by the player, for each region boss beaten for the first time).
-- **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. Each region offers two missions a week.
+- **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. They open in that order: the first from the start, each next one when the boss before it is beaten for the first time. Each open region offers two missions a week (four while only the first is open).
 - **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**, or its **Boss** on a boss mission.
 - **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
@@ -118,7 +119,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, the campaign and the sandbox as `.tres` files |
-| `art/` | Unit sprites, skill and token icons, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
+| `art/` | Unit sprites, close-up poses (`art/poses/<unit>/<skill>.png` and `hurt.png`), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |
 | `scripts/` | `test.ps1` runs the tests, `balance.ps1` plays missions in parallel for balance numbers, `serve_web.ps1` serves the web export locally |
@@ -126,3 +127,4 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
 | `tools/balance_probe.gd` | Fresh random parties against every enemy group: win rate, HP lost, stress |
 | `tools/mission_probe.gd` | Random parties play whole missions; `scripts/balance.ps1` runs it in parallel |
+| `tools/make_poses.gd` | Writes placeholder attack and hurt poses into `art/poses/` (keeps existing files unless `--overwrite`) |

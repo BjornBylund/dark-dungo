@@ -74,17 +74,24 @@ func test_new_campaign_starts_with_four_heroes_and_six_missions() -> void:
 		assert_eq(mission.tier, CampaignRules.Tier.APPRENTICE)
 
 
-func test_the_board_has_two_missions_per_region_at_both_ends_of_the_tiers() -> void:
+func test_the_board_fills_the_open_regions_at_both_ends_of_the_tiers() -> void:
+	# Missions per region as the regions open one by one.
+	var expected := [[4, 0, 0], [2, 2, 0], [2, 2, 2]]
 	for seed_value in 30:
 		var campaign := _campaign(seed_value)
 		campaign.roster()[0].xp = CampaignRules.LEVEL_XP[3]
-		campaign._refresh_board()
-		for region in campaign.def.regions:
-			assert_eq(campaign.board.filter(func(m: Mission) -> bool: return m.region == region).size(),
-					CampaignRules.MISSIONS_PER_REGION, "seed %d" % seed_value)
-		var tiers := campaign.board.map(func(m: Mission) -> int: return m.tier)
-		assert_true(CampaignRules.Tier.CHAMPION in tiers, "seed %d has a Champion mission" % seed_value)
-		assert_true(CampaignRules.Tier.APPRENTICE in tiers, "seed %d has an Apprentice mission" % seed_value)
+		var regions := campaign.def.regions
+		for opened in regions.size():
+			if opened > 0:
+				campaign.bosses_beaten[regions[opened - 1].id] = 1
+			campaign._refresh_board()
+			var label := "seed %d, %d open" % [seed_value, opened + 1]
+			for i in regions.size():
+				assert_eq(campaign.board.filter(func(m: Mission) -> bool: return m.region == regions[i]).size(),
+						expected[opened][i], label)
+			var tiers := campaign.board.map(func(m: Mission) -> int: return m.tier)
+			assert_true(CampaignRules.Tier.CHAMPION in tiers, label + " has a Champion mission")
+			assert_true(CampaignRules.Tier.APPRENTICE in tiers, label + " has an Apprentice mission")
 
 
 func test_levels_follow_the_dd1_xp_table() -> void:
@@ -213,7 +220,7 @@ func test_the_week_can_pass_only_when_nobody_can_go() -> void:
 		assert_false(hero.wounded, hero.display_name)
 		hero.wounded = true
 	campaign.recruits_waiting = 1
-	assert_ne(campaign.wait_week(), "", "the Warden can still be recruited")
+	assert_ne(campaign.wait_week(), "", "a boss recruit can still join")
 
 
 func test_will_not_go_and_underlevel_stress() -> void:
