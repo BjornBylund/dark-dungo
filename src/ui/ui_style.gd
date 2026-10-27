@@ -246,7 +246,8 @@ static func hero_status(hero: HeroRecord) -> Array:
 
 
 ## [title, text] for the end of a mission, from Campaign.finish_mission()'s summary.
-static func mission_summary(summary: Dictionary) -> Array:
+## `campaign` gives the boss progress after it.
+static func mission_summary(summary: Dictionary, campaign: Campaign) -> Array:
 	var lines: Array[String] = []
 	var title := "Mission complete"
 	match summary.outcome:
@@ -275,6 +276,12 @@ static func mission_summary(summary: Dictionary) -> Array:
 		lines.append("With the region's boss defeated, a new hero will join you in town.")
 	if summary.get("opened", "") != "":
 		lines.append("A new region is open: %s." % summary.opened)
+	var region: RegionDef = summary.get("progress")
+	if region:
+		if campaign.boss_ready(region):
+			lines.append("%s awaits in %s." % [region.boss.display_name, region.display_name])
+		else:
+			lines.append("Boss progress in %s: %s" % [region.display_name, percent(campaign.boss_progress(region))])
 	if not summary.town.is_empty():
 		lines.append("")
 		lines.append("In town:")

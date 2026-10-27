@@ -365,7 +365,7 @@ func _on_retreat() -> void:
 	_run().retreat()
 	var summary := Game.campaign.finish_mission()
 	Game.save()
-	var text: Array = UiStyle.mission_summary(summary)
+	var text: Array = UiStyle.mission_summary(summary, Game.campaign)
 	_retreat.hide()
 	_show_panel(text[0], text[1], [["Return to town", Game.go_to_town]])
 

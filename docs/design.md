@@ -71,10 +71,11 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 
 After DD1's region progress and bosses:
 
-- **Unlocking:** every mission **completed** in a region counts towards its boss; retreats and wipes don't. After **3**, the region's **boss mission** appears on the board, by its region, as a skull shield on a blood-red field. It stays there, week after week, until beaten. The expedition map shows each region's progress under its name ("Boss in 2 missions", "Boss awaits", "Conquered").
+- **Unlocking:** every mission **completed** in a region fills its **boss progress**, by its length: short 25%, medium 35%, long 50% (so 4, 3 or 2 missions); retreats and wipes don't count. When it's full, the region's **boss mission** appears on the board, by its region, as a skull shield on a blood-red field. It stays there, week after week, until beaten.
+- **Where it shows:** on the expedition map, a bar under each open region's name fills blood-red towards a skull, with the chosen quest's share shown ahead of it in pale gold; it becomes "Boss awaits", then "Conquered". The quest details list the share ("+35% boss progress"), and the mission results the new total.
 - **A boss mission** is a **long** map (20 columns) that ends at the region's boss instead of its finale. It pays a long mission's gold and XP and **double** heirlooms.
 - **The first win** against each region's boss lets a new hero join (see Recruiting), and opens the next region. A window in town offers the choice of hero.
-- **Coming back harder:** after a win the region starts again, and after 3 more completed missions there its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
+- **Coming back harder:** after a win the region's progress starts again from empty, and when it's full again its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
 - **The bosses**, each with escorts, built from mechanics the engine already has and tuned with `tools/balance_probe.gd` so fresh level-0 random parties win about 40–46% at Apprentice:
 
 | Region | Boss | Kit |

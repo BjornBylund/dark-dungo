@@ -7,8 +7,11 @@ extends RefCounted
 
 enum Eligibility { OK, UNDERLEVELED, WILL_NOT_GO, WOUNDED, BUSY, NOT_RECRUITED }
 
-## 2 added regions to missions and 3 mission maps; older saves still load.
-const SAVE_VERSION := 3
+## 2 added regions to missions, 3 mission maps, and 4 boss progress as a share
+## instead of a mission count; older saves still load.
+const SAVE_VERSION := 4
+## Before version 4, this many completed missions brought a region's boss.
+const _OLD_BOSS_MISSIONS := 3
 
 var def: CampaignDef
 var week := 1
@@ -20,7 +23,7 @@ var upgrades: Dictionary[StringName, int] = {}
 var heroes: Array[HeroRecord] = []
 var board: Array[Mission] = []
 var bonds := Bonds.new()
-## Region id -> missions completed there towards its next boss.
+## Region id -> progress towards its next boss, 0 to BOSS_PROGRESS_FULL.
 var region_progress: Dictionary[StringName, int] = {}
 ## Region id -> boss tiers beaten (Apprentice, then Veteran, then Champion).
 var bosses_beaten: Dictionary[StringName, int] = {}
@@ -461,7 +464,8 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 ## Settles a finished mission and ends the week. Returns a summary for the
 ## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups,
 ## bonds (level-up lines), wounded, town (the week's report), recruit (a new
-## hero may join), opened (the name of a region the boss win opened, or "")}.
+## hero may join), opened (the name of a region the boss win opened, or ""),
+## progress (the region whose boss progress grew, or null)}.
 ## Completing pays everything, and counts towards the region's boss;
 ## retreating keeps what was earned on the way. Every pair in the party bonds a
 ## little, more for completing. Tavern perks for this mission end.
@@ -469,7 +473,7 @@ func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
 		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
-		bonds = run.new_bonds.duplicate(), recruit = false, opened = "",
+		bonds = run.new_bonds.duplicate(), recruit = false, opened = "", progress = null,
 	}
 	var bond_points := CampaignRules.BOND_COMPLETED_POINTS if run.outcome == MissionRun.Outcome.COMPLETED \
 			else CampaignRules.BOND_MISSION_POINTS
@@ -499,6 +503,8 @@ func finish_mission() -> Dictionary:
 				if hero.level() > before:
 					summary.level_ups.append(hero)
 			var open_before := open_regions().size()
+			if progress_for(mission) > 0.0:
+				summary.progress = mission.region
 			summary.recruit = _region_progresses(mission)
 			if open_regions().size() > open_before:
 				summary.opened = open_regions().back().display_name
@@ -644,22 +650,41 @@ func boss_tier(region: RegionDef) -> int:
 	return bosses_beaten.get(region.id, 0)
 
 
-## Whether the region's boss mission is on the board: after BOSS_UNLOCK_MISSIONS
-## missions completed there since the last boss win. It stays until beaten.
+## Whether the region's boss mission is on the board: once missions completed
+## there since the last boss win have filled its progress. It stays until beaten.
 func boss_ready(region: RegionDef) -> bool:
-	return region.boss != null and boss_tier(region) < CampaignRules.TIER_NAMES.size() \
-			and region_progress.get(region.id, 0) >= CampaignRules.BOSS_UNLOCK_MISSIONS
+	return region.boss != null and not boss_conquered(region) \
+			and region_progress.get(region.id, 0) >= CampaignRules.BOSS_PROGRESS_FULL
 
 
-## Counts a completed mission towards the region's next boss, or records a boss
-## win: the region starts again towards the next tier's boss, and the first win
-## lets a new hero join. Returns true when that first win earned a recruit.
+## Whether the region's last (Champion) boss has fallen, or it has none.
+func boss_conquered(region: RegionDef) -> bool:
+	return region.boss == null or boss_tier(region) >= CampaignRules.TIER_NAMES.size()
+
+
+## How full the region's boss progress is, 0 to 1.
+func boss_progress(region: RegionDef) -> float:
+	return float(region_progress.get(region.id, 0)) / CampaignRules.BOSS_PROGRESS_FULL
+
+
+## How much completing `mission` adds to its region's boss progress, 0 to 1,
+## or 0 when it doesn't count (a boss mission, or a conquered region).
+func progress_for(mission: Mission) -> float:
+	if mission.boss or mission.region == null or boss_conquered(mission.region):
+		return 0.0
+	return float(CampaignRules.BOSS_PROGRESS[mission.length]) / CampaignRules.BOSS_PROGRESS_FULL
+
+
+## Adds a completed mission's share to the region's boss progress, or records a
+## boss win: the region starts again towards the next tier's boss, and the first
+## win lets a new hero join. Returns true when that first win earned a recruit.
 func _region_progresses(mission: Mission) -> bool:
 	var region := mission.region
 	if region == null or boss_tier(region) >= CampaignRules.TIER_NAMES.size():
 		return false
 	if not mission.boss:
-		region_progress[region.id] = mini(region_progress.get(region.id, 0) + 1, CampaignRules.BOSS_UNLOCK_MISSIONS)
+		region_progress[region.id] = mini(region_progress.get(region.id, 0) + CampaignRules.BOSS_PROGRESS[mission.length],
+				CampaignRules.BOSS_PROGRESS_FULL)
 		return false
 	bosses_beaten[region.id] = boss_tier(region) + 1
 	region_progress[region.id] = 0
@@ -726,7 +751,11 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 				if CampaignRules.UPGRADES.has(line):
 					campaign.upgrades[line] = int(data.buildings[id])
 	for region: String in data.get("region_progress", {}):
-		campaign.region_progress[StringName(region)] = int(data.region_progress[region])
+		var progress := int(data.region_progress[region])
+		if int(data.version) < 4:
+			progress = mini(roundi(progress * float(CampaignRules.BOSS_PROGRESS_FULL) / _OLD_BOSS_MISSIONS),
+					CampaignRules.BOSS_PROGRESS_FULL)
+		campaign.region_progress[StringName(region)] = progress
 	for region: String in data.get("bosses_beaten", {}):
 		campaign.bosses_beaten[StringName(region)] = int(data.bosses_beaten[region])
 	campaign.recruits_waiting = int(data.get("recruits_waiting", 0))

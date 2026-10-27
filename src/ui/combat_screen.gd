@@ -270,7 +270,7 @@ func _on_fight_over() -> void:
 func _show_results() -> void:
 	var summary := Game.campaign.finish_mission()
 	Game.save()
-	var text: Array = UiStyle.mission_summary(summary)
+	var text: Array = UiStyle.mission_summary(summary, Game.campaign)
 	_show_end(text[0], text[1], "Return to town", Game.go_to_town)
 
 

@@ -14,9 +14,12 @@ const MISSIONS_PER_REGION := 2
 ## Regular missions on the board at least, so the first region alone still
 ## offers a choice: it gets 4 while it's the only one open.
 const MIN_BOARD_MISSIONS := 4
-## Missions completed in a region before its boss mission appears (again, a
-## tier harder, after each win), as with DD1's region progress.
-const BOSS_UNLOCK_MISSIONS := 3
+## Boss progress, like DD1's region progress bar: each mission completed in a
+## region fills it by its length's share (short, medium, long: 4, 3 or 2
+## missions), and the boss mission appears when it's full (again, a tier
+## harder, after each win).
+const BOSS_PROGRESS := [25, 35, 50]
+const BOSS_PROGRESS_FULL := 100
 const BOSS_HEIRLOOM_MULTIPLIER := 2
 
 # Missions, indexed [tier] or [length].

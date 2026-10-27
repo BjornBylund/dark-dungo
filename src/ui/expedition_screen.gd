@@ -118,30 +118,38 @@ func _refresh_map() -> void:
 		name_label.position = spot + Vector2(-160 * grow, marker_size.y / 2.0 + 4)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(name_label)
-		var progress := _label(_boss_progress(region), roundi(18 * grow), UiStyle.TEXT if open else UiStyle.TEXT_DIM,
-				UiStyle.DISPLAY_FONT)
+		var below := name_label.position + Vector2(0, 40 * grow)
+		var status := _region_status(region)
+		if status == "":
+			var bar := BossProgressBar.new()
+			var share := _campaign().progress_for(_mission) if _mission.region == region else 0.0
+			bar.setup(_campaign().boss_progress(region), share)
+			bar.scale = Vector2(grow, grow)
+			bar.position = below + Vector2(160 * grow - BossProgressBar.SIZE.x * grow / 2.0, 4 * grow)
+			_map.add_child(bar)
+			continue
+		var progress := _label(status, roundi(18 * grow), UiStyle.TEXT if open else UiStyle.TEXT_DIM, UiStyle.DISPLAY_FONT)
 		progress.add_theme_color_override("font_outline_color", Color.BLACK)
 		progress.add_theme_constant_override("outline_size", roundi(8 * grow))
 		progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		progress.size = Vector2(320, 26) * grow
-		progress.position = name_label.position + Vector2(0, 38 * grow)
+		progress.position = below - Vector2(0, 2 * grow)
 		progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(progress)
 
 
-## How close the region's next boss is, like DD1's region progress, or what
-## opens the region.
-func _boss_progress(region: RegionDef) -> String:
+## What opens a closed region, "Boss awaits", "Conquered", or "" while its boss
+## progress bar is filling.
+func _region_status(region: RegionDef) -> String:
 	var campaign := _campaign()
 	if not campaign.region_open(region):
 		var before := campaign.def.regions[campaign.def.regions.find(region) - 1]
 		return "Opens when %s falls" % before.boss.display_name if before.boss else "Closed"
-	if region.boss == null or campaign.boss_tier(region) >= CampaignRules.TIER_NAMES.size():
+	if campaign.boss_conquered(region):
 		return "Conquered"
 	if campaign.boss_ready(region):
 		return "Boss awaits"
-	var left: int = CampaignRules.BOSS_UNLOCK_MISSIONS - campaign.region_progress.get(region.id, 0)
-	return "Boss in %d mission%s" % [left, "" if left == 1 else "s"]
+	return ""
 
 
 func _refresh_quest() -> void:
@@ -176,6 +184,9 @@ func _refresh_quest() -> void:
 			20))
 	_quest.add_child(heirloom)
 	_quest.add_child(_label("%d XP for each hero" % mission.xp(), 20))
+	var share := campaign.progress_for(mission)
+	if share > 0.0:
+		_quest.add_child(_label("+%s boss progress" % UiStyle.percent(share), 20))
 	if campaign.can_wait() == "":
 		var note := _label("Nobody is fit to go. Treat the wounded at the Abbey, or let the week pass.", 16,
 				UiStyle.TEXT_DIM)
