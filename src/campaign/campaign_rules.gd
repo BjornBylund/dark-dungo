@@ -11,6 +11,10 @@ const LENGTH_NAMES := ["Short", "Medium", "Long"]
 
 const STARTING_GOLD := 5000
 const MISSIONS_PER_REGION := 2
+## Missions completed in a region before its boss mission appears (again, a
+## tier harder, after each win), as with DD1's region progress.
+const BOSS_UNLOCK_MISSIONS := 3
+const BOSS_HEIRLOOM_MULTIPLIER := 2
 
 # Missions, indexed [tier] or [length].
 const TIER_LEVELS := [1, 3, 5]
@@ -94,31 +98,81 @@ const ENEMY_HP_BONUS := [0.0, 0.25, 0.5]
 const ENEMY_DAMAGE_BONUS := [0.0, 0.25, 0.5]
 const ENEMY_CRIT_BONUS := [0.0, 0.0, 0.05]
 
-# Abbey.
-const ABBEY_ACTIVITIES := ["Meditation", "Prayer", "Flagellation"]
-const ABBEY_PRICES := [1000, 1250, 1500]
-## Stress removed per activity, by relief tier (raised by Abbey upgrades 1 and 4).
-const ABBEY_RELIEF := [[4, 5, 6], [6, 7, 8], [7, 9, 10]]
-const ABBEY_DISCOUNT := 0.15
+# Stress relief in town: DD1's Abbey (safe) and Tavern (with side effects).
+# Each activity is also the id of its upgrade line: levels 1 and 4 raise the
+# relief (base / L1 / L4 below), 2 and 5 cut the price by ACTIVITY_DISCOUNT,
+# and 3 and 6 add a slot. The Bar starts with two slots so heroes can drink together.
+const ACTIVITIES := {
+	&"meditation": {building = &"abbey", name = "Meditation", relief = [4, 6, 7], price = 1000, slots = 1},
+	&"prayer": {building = &"abbey", name = "Prayer", relief = [5, 7, 9], price = 1250, slots = 1},
+	&"flagellation": {building = &"abbey", name = "Flagellation", relief = [6, 8, 10], price = 1500, slots = 1},
+	&"bar": {building = &"tavern", name = "Bar", relief = [4, 6, 7], price = 1000, slots = 2},
+	&"gambling": {building = &"tavern", name = "Gambling Hall", relief = [5, 7, 9], price = 1250, slots = 1},
+	&"bathhouse": {building = &"tavern", name = "Bathhouse", relief = [6, 8, 10], price = 1500, slots = 1},
+}
+const ACTIVITY_DISCOUNT := 0.15
+## Tavern side effects, one roll per visit: [chance, effect, amount], DD1's
+## without quirks, trinkets or diseases. "max_hp" (a fraction) and "speed" last
+## the hero's next mission, "relief" takes more stress off, "away" keeps the
+## hero busy next week too, and "gold" is won or lost.
+const SIDE_EFFECTS := {
+	&"bar": [[0.10, &"max_hp", 0.2], [0.10, &"away", 1], [0.05, &"gold", -500]],
+	&"gambling": [[0.05, &"gold", 2000], [0.10, &"away", 1], [0.08, &"gold", -1000]],
+	&"bathhouse": [[0.08, &"speed", 1], [0.04, &"relief", 2], [0.08, &"away", 1], [0.04, &"gold", -750]],
+}
+## Bond points for every pair of heroes at the Bar in the same week.
+const BAR_BOND_POINTS := 2
 const WOUND_TREATMENT_PRICE := 750
 
-## Building upgrade ladders: one heirloom cost per level.
-const BUILDINGS := {
-	&"stagecoach": [{&"bust": 9, &"crest": 12}, {&"bust": 12, &"crest": 16}, {&"bust": 15, &"crest": 20}],
+# Buildings and their upgrade lines, DD1's: one heirloom cost per level.
+const ABBEY_LADDER := [{&"bust": 4, &"crest": 5}, {&"bust": 8, &"crest": 10}, {&"bust": 11, &"crest": 14},
+		{&"bust": 15, &"crest": 19}, {&"bust": 19, &"crest": 24}, {&"bust": 23, &"crest": 29}]
+const TAVERN_LADDER := [{&"portrait": 2, &"crest": 5}, {&"portrait": 4, &"crest": 10}, {&"portrait": 6, &"crest": 14},
+		{&"portrait": 8, &"crest": 19}, {&"portrait": 10, &"crest": 24}, {&"portrait": 11, &"crest": 29}]
+const SMITHING_LADDER := [{&"deed": 8, &"crest": 8}, {&"deed": 20, &"crest": 21},
+		{&"deed": 32, &"crest": 35}, {&"deed": 44, &"crest": 49}]
+const UPGRADES := {
+	&"weaponsmith": SMITHING_LADDER,
+	&"armorsmith": SMITHING_LADDER,
+	&"furnace": [{&"deed": 4, &"crest": 4}, {&"deed": 9, &"crest": 10}, {&"deed": 14, &"crest": 15},
+			{&"deed": 18, &"crest": 20}, {&"deed": 24, &"crest": 26}],
 	&"guild": [{&"portrait": 6, &"crest": 14}, {&"portrait": 15, &"crest": 38},
 			{&"portrait": 24, &"crest": 60}, {&"portrait": 33, &"crest": 84}],
-	&"weaponsmith": [{&"deed": 8, &"crest": 8}, {&"deed": 20, &"crest": 21},
-			{&"deed": 32, &"crest": 35}, {&"deed": 44, &"crest": 49}],
-	&"armorsmith": [{&"deed": 8, &"crest": 8}, {&"deed": 20, &"crest": 21},
-			{&"deed": 32, &"crest": 35}, {&"deed": 44, &"crest": 49}],
-	&"abbey": [{&"bust": 4, &"crest": 5}, {&"bust": 8, &"crest": 10}, {&"bust": 11, &"crest": 14},
-			{&"bust": 15, &"crest": 19}, {&"bust": 19, &"crest": 24}, {&"bust": 23, &"crest": 29}],
+	&"regimen": [{&"portrait": 2, &"crest": 6}, {&"portrait": 5, &"crest": 14}, {&"portrait": 8, &"crest": 21},
+			{&"portrait": 11, &"crest": 29}, {&"portrait": 14, &"crest": 36}],
+	&"meditation": ABBEY_LADDER,
+	&"prayer": ABBEY_LADDER,
+	&"flagellation": ABBEY_LADDER,
+	&"bar": TAVERN_LADDER,
+	&"gambling": TAVERN_LADDER,
+	&"bathhouse": TAVERN_LADDER,
 }
-
-const BUILDING_NAMES := {
-	&"stagecoach": "Stagecoach", &"guild": "Guild", &"weaponsmith": "Weaponsmith",
-	&"armorsmith": "Armorsmith", &"abbey": "Abbey",
+const UPGRADE_NAMES := {
+	&"weaponsmith": "Weaponsmithing", &"armorsmith": "Armorsmithing",
+	&"furnace": "Furnace", &"guild": "Instructors", &"regimen": "Training regimen", &"meditation": "Cloister",
+	&"prayer": "Transept", &"flagellation": "Penance hall", &"bar": "Bar", &"gambling": "Gambling hall",
+	&"bathhouse": "Bathhouse",
 }
+## Off gear gold per Furnace level, and off skill gold per Training regimen level.
+const UPGRADE_DISCOUNT := 0.1
+## The hamlet's buildings: their upgrade lines, and the week they open (DD1
+## opens buildings over the first weeks).
+const BUILDINGS := {
+	&"blacksmith": {name = "Blacksmith", lines = [&"weaponsmith", &"armorsmith", &"furnace"], opens = 1},
+	&"guild": {name = "Guild", lines = [&"guild", &"regimen"], opens = 1},
+	&"abbey": {name = "Abbey", lines = [&"meditation", &"prayer", &"flagellation"], opens = 1},
+	&"tavern": {name = "Tavern", lines = [&"bar", &"gambling", &"bathhouse"], opens = 3},
+	&"exchange": {name = "Heirloom Exchange", lines = [], opens = 5},
+}
+## DD1's Heirloom Exchange: [give, get]. A Crest is worth about 1, a Bust or
+## Deed about 2 and a Portrait about 4, and every trade loses a little.
+const EXCHANGE_TRADES := [
+	[{&"crest": 3}, {&"bust": 1}], [{&"crest": 3}, {&"deed": 1}], [{&"crest": 6}, {&"portrait": 1}],
+	[{&"bust": 2}, {&"crest": 3}], [{&"deed": 2}, {&"crest": 3}], [{&"portrait": 1}, {&"crest": 3}],
+	[{&"bust": 3}, {&"deed": 2}], [{&"deed": 3}, {&"bust": 2}],
+	[{&"bust": 3}, {&"portrait": 1}], [{&"deed": 3}, {&"portrait": 1}],
+	[{&"portrait": 2}, {&"bust": 3}], [{&"portrait": 2}, {&"deed": 3}],
+]
 
 
 static func level_for_xp(xp: int) -> int:

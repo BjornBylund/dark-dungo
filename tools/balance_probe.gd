@@ -10,11 +10,13 @@ func _initialize() -> void:
 	var def: CampaignDef = load("res://content/campaign.tres")
 	var cast: Array[UnitDef] = []
 	cast.append_array(def.starting_heroes)
-	cast.append_array(def.arrivals)
+	cast.append_array(def.recruits)
 	for region in def.regions:
 		for kind: String in ["encounters", "elites", "finales"]:
 			for group: EncounterDef in region.get(kind):
 				print("%-14s %-9s %s" % [region.id, kind, _probe(group, cast)])
+		if region.boss:
+			print("%-14s %-9s %s" % [region.id, "boss", _probe(region.boss, cast)])
 	quit()
 
 

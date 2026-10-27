@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RegionDef" format=3]
 
 [ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="1_encounter"]
+[ext_resource type="Resource" path="res://content/encounters/hollow_saint.tres" id="1_lpap5"]
 [ext_resource type="Resource" path="res://content/encounters/coven.tres" id="2_coven"]
 [ext_resource type="Resource" path="res://content/encounters/priests_flock.tres" id="2_nb5t8"]
 [ext_resource type="Resource" path="res://content/encounters/acolytes.tres" id="3_acolytes"]
@@ -17,5 +18,6 @@ display_name = "The Chapel"
 encounters = Array[ExtResource("1_encounter")]([ExtResource("2_coven"), ExtResource("3_acolytes")])
 elites = Array[ExtResource("1_encounter")]([ExtResource("2_nb5t8")])
 finales = Array[ExtResource("1_encounter")]([ExtResource("4_the_brute")])
+boss = ExtResource("1_lpap5")
 events = Array[ExtResource("4_8hs8n")]([ExtResource("5_nb5t8"), ExtResource("6_lpap5")])
 map_position = Vector2(1390, 150)

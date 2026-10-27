@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RegionDef" format=3]
 
 [ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="1_encounter"]
+[ext_resource type="Resource" path="res://content/encounters/the_maw.tres" id="1_npio0"]
 [ext_resource type="Resource" path="res://content/encounters/hungry_dead.tres" id="2_hungry_dead"]
 [ext_resource type="Resource" path="res://content/encounters/broodmother_nest.tres" id="2_y10cp"]
 [ext_resource type="Resource" path="res://content/encounters/rot_nest.tres" id="3_rot_nest"]
@@ -18,5 +19,6 @@ display_name = "The Burrows"
 encounters = Array[ExtResource("1_encounter")]([ExtResource("2_hungry_dead"), ExtResource("3_rot_nest"), ExtResource("4_ghoul_pack")])
 elites = Array[ExtResource("1_encounter")]([ExtResource("2_y10cp")])
 finales = Array[ExtResource("1_encounter")]([ExtResource("5_glutton")])
+boss = ExtResource("1_npio0")
 events = Array[ExtResource("5_nfb2k")]([ExtResource("6_y10cp"), ExtResource("7_npio0")])
 map_position = Vector2(1060, 360)

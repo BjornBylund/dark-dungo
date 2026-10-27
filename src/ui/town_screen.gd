@@ -1,23 +1,30 @@
 ## The hamlet, DD1-style: click a building to open its window, the roster runs
-## down the right, and the week, gold and heirlooms sit along the top. Every
-## action goes through Game.campaign and is saved straight away. Embark (or the
-## mission board) opens the expedition map.
+## down the right, and the week, gold and heirlooms sit along the top. A plate
+## over each building shows its upgrades, or when it opens. Building windows
+## have a Services and an Upgrades tab. Every action goes through Game.campaign
+## and is saved straight away. Embark (or the mission board) opens the
+## expedition map.
 ## Authored for 1920x1080 on a centred stage, like the combat screen. In the
-## phone layout the hamlet shrinks to fit and the bar, roster and windows sit
-## on top at full size, the windows filling the screen and scrolling.
+## phone layout the hamlet shrinks to fit (its plates grow to stay readable)
+## and the bar, roster and windows sit on top at full size, the windows
+## filling the screen and scrolling.
 extends Control
 
 const STAGE_SIZE := Vector2(1920, 1080)
-## Clickable areas on the hamlet picture (art/backgrounds/hamlet.svg).
-const BUILDINGS := [
-	[&"stagecoach", "Stagecoach", Rect2(40, 480, 370, 320)],
-	[&"blacksmith", "Blacksmith", Rect2(390, 420, 300, 300)],
-	[&"guild", "Guild", Rect2(720, 320, 280, 410)],
-	[&"abbey", "Abbey", Rect2(1040, 260, 260, 480)],
-	[&"board", "Embark", Rect2(1330, 560, 240, 250)],
-]
-const ABBEY_UPGRADES := ["More stress relief", "Prices -15%", "A second slot per activity",
-		"More stress relief", "Prices -15% more", "A third slot per activity"]
+## Clickable areas on the hamlet picture (art/backgrounds/hamlet.svg), by building.
+const SPOTS := {
+	&"blacksmith": Rect2(390, 420, 300, 300),
+	&"guild": Rect2(720, 320, 280, 410),
+	&"abbey": Rect2(1040, 260, 260, 480),
+	&"tavern": Rect2(320, 830, 400, 250),
+	&"exchange": Rect2(790, 860, 260, 220),
+	&"board": Rect2(1330, 560, 240, 250),
+}
+## What each level of an Abbey or Tavern activity's upgrade line brings.
+const ACTIVITY_UPGRADES := ["More stress relief", "Prices -15%", "One more slot", "More stress relief",
+		"Prices -15% more", "One more slot"]
+## Building plates grow this much on phones, where the hamlet is drawn small.
+const PHONE_PLATE_SCALE := 2.2
 
 var _stage: Control
 ## Where the bar, roster and windows live: the stage itself on desktop, a layer
@@ -25,8 +32,10 @@ var _stage: Control
 var _ui: Control
 var _bar: EstateBar
 var _roster_panel: PanelContainer
+var _roster_title: Label
 var _roster: VBoxContainer
-var _hover_label: Label
+## The building plates, on the stage.
+var _plates: Control
 var _window: PanelContainer
 var _window_title: Label
 var _window_message: Label
@@ -35,6 +44,8 @@ var _window_body: VBoxContainer
 var _rebuild_window: Callable
 ## The hero picked in a building window.
 var _selected: HeroRecord
+## Whether the open building window shows its Upgrades tab.
+var _showing_upgrades := false
 
 
 func _ready() -> void:
@@ -46,18 +57,54 @@ func _ready() -> void:
 	resized.connect(_center_stage)
 	_center_stage()
 	_refresh()
+	if _campaign().recruits_waiting > 0 and not _campaign().recruit_choices().is_empty():
+		_open_recruits()
+	else:
+		_show_week_report()
 	if "--autoplay" in OS.get_cmdline_user_args():
 		_autoplay_embark()
 
 
-## With `-- --autoplay` the town plays itself: hire whoever has arrived, treat
+## After a week passed without a mission, what happened in town.
+func _show_week_report() -> void:
+	var report := _campaign().week_report.duplicate()
+	if report.is_empty():
+		return
+	_campaign().week_report.clear()
+	_open("The week in town", func() -> void:
+		for line: String in report:
+			_text(line, 18))
+
+
+## After a region boss's first defeat: pick who joins, from those not yet in the roster.
+func _open_recruits() -> void:
+	_open("A new hero joins", func() -> void:
+		var campaign := _campaign()
+		if campaign.recruits_waiting <= 0 or campaign.recruit_choices().is_empty():
+			_text("They're settling in.", 18, UiStyle.TEXT_DIM)
+			return
+		_text("Word of the victory has spread. Choose who joins the roster, at level 1.", 18, UiStyle.TEXT_DIM)
+		for hero in campaign.recruit_choices():
+			var row := _row()
+			var badge := HeroBadge.new()
+			badge.setup(hero)
+			row.add_child(badge)
+			var skills := _label(", ".join(hero.def.skills.map(func(s: SkillDef) -> String: return s.display_name)),
+					16, UiStyle.TEXT_DIM)
+			skills.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(skills)
+			row.add_child(_action("Recruit", func() -> void: _after(campaign.recruit(hero)))))
+
+
+## With `-- --autoplay` the town plays itself: take any recruit waiting, treat
 ## the wounded it can afford, then embark on the first mission with the first
 ## heroes who can go (or wait out the week if nobody can).
 func _autoplay_embark() -> void:
 	await get_tree().create_timer(1.5).timeout
 	var campaign := _campaign()
-	for hero in campaign.stagecoach():
-		campaign.hire(hero)
+	while campaign.recruits_waiting > 0 and not campaign.recruit_choices().is_empty():
+		campaign.recruit(campaign.recruit_choices()[0])
 	for hero in campaign.roster():
 		campaign.treat(hero)
 	if campaign.wait_week() == "":
@@ -99,25 +146,66 @@ func _unhandled_input(event: InputEvent) -> void:
 func _refresh() -> void:
 	var campaign := _campaign()
 	_bar.refresh(campaign)
+	_roster_title.text = "Roster   %d / %d" % [campaign.roster().size(), campaign.heroes.size()]
 	for child in _roster.get_children():
 		child.queue_free()
 	for hero in campaign.roster():
 		var badge := HeroBadge.new()
-		var status := _status(hero)
+		var status := UiStyle.hero_status(hero)
 		badge.setup(hero, status[0], status[1])
 		badge.pressed.connect(_open_hero.bind(hero))
 		_roster.add_child(badge)
+	_refresh_plates()
 	if _window.visible and _rebuild_window.is_valid():
 		_rebuild_window.call()
 
 
-## [tag, colour] describing where a hero is this week.
-func _status(hero: HeroRecord) -> Array:
-	if hero.wounded:
-		return ["WOUNDED", UiStyle.DAMAGE]
-	if hero.abbey_activity >= 0:
-		return ["AT THE ABBEY", UiStyle.GOLD]
-	return ["", UiStyle.GREY]
+## A plate over each building: its name, and how many upgrades are bought (in
+## gold when one can be bought now), or the week it opens. Phones, short of
+## room, leave out the count.
+func _refresh_plates() -> void:
+	for child in _plates.get_children():
+		_plates.remove_child(child)
+		child.queue_free()
+	var campaign := _campaign()
+	var grow := PHONE_PLATE_SCALE if Device.phone else 1.0
+	for id: StringName in SPOTS:
+		var spot: Rect2 = SPOTS[id]
+		var plate := VBoxContainer.new()
+		plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		plate.add_theme_constant_override("separation", 0)
+		plate.size = Vector2(440, 0) * grow
+		plate.position = Vector2(spot.get_center().x - 220 * grow, spot.position.y - 64 * grow)
+		var title: String = "Embark" if id == &"board" else CampaignRules.BUILDINGS[id].name
+		plate.add_child(_plate_label(title, roundi(30 * grow), UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+		if id != &"board":
+			var lines: Array = CampaignRules.BUILDINGS[id].lines
+			var note := ""
+			var color := UiStyle.TEXT
+			if not campaign.building_open(id):
+				note = "Opens in week %d" % CampaignRules.BUILDINGS[id].opens
+				color = UiStyle.TEXT_DIM
+			elif not lines.is_empty():
+				var bought := 0
+				var total := 0
+				for line: StringName in lines:
+					bought += campaign.upgrades[line]
+					total += CampaignRules.UPGRADES[line].size()
+				note = "" if Device.phone else "Upgrades %d/%d" % [bought, total]
+				if campaign.upgrade_ready(id):
+					note = "Upgrade ready" if Device.phone else "Upgrade ready   %d/%d" % [bought, total]
+					color = UiStyle.GOLD
+			if note != "":
+				plate.add_child(_plate_label(note, roundi(18 * grow), color))
+		_plates.add_child(plate)
+
+
+func _plate_label(text: String, font_size: int, color: Color, font: Font = null) -> Label:
+	var label := _label(text, font_size, color, font)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", maxi(6, font_size / 4))
+	return label
 
 
 ## Shows `reason` if the action was refused; otherwise saves and refreshes.
@@ -150,17 +238,29 @@ func _close_window() -> void:
 
 
 func _open_building(id: StringName) -> void:
+	if id == &"board":
+		Game.go_to_expedition()
+		return
+	_showing_upgrades = false
+	var title: String = CampaignRules.BUILDINGS[id].name
+	if not _campaign().building_open(id):
+		_open(title, func() -> void:
+			_text("Opens in week %d." % CampaignRules.BUILDINGS[id].opens, 20, UiStyle.TEXT_DIM))
+		return
 	match id:
-		&"stagecoach":
-			_open("Stagecoach", _build_stagecoach)
 		&"blacksmith":
-			_open("Blacksmith", _build_blacksmith)
+			_open(title, _build_blacksmith)
 		&"guild":
-			_open("Guild", _build_guild)
+			_open(title, _build_guild)
 		&"abbey":
-			_open("Abbey", _build_abbey)
-		&"board":
-			Game.go_to_expedition()
+			_open(title, _build_relief.bind(&"abbey",
+					"Safe and steady: no surprises. Heroes sent here miss this week's mission; the stress comes off when the week ends."))
+		&"tavern":
+			_open(title, _build_relief.bind(&"tavern",
+					"More of a gamble: about 1 visit in 4 has a side effect, good or bad. Heroes at the Bar together bond (+%d each pair)."
+					% CampaignRules.BAR_BOND_POINTS))
+		&"exchange":
+			_open(title, _build_exchange)
 
 
 func _open_hero(hero: HeroRecord) -> void:
@@ -168,27 +268,9 @@ func _open_hero(hero: HeroRecord) -> void:
 	_open(hero.display_name, _build_hero_sheet)
 
 
-func _build_stagecoach() -> void:
-	var campaign := _campaign()
-	_text("A new hero arrives each week. Hiring is free.", 18, UiStyle.TEXT_DIM)
-	var waiting := campaign.stagecoach()
-	for hero in waiting:
-		var row := _row()
-		var badge := HeroBadge.new()
-		badge.setup(hero)
-		row.add_child(badge)
-		row.add_child(_action("Hire", func() -> void: _after(campaign.hire(hero))))
-	if waiting.is_empty():
-		var next := campaign.heroes.filter(func(h: HeroRecord) -> bool: return not h.arrived)
-		_text("Next week: the %s arrives." % next[0].display_name if not next.is_empty()
-				else "Every hero has arrived.", 18)
-	var level := campaign.buildings[&"stagecoach"]
-	_section("Experienced arrivals")
-	_text("New heroes arrive at level %d." % level, 17)
-	_upgrade_row(&"stagecoach", "New heroes arrive at level %d" % (level + 1))
-
-
 func _build_blacksmith() -> void:
+	if _upgrades_tab(&"blacksmith"):
+		return
 	var campaign := _campaign()
 	var columns := _columns()
 	_hero_picker(columns[0], func(hero: HeroRecord) -> String:
@@ -207,12 +289,11 @@ func _build_blacksmith() -> void:
 		_rank_button(right, hero.armor_rank, campaign.gear_cost(hero.armor_rank), campaign.can_upgrade_armor(hero),
 				"Max HP %d" % (hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank + 1)),
 				func() -> void: _after(campaign.upgrade_armor(hero)))
-	_section("Forges")
-	_upgrade_row(&"weaponsmith", "Weapons up to rank %d" % (campaign.buildings[&"weaponsmith"] + 2))
-	_upgrade_row(&"armorsmith", "Armour up to rank %d" % (campaign.buildings[&"armorsmith"] + 2))
 
 
 func _build_guild() -> void:
+	if _upgrades_tab(&"guild"):
+		return
 	var campaign := _campaign()
 	var columns := _columns()
 	_hero_picker(columns[0], func(_hero: HeroRecord) -> String: return "")
@@ -245,37 +326,45 @@ func _build_guild() -> void:
 				if reason != "":
 					row.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
 			right.add_child(row)
-	_section("Instructors")
-	_upgrade_row(&"guild", "Skills up to rank %d" % (campaign.buildings[&"guild"] + 2))
 
 
-func _build_abbey() -> void:
+## The Abbey or the Tavern: its activities with who is there, a Send button
+## for the hero picked on the left, and (at the Abbey) wound treatment.
+func _build_relief(building: StringName, blurb: String) -> void:
+	if _upgrades_tab(building):
+		return
 	var campaign := _campaign()
 	var columns := _columns()
-	_hero_picker(columns[0], func(hero: HeroRecord) -> String: return "Stress %d" % hero.stress)
+	_hero_picker(columns[0], func(hero: HeroRecord) -> String: return "%d / %d" % [hero.stress, Rules.STRESS_MAX])
 	var right: VBoxContainer = columns[1]
-	right.add_child(_label("Heroes sent here miss this week's mission; the stress comes off when the week ends.",
-			16, UiStyle.TEXT_DIM))
-	for activity in CampaignRules.ABBEY_ACTIVITIES.size():
-		var occupants := campaign.abbey_occupants(activity)
-		var title := "%s   -%d stress   %d/%d" % [CampaignRules.ABBEY_ACTIVITIES[activity],
-				campaign.abbey_relief(activity), occupants.size(), campaign.abbey_slots()]
+	var intro := _label(blurb, 16, UiStyle.TEXT_DIM)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	right.add_child(intro)
+	for activity: StringName in CampaignRules.ACTIVITIES:
+		if CampaignRules.ACTIVITIES[activity].building != building:
+			continue
+		var occupants := campaign.activity_occupants(activity)
+		var title := "%s   -%d stress   %d/%d" % [CampaignRules.ACTIVITIES[activity].name,
+				campaign.activity_relief(activity), occupants.size(), campaign.activity_slots(activity)]
 		right.add_child(_label(title, 22, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 12)
 		for hero in occupants:
 			row.add_child(_action("%s  (cancel)" % hero.display_name, func() -> void:
-				campaign.cancel_abbey(hero)
+				campaign.cancel_activity(hero)
 				_after("")))
 		if _selected:
 			var hero := _selected
-			var button := _action("Send %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.abbey_price(hero, activity))],
-					func() -> void: _after(campaign.send_to_abbey(hero, activity)))
-			var reason := campaign.can_send_to_abbey(hero, activity)
+			var button := _action("Send %s  %s gold" % [hero.display_name,
+					UiStyle.gold_text(campaign.activity_price(hero, activity))],
+					func() -> void: _after(campaign.send(hero, activity)))
+			var reason := campaign.can_send(hero, activity)
 			button.disabled = reason != ""
 			button.tooltip_text = reason
 			row.add_child(button)
 		right.add_child(row)
+	if building != &"abbey":
+		return
 	var wounded := campaign.roster().filter(func(h: HeroRecord) -> bool: return h.wounded)
 	if not wounded.is_empty():
 		_section("Wounded")
@@ -283,9 +372,98 @@ func _build_abbey() -> void:
 		for hero: HeroRecord in wounded:
 			_window_body.add_child(_action("Treat %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.treatment_price(hero))],
 					func() -> void: _after(campaign.treat(hero))))
-	var level := campaign.buildings[&"abbey"]
-	_section("Abbey")
-	_upgrade_row(&"abbey", ABBEY_UPGRADES[level] if level < ABBEY_UPGRADES.size() else "")
+
+
+func _build_exchange() -> void:
+	var campaign := _campaign()
+	_text("Trade one kind of heirloom for another, at a loss. As often as you like.", 18, UiStyle.TEXT_DIM)
+	var grid := GridContainer.new()
+	grid.columns = 1 if Device.phone else 2
+	grid.add_theme_constant_override("h_separation", 24)
+	grid.add_theme_constant_override("v_separation", 10)
+	_window_body.add_child(grid)
+	for index in CampaignRules.EXCHANGE_TRADES.size():
+		var trade: Array = CampaignRules.EXCHANGE_TRADES[index]
+		var button := _action("%s  for  %s" % [_cost_text(trade[0]), _cost_text(trade[1])],
+				func() -> void: _after(campaign.exchange(index)))
+		var reason := campaign.can_exchange(index)
+		button.disabled = reason != ""
+		button.tooltip_text = reason
+		grid.add_child(button)
+
+
+# --- Upgrades ---
+
+## Services and Upgrades tabs at the top of a building window. Draws the
+## Upgrades tab and returns true when it is the one showing.
+func _upgrades_tab(building: StringName) -> bool:
+	var row := _row()
+	for tab: Array in [[false, "Services"], [true, "Upgrades"]]:
+		var button := _action(tab[1], func() -> void:
+			_showing_upgrades = tab[0]
+			_rebuild_window.call())
+		button.toggle_mode = true
+		button.button_pressed = _showing_upgrades == tab[0]
+		row.add_child(button)
+	if not _showing_upgrades:
+		return false
+	for line: StringName in CampaignRules.BUILDINGS[building].lines:
+		_upgrade_line(line)
+	return true
+
+
+## One upgrade line: its name and level pips, what it does now, and a button
+## for the next level with what that brings.
+func _upgrade_line(line: StringName) -> void:
+	var campaign := _campaign()
+	var level := campaign.upgrades[line]
+	var top: int = CampaignRules.UPGRADES[line].size()
+	_section("%s   level %d/%d" % [CampaignRules.UPGRADE_NAMES[line], level, top])
+	_text(_line_now(line), 17, UiStyle.TEXT_DIM)
+	var row := _row()
+	if level >= top:
+		row.add_child(_label("Fully upgraded.", 16, UiStyle.TEXT_DIM))
+		return
+	var reason := campaign.can_upgrade(line)
+	var button := _action("Upgrade  " + _cost_text(campaign.upgrade_cost(line)),
+			func() -> void: _after(campaign.upgrade(line)))
+	button.disabled = reason != ""
+	row.add_child(button)
+	row.add_child(_label("Next: " + _line_next(line, level + 1) + ("   (%s)" % reason if reason != "" else ""), 16))
+
+
+## What an upgrade line gives at its current level.
+func _line_now(line: StringName) -> String:
+	var campaign := _campaign()
+	var level := campaign.upgrades[line]
+	match line:
+		&"weaponsmith":
+			return "Weapons up to rank %d." % (level + 1)
+		&"armorsmith":
+			return "Armour up to rank %d." % (level + 1)
+		&"guild":
+			return "Skills up to rank %d." % (level + 1)
+		&"furnace", &"regimen":
+			return "%s cost %d%% less." % ["Weapons and armour" if line == &"furnace" else "Skill ranks",
+					roundi(level * CampaignRules.UPGRADE_DISCOUNT * 100)]
+	var slots := campaign.activity_slots(line)
+	return "%s: -%d stress, %s gold (levels 0-2), %d %s." % [CampaignRules.ACTIVITIES[line].name,
+			campaign.activity_relief(line), UiStyle.gold_text(roundi(campaign.activity_base_price(line))), slots,
+			"slot" if slots == 1 else "slots"]
+
+
+## What reaching `level` on an upgrade line brings.
+func _line_next(line: StringName, level: int) -> String:
+	match line:
+		&"weaponsmith":
+			return "weapons up to rank %d" % (level + 1)
+		&"armorsmith":
+			return "armour up to rank %d" % (level + 1)
+		&"guild":
+			return "skills up to rank %d" % (level + 1)
+		&"furnace", &"regimen":
+			return "%d%% off" % roundi(level * CampaignRules.UPGRADE_DISCOUNT * 100)
+	return ACTIVITY_UPGRADES[level - 1].to_lower()
 
 
 func _build_hero_sheet() -> void:
@@ -303,8 +481,15 @@ func _build_hero_sheet() -> void:
 	var level := hero.level()
 	var next_xp := "max level" if level >= CampaignRules.MAX_LEVEL else "%d / %d XP" % [hero.xp, CampaignRules.LEVEL_XP[level]]
 	info.add_child(_label("Level %d   (%s)" % [level, next_xp], 20, UiStyle.TEXT_DIM))
-	var status: String = _status(hero)[0]
+	var status: String = UiStyle.hero_status(hero)[0]
 	info.add_child(_label("Stress %d / %d%s" % [hero.stress, Rules.STRESS_MAX, "   " + status if status != "" else ""], 20))
+	var perks: Array[String] = []
+	if hero.next_mission.has(&"max_hp"):
+		perks.append("+%d%% max HP" % roundi(hero.next_mission[&"max_hp"] * 100))
+	if hero.next_mission.has(&"speed"):
+		perks.append("+%d speed" % roundi(hero.next_mission[&"speed"]))
+	if not perks.is_empty():
+		info.add_child(_label("Next mission, from the Tavern: " + ", ".join(perks), 18, UiStyle.GOLD))
 	info.add_child(_label("Max HP %d   Speed %d" % [hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank),
 			hero.def.speed + Growth.weapon_speed_bonus(hero.weapon_rank)], 20))
 	info.add_child(_label("Weapon rank %d: %s" % [hero.weapon_rank, _weapon_text(hero.weapon_rank)], 18))
@@ -407,21 +592,6 @@ func _rank_button(parent: VBoxContainer, rank: int, cost: int, reason: String, n
 	parent.add_child(row)
 
 
-func _upgrade_row(id: StringName, next_effect: String) -> void:
-	var campaign := _campaign()
-	var cost := campaign.building_upgrade_cost(id)
-	var row := _row()
-	var building_label := _label("%s, level %d" % [CampaignRules.BUILDING_NAMES[id], campaign.buildings[id]], 18)
-	building_label.custom_minimum_size = Vector2(260, 0)
-	row.add_child(building_label)
-	if cost.is_empty():
-		row.add_child(_label("Fully upgraded.", 16, UiStyle.TEXT_DIM))
-		return
-	var button := _action("Upgrade  " + _cost_text(cost), func() -> void: _after(campaign.upgrade_building(id)))
-	row.add_child(button)
-	row.add_child(_label(next_effect, 16, UiStyle.TEXT_DIM))
-
-
 func _weapon_text(rank: int) -> String:
 	var steps := rank - 1
 	var text := "+%d%% damage, +%d%% crit" % [roundi(steps * CampaignRules.WEAPON_DAMAGE_PER_RANK * 100),
@@ -433,7 +603,8 @@ func _weapon_text(rank: int) -> String:
 func _cost_text(cost: Dictionary) -> String:
 	var parts: Array[String] = []
 	for heirloom: StringName in cost:
-		parts.append("%d %s" % [cost[heirloom], CampaignRules.HEIRLOOM_NAMES[heirloom]])
+		var name: String = CampaignRules.HEIRLOOM_NAMES[heirloom]
+		parts.append("%d %s" % [cost[heirloom], name.trim_suffix("s") if cost[heirloom] == 1 else name])
 	return ", ".join(parts)
 
 
@@ -486,34 +657,26 @@ func _build() -> void:
 		_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_ui)
 
-	for building: Array in BUILDINGS:
+	for id: StringName in SPOTS:
 		var hotspot := Control.new()
-		hotspot.position = (building[2] as Rect2).position
-		hotspot.size = (building[2] as Rect2).size
+		hotspot.position = (SPOTS[id] as Rect2).position
+		hotspot.size = (SPOTS[id] as Rect2).size
 		hotspot.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		hotspot.mouse_entered.connect(func() -> void:
-			_hover_label.text = building[1]
-			_hover_label.position = Vector2(hotspot.position.x + hotspot.size.x / 2.0 - 200, hotspot.position.y - 52)
-			_hover_label.show())
-		hotspot.mouse_exited.connect(_hover_label_hide)
 		hotspot.gui_input.connect(func(event: InputEvent) -> void:
 			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-				_open_building(building[0]))
+				_open_building(id))
 		_stage.add_child(hotspot)
 
-	_hover_label = _label("", 34, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
-	_hover_label.size = Vector2(400, 50)
-	_hover_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hover_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_hover_label.add_theme_constant_override("outline_size", 10)
-	_hover_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hover_label.hide()
-	_stage.add_child(_hover_label)
+	_plates = Control.new()
+	_plates.size = STAGE_SIZE
+	_plates.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(_plates)
 
 	# Top band: week, gold and heirlooms, Embark, and a way back to the menu.
 	_bar = EstateBar.new()
 	_ui.add_child(_bar)
 	var embark := _action("Embark", Game.go_to_expedition)
+	embark.theme_type_variation = &"PrimaryButton"
 	embark.custom_minimum_size = Vector2(150, 44)
 	embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
 	embark.add_theme_font_size_override("font_size", 26)
@@ -534,7 +697,9 @@ func _build() -> void:
 	var roster_box := VBoxContainer.new()
 	roster_box.add_theme_constant_override("separation", 6)
 	_roster_panel.add_child(roster_box)
-	roster_box.add_child(_label("Roster", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	_roster_title = _label("Roster", 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	roster_box.add_child(_roster_title)
+	roster_box.add_child(UiStyle.divider(290.0))
 	_roster = VBoxContainer.new()
 	_roster.add_theme_constant_override("separation", 6)
 	roster_box.add_child(UiStyle.scroll_on_phone(_roster))
@@ -543,7 +708,7 @@ func _build() -> void:
 	_window = PanelContainer.new()
 	_window.position = Vector2(60, 90)
 	_window.size = Vector2(1500, 960)
-	_window.add_theme_stylebox_override("panel", UiStyle.box(Color("0e0b0cfa"), Color("4a3e34"), 1, 4))
+	_window.add_theme_stylebox_override("panel", UiStyle.frame(16.0 if Device.phone else 30.0))
 	_window.hide()
 	_ui.add_child(_window)
 	var frame := VBoxContainer.new()
@@ -556,13 +721,11 @@ func _build() -> void:
 	header.add_child(_window_title)
 	var close := _action("Close" if Device.handheld else "Close (Esc)", _close_window)
 	close.custom_minimum_size = Vector2(110, 48) if Device.phone else Vector2.ZERO
+	close.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	header.add_child(close)
+	frame.add_child(UiStyle.divider(600.0 if Device.phone else 900.0))
 	_window_message = _label("", 17, UiStyle.DAMAGE.lightened(0.3))
 	frame.add_child(_window_message)
 	_window_body = VBoxContainer.new()
 	_window_body.add_theme_constant_override("separation", 10)
 	frame.add_child(UiStyle.scroll_on_phone(_window_body))
-
-
-func _hover_label_hide() -> void:
-	_hover_label.hide()

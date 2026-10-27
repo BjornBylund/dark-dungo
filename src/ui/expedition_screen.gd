@@ -116,6 +116,25 @@ func _refresh_map() -> void:
 		name_label.position = spot + Vector2(-160 * grow, marker_size.y / 2.0 + 4)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(name_label)
+		var progress := _label(_boss_progress(region), roundi(18 * grow), UiStyle.TEXT, UiStyle.DISPLAY_FONT)
+		progress.add_theme_color_override("font_outline_color", Color.BLACK)
+		progress.add_theme_constant_override("outline_size", roundi(8 * grow))
+		progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		progress.size = Vector2(320, 26) * grow
+		progress.position = name_label.position + Vector2(0, 38 * grow)
+		progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_map.add_child(progress)
+
+
+## How close the region's next boss is, like DD1's region progress.
+func _boss_progress(region: RegionDef) -> String:
+	var campaign := _campaign()
+	if region.boss == null or campaign.boss_tier(region) >= CampaignRules.TIER_NAMES.size():
+		return "Conquered"
+	if campaign.boss_ready(region):
+		return "Boss awaits"
+	var left: int = CampaignRules.BOSS_UNLOCK_MISSIONS - campaign.region_progress.get(region.id, 0)
+	return "Boss in %d mission%s" % [left, "" if left == 1 else "s"]
 
 
 func _refresh_quest() -> void:
@@ -127,7 +146,12 @@ func _refresh_quest() -> void:
 	_quest.add_child(_label(mission.title(), 40, QuestMarker.tier_color(mission.tier), UiStyle.DISPLAY_FONT))
 	_quest.add_child(_label("Level %d   %d columns" % [mission.level(), CampaignRules.MAP_COLUMNS[mission.length]], 18))
 	_quest.add_child(_heading("Goal"))
-	var goal := _label("Reach the end of the map and win the final fight.", 18)
+	var goal_text := "Reach the end of the map and win the final fight."
+	if mission.boss:
+		goal_text = "Reach the end of the map and defeat %s." % mission.region.boss.display_name
+		if campaign.boss_tier(mission.region) == 0 and not campaign.recruit_choices().is_empty():
+			goal_text += "\nThe first victory lets a new hero join."
+	var goal := _label(goal_text, 18)
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if Device.phone else TextServer.AUTOWRAP_OFF
 	_quest.add_child(goal)
 	_quest.add_child(_heading("Rewards"))
@@ -153,8 +177,7 @@ func _refresh_quest() -> void:
 		_quest.add_child(_action("Wait out the week", func() -> void:
 			if campaign.wait_week() == "":
 				Game.save()
-				_party.clear()
-				_refresh()))
+				Game.go_to_town()))
 
 
 func _refresh_roster() -> void:
@@ -257,10 +280,8 @@ func _place_in_lineup(hero: HeroRecord, rank: int) -> void:
 ## [tag, colour] for why a hero can't go on the chosen quest, or what it costs them.
 func _eligibility_tag(hero: HeroRecord) -> Array:
 	match _campaign().eligibility(hero, _mission):
-		Campaign.Eligibility.WOUNDED:
-			return ["WOUNDED", UiStyle.DAMAGE]
-		Campaign.Eligibility.BUSY:
-			return ["AT THE ABBEY", UiStyle.GOLD]
+		Campaign.Eligibility.WOUNDED, Campaign.Eligibility.BUSY:
+			return UiStyle.hero_status(hero)
 		Campaign.Eligibility.WILL_NOT_GO:
 			return ["WILL NOT GO", UiStyle.GREY]
 		Campaign.Eligibility.UNDERLEVELED:
@@ -365,6 +386,7 @@ func _build() -> void:
 	_reason = _label("", 16, UiStyle.TEXT_DIM)
 	embark_box.add_child(_reason)
 	_embark = _action("Embark", _on_embark)
+	_embark.theme_type_variation = &"PrimaryButton"
 	_embark.custom_minimum_size = Vector2(320, 72)
 	_embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
 	_embark.add_theme_font_size_override("font_size", 36)
@@ -427,6 +449,7 @@ func _build_phone() -> void:
 	map_button.custom_minimum_size = Vector2(100, 52)
 	header.add_child(map_button)
 	_embark = _action("Embark", _on_embark)
+	_embark.theme_type_variation = &"PrimaryButton"
 	_embark.custom_minimum_size = Vector2(170, 52)
 	_embark.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
 	_embark.add_theme_font_size_override("font_size", 28)

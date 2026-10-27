@@ -1,0 +1,86 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_i7bbv"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_27v0x"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_fymlx"]
+[ext_resource type="Texture2D" path="res://art/units/maw.png" id="4_hdbla"]
+
+[sub_resource type="Resource" id="Resource_i7bbv"]
+script = ExtResource("3_fymlx")
+kind = 1
+dot = &"bleed"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_27v0x"]
+script = ExtResource("2_27v0x")
+id = &"gorge"
+display_name = "Gorge"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 11
+damage_max = 16
+crit_chance = 0.08
+effects = Array[ExtResource("3_fymlx")]([SubResource("Resource_i7bbv")])
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_fymlx"]
+script = ExtResource("3_fymlx")
+token = &"stun"
+
+[sub_resource type="Resource" id="Resource_hdbla"]
+script = ExtResource("2_27v0x")
+id = &"swallow"
+display_name = "Swallow"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1])
+damage_min = 6
+damage_max = 9
+crit_chance = 0.05
+effects = Array[ExtResource("3_fymlx")]([SubResource("Resource_fymlx")])
+cooldown = 2
+
+[sub_resource type="Resource" id="Resource_023wa"]
+script = ExtResource("3_fymlx")
+kind = 1
+dot = &"blight"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_mtdk1"]
+script = ExtResource("2_27v0x")
+id = &"retch"
+display_name = "Retch"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 3
+damage_max = 5
+effects = Array[ExtResource("3_fymlx")]([SubResource("Resource_023wa")])
+ai_weight = 1.2
+
+[sub_resource type="Resource" id="Resource_k81sb"]
+script = ExtResource("2_27v0x")
+id = &"ravenous_howl"
+display_name = "Ravenous Howl"
+launch_ranks = Array[int]([1, 2])
+multi_target = true
+stress = 1
+cooldown = 3
+
+[resource]
+script = ExtResource("1_i7bbv")
+id = &"maw"
+display_name = "The Maw"
+color = Color(0.54, 0.58, 0.5, 1)
+size = 2
+max_hp = 175
+speed = 1
+corpse_hp = 40
+death_armor = 1
+resist_stun = 0.7
+resist_bleed = 0.3
+resist_blight = 0.6
+resist_burn = 0.2
+resist_move = 0.9
+resist_debuff = 0.4
+skills = Array[ExtResource("2_27v0x")]([SubResource("Resource_27v0x"), SubResource("Resource_hdbla"), SubResource("Resource_mtdk1"), SubResource("Resource_k81sb")])
+sprite = ExtResource("4_hdbla")

@@ -389,8 +389,7 @@ func _bond_over(helps: Array[Array]) -> void:
 			continue
 		new_bonds.append(Bonds.level_up_line(a, b, bonds.level(a, b)))
 		if outcome != Outcome.IN_PROGRESS:
-			if pair not in bonds.boosts_waiting:
-				bonds.boosts_waiting.append(pair)
+			bonds.hold_boost(a, b)
 			continue
 		_boost(help[0])
 		_boost(help[1])

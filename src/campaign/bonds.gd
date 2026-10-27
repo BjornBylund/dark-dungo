@@ -48,6 +48,12 @@ func add(a: HeroRecord, b: HeroRecord, amount: int) -> bool:
 	return level(a, b) > before
 
 
+## Keeps the pair's level-up boost for their next mission together.
+func hold_boost(a: HeroRecord, b: HeroRecord) -> void:
+	if key(a, b) not in boosts_waiting:
+		boosts_waiting.append(key(a, b))
+
+
 ## "Vanguard and Mender are now Friendly!"
 static func level_up_line(a: HeroRecord, b: HeroRecord, level: Level) -> String:
 	return "%s and %s are now %s!" % [a.display_name, b.display_name, level_name(level)]

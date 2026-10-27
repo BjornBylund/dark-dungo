@@ -56,7 +56,6 @@ func _probe(length: int, tier: CampaignRules.Tier, level: int, runs: int, first_
 	for seed_value in range(first_seed, first_seed + runs):
 		var campaign := Campaign.create(def, seed_value)
 		for hero in campaign.heroes:
-			hero.arrived = true
 			hero.recruited = true
 			hero.xp = CampaignRules.LEVEL_XP[level - 1] if level > 0 else 0
 		var pool := campaign.roster()

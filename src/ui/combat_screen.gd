@@ -231,7 +231,7 @@ func _start_fight() -> void:
 	_hud.hide()
 	var mission := _mission_run.mission
 	var encounter := _mission_run.pending
-	var kind: String = ["Fight", "Elite", "Finale"][_mission_run.pending_kind]
+	var kind: String = ["Fight", "Elite", "Boss" if mission.boss else "Finale"][_mission_run.pending_kind]
 	_battle = _mission_run.start_fight()
 	_units.clear()
 	for unit in _battle.all_units():
@@ -1140,9 +1140,7 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.add_child(center)
 	var frame := PanelContainer.new()
-	var frame_style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
-	frame_style.set_content_margin_all(36)
-	frame.add_theme_stylebox_override("panel", frame_style)
+	frame.add_theme_stylebox_override("panel", UiStyle.frame(40.0))
 	frame.custom_minimum_size = Vector2(620, 0)
 	center.add_child(frame)
 	var end_box := VBoxContainer.new()
@@ -1150,6 +1148,8 @@ func _build() -> void:
 	frame.add_child(end_box)
 	_end_title = _label(64, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var rule := UiStyle.divider(480.0)
+	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_end_text = _label(20, UiStyle.TEXT)
 	_end_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_button = _button("", func() -> void: _end_action.call())
@@ -1157,7 +1157,7 @@ func _build() -> void:
 	_end_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_end_button.custom_minimum_size = Vector2(280, 52)
 	_end_button.add_theme_font_size_override("font_size", 22)
-	for node: Control in [_end_title, _end_text, _end_button]:
+	for node: Control in [_end_title, rule, _end_text, _end_button]:
 		end_box.add_child(node)
 	_end_panel.hide()
 

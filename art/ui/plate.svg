@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="40" viewBox="0 0 64 40">
+  <!-- A DD1-style button plate, drawn as a 9-slice with 12 px corners: a
+       dark red-brown face, a bronze rim, and a faint highlight along the top. -->
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2e1c17"/>
+      <stop offset="1" stop-color="#150d0b"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="38" rx="2" fill="url(#face)" stroke="#060404" stroke-width="2"/>
+  <rect x="3.5" y="3.5" width="57" height="33" rx="1" fill="none" stroke="#7a5c38" stroke-width="1.5"/>
+  <path d="M6 6.5 L58 6.5" stroke="#5a3e2a" stroke-width="1"/>
+</svg>

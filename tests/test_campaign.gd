@@ -3,11 +3,11 @@ extends TestCase
 const HEROES := ["vanguard", "cutthroat", "marksman", "mender"]
 
 
-func _def(arrivals: Array = []) -> CampaignDef:
+func _def(recruits: Array = []) -> CampaignDef:
 	var def := CampaignDef.new()
 	for id: String in HEROES:
 		def.starting_heroes.append(load("res://content/heroes/%s.tres" % id))
-	def.arrivals.assign(arrivals)
+	def.recruits.assign(recruits)
 	def.regions.assign([
 		Fixtures.region(&"first", ["wave_1", "wave_2"], ["brute_and_bones"], ["wave_3"]),
 		Fixtures.region(&"second", ["graveyard_watch", "rot_nest"], ["the_glutton"], ["brute_and_bones"]),
@@ -16,8 +16,8 @@ func _def(arrivals: Array = []) -> CampaignDef:
 	return def
 
 
-func _campaign(seed_value: int = 1, arrivals: Array = []) -> Campaign:
-	return Campaign.create(_def(arrivals), seed_value)
+func _campaign(seed_value: int = 1, recruits: Array = []) -> Campaign:
+	return Campaign.create(_def(recruits), seed_value)
 
 
 ## A mission whose tier and length are fixed, added to the board.
@@ -205,14 +205,15 @@ func test_the_week_can_pass_only_when_nobody_can_go() -> void:
 		hero.wounded = true
 	assert_ne(campaign.wait_week(), "", "one hero can still go")
 	heroes[3].stress = 5
-	campaign.send_to_abbey(heroes[3], 0)
+	campaign.send(heroes[3], &"meditation")
 	assert_eq(campaign.wait_week(), "")
 	assert_eq(campaign.week, 2)
-	assert_eq(heroes[3].stress, 5 - campaign.abbey_relief(0))
+	assert_eq(heroes[3].stress, 5 - campaign.activity_relief(&"meditation"))
 	for hero in heroes:
 		assert_false(hero.wounded, hero.display_name)
 		hero.wounded = true
-	assert_ne(campaign.wait_week(), "", "the Warden has arrived at the Stagecoach")
+	campaign.recruits_waiting = 1
+	assert_ne(campaign.wait_week(), "", "the Warden can still be recruited")
 
 
 func test_will_not_go_and_underlevel_stress() -> void:
@@ -232,8 +233,8 @@ func test_will_not_go_and_underlevel_stress() -> void:
 func test_blacksmith_needs_building_level_hero_level_and_gold() -> void:
 	var campaign := _campaign()
 	var hero := campaign.roster()[0]
-	assert_eq(campaign.upgrade_weapon(hero), "Upgrade the Weaponsmith first.")
-	campaign.buildings[&"weaponsmith"] = 1
+	assert_eq(campaign.upgrade_weapon(hero), "Upgrade Weaponsmithing first.")
+	campaign.upgrades[&"weaponsmith"] = 1
 	assert_eq(campaign.upgrade_weapon(hero), "Needs hero level 1.")
 	hero.xp = CampaignRules.LEVEL_XP[0]
 	campaign.gold = 100
@@ -242,29 +243,19 @@ func test_blacksmith_needs_building_level_hero_level_and_gold() -> void:
 	assert_eq(campaign.upgrade_weapon(hero), "")
 	assert_eq(hero.weapon_rank, 2)
 	assert_eq(campaign.gold, 5000 - CampaignRules.GEAR_COST[0])
-	assert_eq(campaign.upgrade_armor(hero), "Upgrade the Armorsmith first.")
+	assert_eq(campaign.upgrade_armor(hero), "Upgrade Armorsmithing first.")
 
 
 func test_guild_raises_skill_ranks() -> void:
 	var campaign := _campaign()
 	var hero := campaign.roster()[0]
 	var skill := hero.def.skills[0]
-	campaign.buildings[&"guild"] = 1
+	campaign.upgrades[&"guild"] = 1
 	hero.xp = CampaignRules.LEVEL_XP[0]
 	assert_eq(campaign.upgrade_skill(hero, skill), "")
 	assert_eq(hero.skill_rank(skill), 2)
 	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD - CampaignRules.SKILL_COST[0])
-	assert_eq(campaign.upgrade_skill(hero, skill), "Upgrade the Guild first.")
-
-
-func test_building_upgrades_spend_heirlooms() -> void:
-	var campaign := _campaign()
-	campaign.heirlooms[&"deed"] = 8
-	campaign.heirlooms[&"crest"] = 8
-	assert_eq(campaign.upgrade_building(&"weaponsmith"), "")
-	assert_eq(campaign.buildings[&"weaponsmith"], 1)
-	assert_eq(campaign.heirlooms[&"deed"], 0)
-	assert_eq(campaign.upgrade_building(&"weaponsmith"), "Not enough Deeds.")
+	assert_eq(campaign.upgrade_skill(hero, skill), "Upgrade Instructors first.")
 
 
 func test_abbey_relieves_stress_at_week_end_and_blocks_the_mission() -> void:
@@ -272,43 +263,39 @@ func test_abbey_relieves_stress_at_week_end_and_blocks_the_mission() -> void:
 	var heroes := campaign.roster()
 	heroes[0].stress = 6
 	heroes[1].stress = 6
-	assert_eq(campaign.send_to_abbey(heroes[0], 0), "")
-	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD - CampaignRules.ABBEY_PRICES[0])
+	assert_eq(campaign.send(heroes[0], &"meditation"), "")
+	assert_eq(campaign.gold, CampaignRules.STARTING_GOLD - CampaignRules.ACTIVITIES[&"meditation"].price)
 	assert_eq(campaign.eligibility(heroes[0], campaign.board[0]), Campaign.Eligibility.BUSY)
-	assert_eq(campaign.send_to_abbey(heroes[1], 0), "No free slot.")
+	assert_eq(campaign.send(heroes[1], &"meditation"), "No free slot.")
 	campaign._advance_week([])
-	assert_eq(heroes[0].stress, 6 - CampaignRules.ABBEY_RELIEF[0][0])
-	assert_eq(heroes[0].abbey_activity, -1)
+	assert_eq(heroes[0].stress, 6 - CampaignRules.ACTIVITIES[&"meditation"].relief[0])
+	assert_eq(heroes[0].activity, &"")
 	assert_eq(heroes[1].stress, 5, "idle heroes lose 1 stress")
 
 
-func test_abbey_prices_and_upgrades() -> void:
+func test_activity_prices_follow_hero_level_and_upgrades() -> void:
 	var campaign := _campaign()
 	var hero := campaign.roster()[0]
-	assert_eq(campaign.abbey_price(hero, 0), 1000)
+	assert_eq(campaign.activity_price(hero, &"meditation"), 1000)
 	hero.xp = CampaignRules.LEVEL_XP[2]
-	assert_eq(campaign.abbey_price(hero, 0), 1400)
+	assert_eq(campaign.activity_price(hero, &"meditation"), 1400)
 	hero.xp = CampaignRules.LEVEL_XP[4]
-	assert_eq(campaign.abbey_price(hero, 0), 1800)
-	campaign.buildings[&"abbey"] = 3
-	assert_eq(campaign.abbey_price(hero, 0), roundi(1800 * 0.85))
-	assert_eq(campaign.abbey_relief(0), CampaignRules.ABBEY_RELIEF[1][0])
-	assert_eq(campaign.abbey_slots(), 2)
+	assert_eq(campaign.activity_price(hero, &"meditation"), 1800)
+	campaign.upgrades[&"meditation"] = 3
+	assert_eq(campaign.activity_price(hero, &"meditation"), roundi(1800 * 0.85))
+	assert_eq(campaign.activity_relief(&"meditation"), CampaignRules.ACTIVITIES[&"meditation"].relief[1])
+	assert_eq(campaign.activity_slots(&"meditation"), 2)
+	assert_eq(campaign.activity_slots(&"prayer"), 1, "each activity upgrades on its own")
 
 
-func test_a_new_hero_arrives_each_week_at_the_stagecoach_level() -> void:
-	var campaign := _campaign(1, [Fixtures.unit("First"), Fixtures.unit("Second")])
-	assert_eq(campaign.stagecoach().size(), 0)
-	campaign._advance_week([])
-	assert_eq(campaign.stagecoach().size(), 1)
-	assert_eq(campaign.stagecoach()[0].level(), 0)
-	campaign.buildings[&"stagecoach"] = 2
-	campaign._advance_week([])
-	var second := campaign.stagecoach()[1]
-	assert_eq(second.display_name, "Second")
-	assert_eq(second.level(), 2)
-	assert_eq(campaign.hire(second), "")
-	assert_eq(campaign.roster().size(), 5)
+func test_heroes_who_havent_joined_stay_out_of_the_roster() -> void:
+	var campaign := _campaign(1, [Fixtures.unit("Later")])
+	assert_eq(campaign.roster().size(), HEROES.size())
+	for week in 5:
+		campaign._advance_week([])
+	assert_eq(campaign.roster().size(), HEROES.size(), "nobody arrives on their own")
+	assert_eq(campaign.recruit_choices().size(), 1)
+	assert_ne(campaign.recruit(campaign.recruit_choices()[0]), "", "only after a boss")
 
 
 func test_mission_tiers_unlock_with_hero_levels() -> void:
@@ -324,12 +311,11 @@ func test_save_and_load_round_trip() -> void:
 	var campaign := _campaign(9)
 	campaign.gold = 1234
 	campaign.heirlooms[&"bust"] = 7
-	campaign.buildings[&"guild"] = 2
+	campaign.upgrades[&"guild"] = 2
 	var hero := campaign.roster()[2]
 	hero.xp = 9
 	hero.weapon_rank = 3
 	hero.skill_ranks[hero.def.skills[1].id] = 4
-	campaign.send_to_abbey(campaign.roster()[1], 2)
 	var party := _party(campaign)
 	_strengthen(party)
 	var run := campaign.embark(_mission(campaign, 0, CampaignRules.Length.LONG), party)

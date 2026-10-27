@@ -52,19 +52,35 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 
 ### Roster: a fixed cast, no permadeath
 
-- **One unique hero per class.** The cast is the 8 classes below; you start with the original 4 at level 0.
-- **Recruiting:** from week 2 one new hero arrives at the Stagecoach each week (Warden, Plaguebearer, Minstrel, Penitent, in that order). Hiring is free, and an unhired hero waits at the Stagecoach. The Stagecoach upgrade makes arrivals start at level 1, 2 or 3 so late heroes can catch up.
+- **One unique hero per class.** The cast is the 8 classes below; you start with 5 at level 0: the original 4 and the Warden.
+- **Recruiting through bosses:** there is no Stagecoach. Beating a region's boss for the first time lets one hero join: you choose from those who haven't, and they join at level 1. Three regions, three heroes left (Plaguebearer, Minstrel, Penitent). See [Region bosses](#region-bosses).
 - **No permadeath.** A failed deathblow **defeats** the hero: they leave the fight and take no further part in the mission. Back in town they are **Wounded** and sit out the next week, unless you pay to treat them at once. They keep their levels, gear and skills.
 - **Between missions** heroes return at full HP. Stress carries over until relieved at the Abbey. Idle heroes lose 1 stress per week.
 
 ### Weeks and missions
 
-- **One mission is one week.** The week advances when the party returns, whether it won, retreated or wiped. Then: Abbey and wound treatments finish, idle heroes lose stress, a new hero may arrive, and the mission board refreshes.
+- **One mission is one week.** The week advances when the party returns, whether it won, retreated or wiped. Then: Abbey and Tavern visits and wound treatments finish, idle heroes lose stress, and the mission board refreshes.
 - **Regions**, like DD1's Ruins, Weald, Warrens and Cove: three placeholder places, each with its own enemy groups and finale. **The Graveyard** has skeletons and cultists, **the Burrows** ghouls and spitters, and **the Chapel** cultists and the Brute (`content/regions/`).
 - **Missions:** 2 per region each week, so 6 to choose from, each with a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short, medium, long). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
-- **A mission is a map** of rooms to pick a route through, like a Slay the Spire act or DD2's roads, longer for longer missions. Its goal is to reach the end and win the region's finale. See [Mission maps](#mission-maps). DD1's other quest goals (Explore, Gather, Activate, Boss) stay deferred.
+- **A mission is a map** of rooms to pick a route through, like a Slay the Spire act or DD2's roads, longer for longer missions. Its goal is to reach the end and win the region's finale, or its boss on a boss mission. See [Mission maps](#mission-maps). DD1's other quest goals (Explore, Gather, Activate) stay deferred.
 - **Party selection:** up to 4 heroes, rank 1 first in the order picked. Heroes who are Wounded or busy at the Abbey can't go. Heroes at least 2 levels above the mission level refuse it ("will not go"). Heroes more than one level below it start the mission with +2 stress per level short: level 0 is fine for Apprentice, level 2 for Veteran, level 4 for Champion.
-- **Nobody fit to go:** when every hero is Wounded or at the Abbey and nobody waits at the Stagecoach, the board offers **Wait out the week**, which ends the week without a mission. It keeps a wiped party that can't afford treatment from locking the campaign; DD1 never needs it because its Stagecoach always has recruits.
+- **Nobody fit to go:** when every hero is Wounded or busy in town and no recruit is waiting to join, the board offers **Wait out the week**, which ends the week without a mission. It keeps a wiped party that can't afford treatment from locking the campaign; DD1 never needs it because its Stagecoach always has recruits.
+
+### Region bosses
+
+After DD1's region progress and bosses:
+
+- **Unlocking:** every mission **completed** in a region counts towards its boss; retreats and wipes don't. After **3**, the region's **boss mission** appears on the board, by its region, as a skull shield on a blood-red field. It stays there, week after week, until beaten. The expedition map shows each region's progress under its name ("Boss in 2 missions", "Boss awaits", "Conquered").
+- **A boss mission** is a **long** map (20 columns) that ends at the region's boss instead of its finale. It pays a long mission's gold and XP and **double** heirlooms.
+- **The first win** against each region's boss lets a new hero join (see Recruiting). A window in town offers the choice.
+- **Coming back harder:** after a win the region starts again, and after 3 more completed missions there its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
+- **The bosses**, each with escorts, built from mechanics the engine already has and tuned with `tools/balance_probe.gd` so fresh level-0 random parties win about 40–46% at Apprentice:
+
+| Region | Boss | Kit |
+|---|---|---|
+| Graveyard | **The Gravelord** (2 ranks), with a Bone Spearman and a Cultist | Bone Storm on every rank, Grasp of the Grave (heavy, Weak), Raise the Dead (Strength for all), Death Knell (stress to all) |
+| Burrows | **The Maw** (2 ranks), with two Spitters | Gorge (heavy, Bleed), Swallow (Stun), Retch (Blight on the back ranks), Ravenous Howl (stress to all) |
+| Chapel | **The Hollow Saint** (rank 4, acts twice), behind the Brute and a Cultist | Sermon of Despair (+2 stress to all), Smite (heavy, Vulnerable), Wailing Choir (every rank), Hallowed Ward (Block for all), Saint's Mercy (heals) |
 - **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +50% HP and damage and +5% crit.
 
 ### Rewards
@@ -162,23 +178,38 @@ After DD2's relationships, but long-term and only positive: every pair of heroes
 
 ### Buildings
 
-| Building | Service (gold) | Upgrades (heirlooms) |
-|---|---|---|
-| **Stagecoach** | Hire arriving heroes (free) | Arrivals start at level 1 / 2 / 3: 9 Busts + 12 Crests, 12 + 16, 15 + 20 |
-| **Guild** | Skill ranks | Max rank 2 / 3 / 4 / 5: 6 Portraits + 14 Crests, 15 + 38, 24 + 60, 33 + 84 |
-| **Blacksmith** | Weapon and armour ranks | Weapon and armour each, max rank 2 / 3 / 4 / 5: 8 Deeds + 8 Crests, 20 + 21, 32 + 35, 44 + 49 |
-| **Abbey** | Stress relief, wound treatment | Ladder below |
+Each building has DD1's separate **upgrade lines**, bought with heirlooms in its window's Upgrades tab, so you choose where to spend. Costs are DD1's.
 
-- **Abbey activities:** three, removing 4 / 5 / 6 stress for 1,000 / 1,250 / 1,500 gold. Prices ×1.4 for heroes of level 3–4 and ×1.8 for level 5–6. The hero is busy for that week. One slot per activity at first. No side effects for now.
-- **Abbey upgrades** (Busts + Crests), applying to all three activities:
-  1. more relief, 6 / 7 / 8 stress (4 + 5)
-  2. prices −15% (8 + 10)
-  3. 2 slots each (11 + 14)
-  4. more relief, 7 / 9 / 10 stress (15 + 19)
-  5. prices −15% more (19 + 24)
-  6. 3 slots each (23 + 29)
-- **Wound treatment:** 750 gold (same ×1.4 / ×1.8) to heal a Wounded hero for this week's mission.
-- All buildings are open from the start. DD1's gradual unlocking, the Tavern as a separate building and the discount upgrade lines come later.
+| Building | Opens | Services (gold) | Upgrade lines (heirlooms per level) |
+|---|---|---|---|
+| **Blacksmith** | week 1 | Weapon and armour ranks | Weaponsmithing and Armorsmithing: max rank 2 / 3 / 4 / 5 (8 Deeds + 8 Crests, 20 + 21, 32 + 35, 44 + 49). Furnace: −10% gear gold per level, 5 levels (4 + 4, 9 + 10, 14 + 15, 18 + 20, 24 + 26) |
+| **Guild** | week 1 | Skill ranks | Instructors: max rank 2 / 3 / 4 / 5 (6 Portraits + 14 Crests, 15 + 38, 24 + 60, 33 + 84). Training regimen: −10% skill gold per level, 5 levels (2 + 6, 5 + 14, 8 + 21, 11 + 29, 14 + 36) |
+| **Abbey** | week 1 | Safe stress relief: Meditation, Prayer, Flagellation. Wound treatment | One line per activity (below), Busts + Crests |
+| **Tavern** | week 3 | Risky stress relief: Bar, Gambling Hall, Bathhouse | One line per activity (below), Portraits + Crests |
+| **Heirloom Exchange** | week 5 | Trades heirlooms at a loss | none |
+
+- **Stress relief activities:** the hero pays now, misses this week's mission, and the stress comes off when the week ends. Prices ×1.4 for heroes of level 3–4 and ×1.8 for level 5–6.
+
+| Activity | Stress off | Gold | Slots |
+|---|---|---|---|
+| Meditation, Bar | 4 | 1,000 | 1 (Bar: 2) |
+| Prayer, Gambling Hall | 5 | 1,250 | 1 |
+| Flagellation, Bathhouse | 6 | 1,500 | 1 |
+
+- **Activity upgrade lines**, one per activity, DD1's: (1) more relief, (2) prices −15%, (3) one more slot, (4) more relief, (5) prices −15% more, (6) one more slot. Relief goes 4 → 6 → 7, 5 → 7 → 9, 6 → 8 → 10. Abbey levels cost 4 Busts + 5 Crests up to 23 + 29; Tavern levels 2 Portraits + 5 Crests up to 11 + 29.
+- **The Abbey is safe**; the **Tavern** has side effects, about 1 visit in 4, DD1's without quirks, trinkets or diseases. Gold can't drop below 0.
+
+| Activity | Good | Bad |
+|---|---|---|
+| Bar | 10%: +20% max HP for the next mission | 10%: away an extra week; 5%: loses 500 gold |
+| Gambling Hall | 5%: wins 2,000 gold | 10%: away an extra week; 8%: loses 1,000 gold |
+| Bathhouse | 8%: +1 speed for the next mission; 4%: 2 more stress off | 8%: away an extra week; 4%: loses 750 gold |
+
+- **The Bar starts with 2 slots**, and every pair of heroes there in the same week gains +2 bond points, like DD2's inn items. A bond level reached there gives its boost on the pair's next mission together.
+- **Heirloom Exchange**, DD1's rates: 3 Crests → 1 Bust or Deed; 6 Crests → 1 Portrait; 2 Busts or 2 Deeds → 3 Crests; 1 Portrait → 3 Crests; 3 Busts ↔ 2 Deeds; 3 Busts or 3 Deeds → 1 Portrait; 2 Portraits → 3 Busts or 3 Deeds. Any number of trades a week.
+- **Wound treatment:** 750 gold (same ×1.4 / ×1.8) at the Abbey to heal a Wounded hero for this week's mission.
+- **On the hamlet** a plate over each building shows its name and upgrades bought (gold when one is affordable), or the week it opens. What happened in town at week's end (Abbey and Tavern visits, side effects, the Bar's bonds) shows with the mission results, or in a "The week in town" window after waiting out a week.
+- **Not yet:** the Sanitarium (needs quirks and diseases) and the Nomad Wagon (needs trinkets).
 
 ### New classes
 
@@ -196,7 +227,7 @@ After DD2's relationships, but long-term and only positive: every pair of heroes
 - **Mission map screen:** the map drawn over one shared placeholder backdrop (a dark trail), the region's name in the header, the party's marker, and the reachable rooms highlighted. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
 - **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
 - One autosave slot, written after every town action and every fight on a mission (`user://`, which is browser storage on the web build).
-- A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town hires arrivals, treats the wounded, and embarks on its own, and the fights play themselves.
+- A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
 
 ## Deviations from DD2
 
@@ -357,7 +388,7 @@ To decide when we design it:
 On mission maps, rooms start hidden or revealed instead of all showing their type, as in DD2 ([research/path-maps.md](research/path-maps.md)). The first version of the map shows every room.
 
 - **Hidden rooms** show only that a room is there; you learn its type when you reach it or once it is scouted.
-- **Ways to scout:** a watchtower room that reveals everything ahead, hero skills or quirks that scout, and Guild or Stagecoach upgrades that reveal more at the start.
+- **Ways to scout:** a watchtower room that reveals everything ahead, hero skills or quirks that scout, and Guild upgrades that reveal more at the start.
 - **Regions or modifiers** that scout less (fog) or more.
 - **Always revealed:** the elite rooms and the finale, so the big risks can still be planned around, as DD2 always shows the Lair.
 
@@ -369,7 +400,7 @@ To decide when we design it:
 ## Open / deferred
 
 - **Theme and setting**, and with it all names.
-- Town features after v1, roughly in DD1's priority: Abbey and Tavern side effects with quirks and the Sanitarium; trinkets and the Nomad Wagon; diseases; region bosses, with DD1's per-region progress bar and dungeon levels; quest goals beyond winning every fight; town events; gradual building unlocks; discount upgrade lines; a dungeon map with supplies, light and camping (Survivalist).
+- Town features after v1, roughly in DD1's priority: quirks, with their Abbey and Tavern side effects, and the Sanitarium; trinkets and the Nomad Wagon; diseases; region bosses, with DD1's per-region progress bar and dungeon levels; quest goals beyond winning every fight; town events; a dungeon map with supplies, light and camping (Survivalist).
 - Relationships, Paths, combat items, skill loadouts.
 - Real art, audio, controller support, multiple save slots.
 - DD2 screen features waiting on mechanics or writing: the Flame emblem at the top, speech-bubble barks, right-click enemy and hero inspect sheets.

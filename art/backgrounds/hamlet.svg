@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#120e16"/>
-      <stop offset="0.45" stop-color="#2c2030"/>
-      <stop offset="0.7" stop-color="#4a3330"/>
+      <stop offset="0" stop-color="#0e0a0a"/>
+      <stop offset="0.45" stop-color="#2a1a18"/>
+      <stop offset="0.7" stop-color="#4e2e24"/>
     </linearGradient>
     <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
       <stop offset="0" stop-color="#ffb060" stop-opacity="0.55"/>
@@ -26,21 +26,16 @@
   <rect x="1316" y="200" width="10" height="18" fill="#c88040" opacity="0.6"/>
 
   <!-- hills -->
-  <path d="M0 560 Q240 470 520 530 Q760 470 1000 540 Q1260 480 1500 545 Q1720 500 1920 560 L1920 760 L0 760 Z" fill="#221922"/>
+  <path d="M0 560 Q240 470 520 530 Q760 470 1000 540 Q1260 480 1500 545 Q1720 500 1920 560 L1920 760 L0 760 Z" fill="#221814"/>
 
   <!-- ground and the high street -->
   <rect y="640" width="1920" height="440" fill="url(#ground)"/>
   <path d="M0 790 Q760 760 1920 800 L1920 880 Q760 840 0 880 Z" fill="#33281f"/>
 
   <g stroke="#0c0909" stroke-width="5" stroke-linejoin="round">
-    <!-- Stagecoach: a coach by a signpost -->
-    <path d="M60 700 L60 560 L180 500 L300 560 L300 700 Z" fill="#3a2c26"/>
-    <path d="M40 566 L180 492 L320 566" fill="none" stroke="#2a1e18" stroke-width="16"/>
-    <rect x="150" y="610" width="60" height="90" fill="#1a1210"/>
-    <rect x="86" y="600" width="40" height="34" fill="#e0a050" opacity="0.8"/>
-    <path d="M200 760 L200 690 L330 690 L330 760 Z" fill="#4a3426"/>
-    <circle cx="220" cy="772" r="22" fill="#2a1e18"/><circle cx="310" cy="772" r="22" fill="#2a1e18"/>
-    <path d="M350 790 L350 640 M330 660 L400 660 L392 676 L330 676" fill="#6a4a30" stroke-width="5"/>
+    <!-- a dead tree and a wayside cairn at the edge of town -->
+    <path d="M150 790 L160 600 Q130 560 100 540 M158 640 Q200 600 236 590 M160 600 Q170 540 150 500" fill="none" stroke="#1a1416" stroke-width="14"/>
+    <path d="M250 790 L262 744 L292 736 L316 752 L322 790 Z" fill="#3a3436"/>
 
     <!-- Blacksmith: forge with chimney and an anvil -->
     <path d="M400 710 L400 560 L540 520 L680 560 L680 710 Z" fill="#33292a"/>
@@ -72,11 +67,32 @@
     <rect x="1410" y="690" width="80" height="60" fill="#6a4a30"/>
     <path d="M1420 704 L1480 704 M1420 720 L1470 720 M1420 736 L1476 736" fill="none" stroke="#d8c8a0" stroke-width="4"/>
     <path d="M1430 750 L1430 800 M1470 750 L1470 800" fill="none" stroke="#4a3426" stroke-width="8"/>
+
+    <!-- Tavern: a long low house on the near side of the street, with a mug sign -->
+    <path d="M340 1080 L340 920 L520 850 L700 920 L700 1080 Z" fill="#3b2a22"/>
+    <path d="M318 928 L520 842 L722 928" fill="none" stroke="#22170f" stroke-width="18"/>
+    <rect x="372" y="960" width="64" height="52" fill="#e0a050" opacity="0.85"/>
+    <rect x="604" y="960" width="64" height="52" fill="#e0a050" opacity="0.85"/>
+    <path d="M484 1080 L484 990 Q520 958 556 990 L556 1080 Z" fill="#1a1210"/>
+    <path d="M700 950 L770 950" fill="none" stroke="#2a1e18" stroke-width="8"/>
+    <rect x="732" y="956" width="44" height="40" fill="#6a4a30"/>
+    <path d="M744 964 L762 964 L762 988 L744 988 Z M762 970 Q772 976 762 982" fill="#d8c8a0" stroke-width="3"/>
+
+    <!-- Heirloom Exchange: a trader's stall with an awning and a pair of scales -->
+    <rect x="810" y="990" width="220" height="90" fill="#3a2e28"/>
+    <path d="M822 990 L822 920 M1018 990 L1018 920" fill="none" stroke="#2a1e18" stroke-width="8"/>
+    <path d="M800 924 L1040 924 L1024 964 L816 964 Z" fill="#6a2a2a"/>
+    <path d="M860 924 L852 964 M920 924 L920 964 M980 924 L988 964" fill="none" stroke="#3a1414" stroke-width="5"/>
+    <path d="M920 924 L920 878 M884 888 L956 888" fill="none" stroke="#c9a24a" stroke-width="5"/>
+    <path d="M876 888 Q884 906 892 888 M948 888 Q956 906 964 888" fill="none" stroke="#c9a24a" stroke-width="4"/>
+    <rect x="836" y="1004" width="40" height="30" fill="#7a5a3a"/>
+    <rect x="966" y="1000" width="44" height="34" fill="#55606a"/>
   </g>
 
   <!-- lit windows glow -->
   <circle cx="470" cy="660" r="90" fill="url(#glow)"/>
   <circle cx="1170" cy="540" r="80" fill="url(#glow)" opacity="0.6"/>
+  <circle cx="520" cy="990" r="120" fill="url(#glow)" opacity="0.7"/>
 
   <!-- foreground -->
   <g fill="#070505">

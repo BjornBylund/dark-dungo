@@ -18,9 +18,10 @@ var cache_column := 0
 var early_columns := 0
 
 
-## Draws maps until one passes layout_problems() and type_problems(), then fills the rooms.
+## Draws maps until one passes layout_problems() and type_problems(), then fills
+## the rooms. `finale` replaces the region's usual finale, for a boss mission.
 static func generate(region: RegionDef, length: CampaignRules.Length, events: Array[EventDef],
-		rng: RandomNumberGenerator) -> MissionMap:
+		rng: RandomNumberGenerator, finale: EncounterDef = null) -> MissionMap:
 	var map := MissionMap.new()
 	map.columns = CampaignRules.MAP_COLUMNS[length]
 	map.cache_column = CampaignRules.CACHE_COLUMN[length]
@@ -35,6 +36,8 @@ static func generate(region: RegionDef, length: CampaignRules.Length, events: Ar
 		if map.type_problems().is_empty():
 			break
 	map._fill(region, events, rng)
+	if finale:
+		map.final_room().encounter = finale
 	return map
 
 

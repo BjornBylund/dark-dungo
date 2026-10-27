@@ -1,5 +1,6 @@
 ## A mission on the board: a region, a difficulty tier and a length, with its
-## rewards. Its map is drawn when the party embarks.
+## rewards. Its map is drawn when the party embarks. A boss mission is a long
+## one that ends at the region's boss and pays double heirlooms.
 class_name Mission
 extends RefCounted
 
@@ -9,6 +10,7 @@ var tier: CampaignRules.Tier
 var length: CampaignRules.Length
 ## Heirloom type paid on completion.
 var heirloom: StringName
+var boss := false
 
 
 func level() -> int:
@@ -16,6 +18,8 @@ func level() -> int:
 
 
 func title() -> String:
+	if boss:
+		return "%s %s" % [region.boss.display_name, CampaignRules.TIER_NAMES[tier]]
 	return "%s %s" % [CampaignRules.LENGTH_NAMES[length], CampaignRules.TIER_NAMES[tier]]
 
 
@@ -38,11 +42,12 @@ func xp() -> int:
 
 
 func heirloom_amount() -> int:
-	return CampaignRules.heirloom_amount(heirloom, tier, length)
+	return CampaignRules.heirloom_amount(heirloom, tier, length) * (CampaignRules.BOSS_HEIRLOOM_MULTIPLIER if boss else 1)
 
 
 func to_dict() -> Dictionary:
-	return {region = region.resource_path if region else "", tier = tier, length = length, heirloom = heirloom}
+	return {region = region.resource_path if region else "", tier = tier, length = length, heirloom = heirloom,
+			boss = boss}
 
 
 static func from_dict(data: Dictionary) -> Mission:
@@ -52,4 +57,5 @@ static func from_dict(data: Dictionary) -> Mission:
 	mission.tier = int(data.tier) as CampaignRules.Tier
 	mission.length = int(data.length) as CampaignRules.Length
 	mission.heirloom = StringName(data.heirloom)
+	mission.boss = data.get("boss", false)
 	return mission

@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_nwqc5"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_cktqj"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_f0ij0"]
+[ext_resource type="Texture2D" path="res://art/units/gravelord.png" id="4_blhek"]
+
+[sub_resource type="Resource" id="Resource_nwqc5"]
+script = ExtResource("2_cktqj")
+id = &"bone_storm"
+display_name = "Bone Storm"
+launch_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 4
+damage_max = 7
+crit_chance = 0.05
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_cktqj"]
+script = ExtResource("3_f0ij0")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_f0ij0"]
+script = ExtResource("2_cktqj")
+id = &"grasp_of_the_grave"
+display_name = "Grasp of the Grave"
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 11
+damage_max = 15
+crit_chance = 0.1
+effects = Array[ExtResource("3_f0ij0")]([SubResource("Resource_cktqj")])
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_blhek"]
+script = ExtResource("3_f0ij0")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_bgyjh"]
+script = ExtResource("2_cktqj")
+id = &"raise_the_dead"
+display_name = "Raise the Dead"
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_f0ij0")]([SubResource("Resource_blhek")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_blpdg"]
+script = ExtResource("2_cktqj")
+id = &"death_knell"
+display_name = "Death Knell"
+launch_ranks = Array[int]([1, 2])
+multi_target = true
+stress = 1
+cooldown = 3
+
+[resource]
+script = ExtResource("1_nwqc5")
+id = &"gravelord"
+display_name = "The Gravelord"
+color = Color(0.2, 0.24, 0.22, 1)
+size = 2
+max_hp = 145
+speed = 4
+corpse_hp = 30
+death_armor = 2
+resist_stun = 0.6
+resist_bleed = 0.7
+resist_blight = 0.6
+resist_burn = 0.3
+resist_move = 0.8
+resist_debuff = 0.5
+skills = Array[ExtResource("2_cktqj")]([SubResource("Resource_nwqc5"), SubResource("Resource_f0ij0"), SubResource("Resource_bgyjh"), SubResource("Resource_blpdg")])
+sprite = ExtResource("4_blhek")

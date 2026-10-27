@@ -1,5 +1,6 @@
-## A hero in a town list: portrait, name, level, stress pips and an
-## optional status tag. Toggles to show selection.
+## A hero in a town list, DD1's roster card: a framed portrait with the level
+## badge on its corner, the name, stress pips and an optional status tag.
+## Toggles to show selection.
 class_name HeroBadge
 extends BaseButton
 
@@ -34,23 +35,18 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 
 
 func _draw() -> void:
-	var border := UiStyle.GOLD if button_pressed else (UiStyle.GOLD.darkened(0.4) if is_hovered() else Color("3a3430"))
-	draw_style_box(UiStyle.box(Color("1a1416") if not is_hovered() else Color("221a1b"), border,
-			2 if button_pressed else 1, 3), Rect2(Vector2.ZERO, size))
-	var portrait := Rect2(6, 6, 54, 54)
-	draw_rect(portrait, Color("0c0a0a"))
-	var sprite := hero.def.sprite
-	if sprite:
-		draw_texture_rect_region(sprite, portrait, UiStyle.portrait_region(sprite))
-	else:
-		draw_rect(portrait.grow(-6), hero.def.color)
+	var tint := Color(1.9, 1.5, 1.05) if button_pressed else (Color(1.35, 1.2, 1.05) if is_hovered() else Color.WHITE)
+	draw_style_box(UiStyle.card(tint), Rect2(Vector2.ZERO, size))
+	var portrait := Rect2(7, 7, 52, 52)
+	UiStyle.draw_portrait(self, portrait, hero.def)
+	UiStyle.draw_level_badge(self, portrait.position + Vector2(6, portrait.size.y - 6), hero.level(), 12.0)
 	var display := UiStyle.DISPLAY_FONT
 	var body := UiStyle.BODY_FONT
-	draw_string(display, Vector2(70, 26), hero.display_name, HORIZONTAL_ALIGNMENT_LEFT, size.x - 150, 22, UiStyle.GOLD)
-	draw_string(body, Vector2(70, 44), "Level %d" % hero.level(), HORIZONTAL_ALIGNMENT_LEFT, size.x - 80, 13,
-			UiStyle.TEXT_DIM)
+	draw_string(display, Vector2(70, 28), hero.display_name, HORIZONTAL_ALIGNMENT_LEFT, size.x - 150, 24,
+			UiStyle.GOLD if button_pressed or is_hovered() else UiStyle.TEXT)
+	draw_string(body, Vector2(70, 45), "Stress", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, UiStyle.TEXT_DIM)
 	for i in Rules.STRESS_MAX:
-		draw_rect(Rect2(70 + i * 9, 51, 7, 7), UiStyle.STRESS_ON if i < hero.stress else UiStyle.STRESS_OFF)
+		draw_rect(Rect2(112 + i * 9, 37, 7, 9), UiStyle.STRESS_ON if i < hero.stress else UiStyle.STRESS_OFF)
 	if tag != "":
 		draw_string(body, Vector2(0, 24), tag, HORIZONTAL_ALIGNMENT_RIGHT, size.x - 10, 13, tag_color)
 	if dimmed:

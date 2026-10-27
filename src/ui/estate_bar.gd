@@ -1,12 +1,13 @@
-## The band along the top of the town and expedition screens: the week, gold
-## and heirlooms, then whatever buttons the screen adds on the right. The phone
-## layout packs it tighter.
+## The band along the top of the town and expedition screens, DD1's: a dark
+## strip over a bronze rule with the week, gold and heirlooms, then whatever
+## buttons the screen adds on the right. The phone layout packs it tighter.
 class_name EstateBar
 extends Control
 
 const HEIGHT := 64.0
 
 var _band: ColorRect
+var _rule: ColorRect
 var _week: Label
 var _gold: Label
 var _heirlooms: Dictionary[StringName, Label] = {}
@@ -16,9 +17,13 @@ var _row: HBoxContainer
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_band = ColorRect.new()
-	_band.color = Color(0, 0, 0, 0.75)
+	_band.color = Color("0a0706f2")
 	_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_band)
+	_rule = ColorRect.new()
+	_rule.color = Color("6e5232")
+	_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_rule)
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 10 if Device.phone else 18)
 	add_child(_row)
@@ -51,6 +56,8 @@ func _init() -> void:
 func fit_width(width: float) -> void:
 	size = Vector2(width, HEIGHT)
 	_band.size = size
+	_rule.position = Vector2(0, HEIGHT - 2.0)
+	_rule.size = Vector2(width, 2.0)
 	var margin := 16.0 if Device.phone else 28.0
 	_row.position = Vector2(margin, 8)
 	_row.size = Vector2(width - 2.0 * margin, 48)

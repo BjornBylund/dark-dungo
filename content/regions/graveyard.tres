@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RegionDef" format=3]
 
 [ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="1_encounter"]
+[ext_resource type="Resource" path="res://content/encounters/gravelord.tres" id="1_j7p74"]
 [ext_resource type="Resource" path="res://content/encounters/graveyard_watch.tres" id="2_watch"]
 [ext_resource type="Resource" path="res://content/encounters/captains_guard.tres" id="2_yc6uy"]
 [ext_resource type="Resource" path="res://content/encounters/wave_2.tres" id="3_bone_line"]
@@ -18,5 +19,6 @@ display_name = "The Graveyard"
 encounters = Array[ExtResource("1_encounter")]([ExtResource("2_watch"), ExtResource("3_bone_line"), ExtResource("4_skirmish")])
 elites = Array[ExtResource("1_encounter")]([ExtResource("2_yc6uy")])
 finales = Array[ExtResource("1_encounter")]([ExtResource("5_brute_and_bones")])
+boss = ExtResource("1_j7p74")
 events = Array[ExtResource("5_2v88o")]([ExtResource("6_yc6uy"), ExtResource("7_j7p74")])
 map_position = Vector2(700, 300)

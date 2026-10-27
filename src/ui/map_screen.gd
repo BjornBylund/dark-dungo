@@ -172,7 +172,8 @@ func _describe(room: MapRoom) -> String:
 	var run := _run()
 	match room.type:
 		MapRoom.Type.FIGHT, MapRoom.Type.ELITE, MapRoom.Type.FINALE:
-			return "%s: %s" % [room.type_name(), room.encounter.display_name]
+			var kind := "Boss" if room.type == MapRoom.Type.FINALE and run.mission.boss else room.type_name()
+			return "%s: %s" % [kind, room.encounter.display_name]
 		MapRoom.Type.REST:
 			return "Rest: heal %d%% HP or relieve %d stress" % [roundi(CampaignRules.REST_HEAL * 100), CampaignRules.REST_STRESS]
 		MapRoom.Type.CACHE:
@@ -479,9 +480,7 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_overlay.add_child(center)
 	var panel := PanelContainer.new()
-	var style := UiStyle.box(Color("0e0b0cf4"), Color("4a3e34"), 1, 4)
-	style.set_content_margin_all(22 if Device.phone else 32)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", UiStyle.frame(24.0 if Device.phone else 36.0))
 	panel.custom_minimum_size = Vector2(760 if Device.phone else 820, 0)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
@@ -489,6 +488,7 @@ func _build() -> void:
 	panel.add_child(box)
 	_panel_title = _label("", 36 if Device.phone else 44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
 	box.add_child(_panel_title)
+	box.add_child(UiStyle.divider(560.0))
 	_panel_text = _label("", 20, UiStyle.TEXT)
 	_panel_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel_text.custom_minimum_size = Vector2(716 if Device.phone else 756, 0)

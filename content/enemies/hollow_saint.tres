@@ -1,0 +1,88 @@
+[gd_resource type="Resource" script_class="UnitDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_h63fq"]
+[ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_ee1an"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_grran"]
+[ext_resource type="Texture2D" path="res://art/units/hollow_saint.png" id="4_u528p"]
+
+[sub_resource type="Resource" id="Resource_h63fq"]
+script = ExtResource("2_ee1an")
+id = &"sermon_of_despair"
+display_name = "Sermon of Despair"
+launch_ranks = Array[int]([3, 4])
+multi_target = true
+stress = 2
+cooldown = 2
+ai_weight = 1.5
+
+[sub_resource type="Resource" id="Resource_ee1an"]
+script = ExtResource("3_grran")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_grran"]
+script = ExtResource("2_ee1an")
+id = &"smite"
+display_name = "Smite"
+launch_ranks = Array[int]([3, 4])
+damage_min = 12
+damage_max = 16
+crit_chance = 0.12
+effects = Array[ExtResource("3_grran")]([SubResource("Resource_ee1an")])
+ai_weight = 1.4
+
+[sub_resource type="Resource" id="Resource_u528p"]
+script = ExtResource("2_ee1an")
+id = &"wailing_choir"
+display_name = "Wailing Choir"
+launch_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 4
+damage_max = 7
+crit_chance = 0.05
+ai_weight = 1.3
+
+[sub_resource type="Resource" id="Resource_q3mgp"]
+script = ExtResource("3_grran")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_8ssdq"]
+script = ExtResource("2_ee1an")
+id = &"hallowed_ward"
+display_name = "Hallowed Ward"
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_grran")]([SubResource("Resource_q3mgp")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_3sj6e"]
+script = ExtResource("2_ee1an")
+id = &"saints_mercy"
+display_name = "Saint's Mercy"
+launch_ranks = Array[int]([3, 4])
+side = 1
+heal_min = 7
+heal_max = 11
+cooldown = 1
+condition = 3
+condition_value = 0.6
+ai_weight = 2.0
+ai_target = 1
+
+[resource]
+script = ExtResource("1_h63fq")
+id = &"hollow_saint"
+display_name = "The Hollow Saint"
+color = Color(0.85, 0.82, 0.72, 1)
+max_hp = 125
+speed = 6
+turns_per_round = 2
+corpse_hp = 24
+death_armor = 1
+resist_stun = 0.4
+resist_bleed = 0.4
+resist_blight = 0.4
+resist_burn = 0.4
+resist_move = 0.5
+resist_debuff = 0.6
+skills = Array[ExtResource("2_ee1an")]([SubResource("Resource_h63fq"), SubResource("Resource_grran"), SubResource("Resource_u528p"), SubResource("Resource_8ssdq"), SubResource("Resource_3sj6e")])
+sprite = ExtResource("4_u528p")

@@ -16,7 +16,7 @@ func _def() -> CampaignDef:
 func _cast() -> Array[UnitDef]:
 	var cast: Array[UnitDef] = []
 	cast.append_array(_def().starting_heroes)
-	cast.append_array(_def().arrivals)
+	cast.append_array(_def().recruits)
 	return cast
 
 
@@ -120,7 +120,6 @@ func test_random_parties_finish_apprentice_missions() -> void:
 	for seed_value in RUNS:
 		var campaign := Campaign.create(_def(), seed_value)
 		for hero in campaign.heroes:
-			hero.arrived = true
 			hero.recruited = true
 		var pool := campaign.roster()
 		var party: Array[HeroRecord] = []

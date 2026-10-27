@@ -14,14 +14,25 @@ var def: CampaignDef
 var week := 1
 var gold := CampaignRules.STARTING_GOLD
 var heirlooms: Dictionary[StringName, int] = {}
-var buildings: Dictionary[StringName, int] = {}
-## The whole cast: starting heroes, then arrivals in order.
+## Upgrade line (CampaignRules.UPGRADES) -> levels bought.
+var upgrades: Dictionary[StringName, int] = {}
+## The whole cast: starting heroes, then those who can join later.
 var heroes: Array[HeroRecord] = []
 var board: Array[Mission] = []
 var bonds := Bonds.new()
+## Region id -> missions completed there towards its next boss.
+var region_progress: Dictionary[StringName, int] = {}
+## Region id -> boss tiers beaten (Apprentice, then Veteran, then Champion).
+var bosses_beaten: Dictionary[StringName, int] = {}
+## Heroes the player may still pick to join, earned by first boss wins.
+var recruits_waiting := 0
 ## The mission in progress, or null when the party is in town.
 var run: MissionRun
 var rng := RandomNumberGenerator.new()
+## What happened in town as the last week ended (Abbey and Tavern visits, the
+## Bar's bonds), for the screen to show once. A mission's results take it over
+## (see finish_mission). Not saved.
+var week_report: Array[String] = []
 
 
 static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
@@ -30,10 +41,9 @@ static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
 	campaign.rng.seed = seed_value
 	for unit in campaign_def.starting_heroes:
 		var record := HeroRecord.new(unit)
-		record.arrived = true
 		record.recruited = true
 		campaign.heroes.append(record)
-	for unit in campaign_def.arrivals:
+	for unit in campaign_def.recruits:
 		campaign.heroes.append(HeroRecord.new(unit))
 	campaign._refresh_board()
 	return campaign
@@ -42,8 +52,8 @@ static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
 func _init() -> void:
 	for heirloom in CampaignRules.HEIRLOOMS:
 		heirlooms[heirloom] = 0
-	for id: StringName in CampaignRules.BUILDINGS:
-		buildings[id] = 0
+	for line: StringName in CampaignRules.UPGRADES:
+		upgrades[line] = 0
 
 
 # --- Roster ---
@@ -52,15 +62,21 @@ func roster() -> Array[HeroRecord]:
 	return _heroes_where(func(h: HeroRecord) -> bool: return h.recruited)
 
 
-## Heroes waiting at the Stagecoach to be hired.
-func stagecoach() -> Array[HeroRecord]:
-	return _heroes_where(func(h: HeroRecord) -> bool: return h.arrived and not h.recruited)
+## Heroes who haven't joined yet; one may join for each region boss beaten
+## for the first time.
+func recruit_choices() -> Array[HeroRecord]:
+	return _heroes_where(func(h: HeroRecord) -> bool: return not h.recruited)
 
 
-func hire(hero: HeroRecord) -> String:
-	if not hero.arrived or hero.recruited:
-		return "%s is not at the Stagecoach." % hero.display_name
+## A recruit earned by a boss joins, at level 1.
+func recruit(hero: HeroRecord) -> String:
+	if recruits_waiting <= 0:
+		return "Defeat a region's boss to recruit a hero."
+	if hero.recruited:
+		return "%s is already in the roster." % hero.display_name
 	hero.recruited = true
+	hero.xp = CampaignRules.LEVEL_XP[0]
+	recruits_waiting -= 1
 	return ""
 
 
@@ -69,7 +85,7 @@ func eligibility(hero: HeroRecord, mission: Mission) -> Eligibility:
 		return Eligibility.NOT_RECRUITED
 	if hero.wounded:
 		return Eligibility.WOUNDED
-	if hero.abbey_activity >= 0:
+	if hero.is_busy():
 		return Eligibility.BUSY
 	if hero.level() >= mission.level() + CampaignRules.WILL_NOT_GO_GAP:
 		return Eligibility.WILL_NOT_GO
@@ -84,32 +100,63 @@ func levels_short(hero: HeroRecord, mission: Mission) -> int:
 	return maxi(0, mission.level() - 1 - hero.level())
 
 
-# --- Buildings ---
+# --- Buildings and their upgrades ---
 
-## Heirlooms for the building's next level, or {} when it is at its highest.
-func building_upgrade_cost(id: StringName) -> Dictionary:
-	var ladder: Array = CampaignRules.BUILDINGS[id]
-	return ladder[buildings[id]] if buildings[id] < ladder.size() else {}
+## Some buildings open after the first weeks, as in DD1.
+func building_open(id: StringName) -> bool:
+	return week >= CampaignRules.BUILDINGS[id].opens
 
 
-func upgrade_building(id: StringName) -> String:
-	var cost := building_upgrade_cost(id)
+## The building an upgrade line belongs to.
+static func building_of(line: StringName) -> StringName:
+	for id: StringName in CampaignRules.BUILDINGS:
+		if line in CampaignRules.BUILDINGS[id].lines:
+			return id
+	return &""
+
+
+## Heirlooms for the line's next level, or {} when it is at its highest.
+func upgrade_cost(line: StringName) -> Dictionary:
+	var ladder: Array = CampaignRules.UPGRADES[line]
+	return ladder[upgrades[line]] if upgrades[line] < ladder.size() else {}
+
+
+func can_upgrade(line: StringName) -> String:
+	var building := building_of(line)
+	if not building_open(building):
+		return "The %s isn't open yet." % CampaignRules.BUILDINGS[building].name
+	var cost := upgrade_cost(line)
 	if cost.is_empty():
 		return "Fully upgraded."
 	for heirloom: StringName in cost:
 		if heirlooms[heirloom] < cost[heirloom]:
 			return "Not enough %s." % CampaignRules.HEIRLOOM_NAMES[heirloom]
-	for heirloom: StringName in cost:
-		heirlooms[heirloom] -= cost[heirloom]
-	buildings[id] += 1
 	return ""
+
+
+func upgrade(line: StringName) -> String:
+	var reason := can_upgrade(line)
+	if reason == "":
+		var cost := upgrade_cost(line)
+		for heirloom: StringName in cost:
+			heirlooms[heirloom] -= cost[heirloom]
+		upgrades[line] += 1
+	return reason
+
+
+## Whether any of the building's upgrades can be bought now, for the hamlet's marker.
+func upgrade_ready(building: StringName) -> bool:
+	return CampaignRules.BUILDINGS[building].lines.any(func(line: StringName) -> bool: return can_upgrade(line) == "")
 
 
 # --- Blacksmith and Guild ---
 
-## Gold for the hero's next weapon or armour rank, or 0 at rank 5.
+## Gold for the hero's next weapon or armour rank (less the Furnace's
+## discount), or 0 at rank 5.
 func gear_cost(rank: int) -> int:
-	return CampaignRules.GEAR_COST[rank - 1] if rank < CampaignRules.MAX_RANK else 0
+	if rank >= CampaignRules.MAX_RANK:
+		return 0
+	return roundi(CampaignRules.GEAR_COST[rank - 1] * (1.0 - CampaignRules.UPGRADE_DISCOUNT * upgrades[&"furnace"]))
 
 
 func can_upgrade_weapon(hero: HeroRecord) -> String:
@@ -136,9 +183,12 @@ func upgrade_armor(hero: HeroRecord) -> String:
 	return reason
 
 
+## Gold for the skill's next rank (less the Training regimen's discount), or 0 at rank 5.
 func skill_cost(hero: HeroRecord, skill: SkillDef) -> int:
 	var rank := hero.skill_rank(skill)
-	return CampaignRules.SKILL_COST[rank - 1] if rank < CampaignRules.MAX_RANK else 0
+	if rank >= CampaignRules.MAX_RANK:
+		return 0
+	return roundi(CampaignRules.SKILL_COST[rank - 1] * (1.0 - CampaignRules.UPGRADE_DISCOUNT * upgrades[&"regimen"]))
 
 
 func can_upgrade_skill(hero: HeroRecord, skill: SkillDef) -> String:
@@ -153,14 +203,14 @@ func upgrade_skill(hero: HeroRecord, skill: SkillDef) -> String:
 	return reason
 
 
-## Rank r + 1 needs the building at level r, the hero at the rank's level, and the gold.
-func _can_raise_rank(hero: HeroRecord, rank: int, building: StringName, cost: int) -> String:
+## Rank r + 1 needs the upgrade line at level r, the hero at the rank's level, and the gold.
+func _can_raise_rank(hero: HeroRecord, rank: int, line: StringName, cost: int) -> String:
 	if not hero.recruited:
 		return "Not in the roster."
 	if rank >= CampaignRules.MAX_RANK:
 		return "Already at the highest rank."
-	if buildings[building] < rank:
-		return "Upgrade the %s first." % CampaignRules.BUILDING_NAMES[building]
+	if upgrades[line] < rank:
+		return "Upgrade %s first." % CampaignRules.UPGRADE_NAMES[line]
 	var needed: int = CampaignRules.RANK_HERO_LEVEL[rank - 1]
 	if hero.level() < needed:
 		return "Needs hero level %d." % needed
@@ -169,54 +219,65 @@ func _can_raise_rank(hero: HeroRecord, rank: int, building: StringName, cost: in
 	return ""
 
 
-# --- Abbey and wounds ---
+# --- Stress relief (Abbey and Tavern) and wounds ---
 
-func abbey_slots() -> int:
-	var level := buildings[&"abbey"]
-	return 1 + int(level >= 3) + int(level >= 6)
-
-
-func abbey_relief(activity: int) -> int:
-	var level := buildings[&"abbey"]
-	return CampaignRules.ABBEY_RELIEF[int(level >= 1) + int(level >= 4)][activity]
+## Each activity's own upgrade line adds a slot at levels 3 and 6.
+func activity_slots(activity: StringName) -> int:
+	var level := upgrades[activity]
+	return CampaignRules.ACTIVITIES[activity].slots + int(level >= 3) + int(level >= 6)
 
 
-func abbey_price(hero: HeroRecord, activity: int) -> int:
-	var level := buildings[&"abbey"]
-	var discount := CampaignRules.ABBEY_DISCOUNT * (int(level >= 2) + int(level >= 5))
-	return roundi(CampaignRules.ABBEY_PRICES[activity] * CampaignRules.service_multiplier(hero.level())
-			* (1.0 - discount))
+## Stress taken off, raised at levels 1 and 4.
+func activity_relief(activity: StringName) -> int:
+	var level := upgrades[activity]
+	return CampaignRules.ACTIVITIES[activity].relief[int(level >= 1) + int(level >= 4)]
 
 
-func abbey_occupants(activity: int) -> Array[HeroRecord]:
-	return _heroes_where(func(h: HeroRecord) -> bool: return h.abbey_activity == activity)
+## By the hero's level (DD1's service tiers), after the line's discounts.
+func activity_price(hero: HeroRecord, activity: StringName) -> int:
+	return roundi(activity_base_price(activity) * CampaignRules.service_multiplier(hero.level()))
 
 
-func can_send_to_abbey(hero: HeroRecord, activity: int) -> String:
-	if not hero.recruited or hero.wounded or hero.abbey_activity >= 0:
+## The price for heroes up to level 2, cut at line levels 2 and 5.
+func activity_base_price(activity: StringName) -> float:
+	var level := upgrades[activity]
+	var discount := CampaignRules.ACTIVITY_DISCOUNT * (int(level >= 2) + int(level >= 5))
+	return CampaignRules.ACTIVITIES[activity].price * (1.0 - discount)
+
+
+func activity_occupants(activity: StringName) -> Array[HeroRecord]:
+	return _heroes_where(func(h: HeroRecord) -> bool: return h.activity == activity)
+
+
+func can_send(hero: HeroRecord, activity: StringName) -> String:
+	var building: StringName = CampaignRules.ACTIVITIES[activity].building
+	if not building_open(building):
+		return "The %s isn't open yet." % CampaignRules.BUILDINGS[building].name
+	if not hero.recruited or hero.wounded or hero.is_busy():
 		return "%s can't go this week." % hero.display_name
 	if hero.stress <= 0:
 		return "%s has no stress." % hero.display_name
-	if abbey_occupants(activity).size() >= abbey_slots():
+	if activity_occupants(activity).size() >= activity_slots(activity):
 		return "No free slot."
-	if gold < abbey_price(hero, activity):
+	if gold < activity_price(hero, activity):
 		return "Not enough gold."
 	return ""
 
 
-## Pays now; the stress comes off when the week ends, and the hero misses this week's mission.
-func send_to_abbey(hero: HeroRecord, activity: int) -> String:
-	var reason := can_send_to_abbey(hero, activity)
+## Pays now; the stress comes off when the week ends (with the Tavern's side
+## effects), and the hero misses this week's mission.
+func send(hero: HeroRecord, activity: StringName) -> String:
+	var reason := can_send(hero, activity)
 	if reason == "":
-		gold -= abbey_price(hero, activity)
-		hero.abbey_activity = activity
+		gold -= activity_price(hero, activity)
+		hero.activity = activity
 	return reason
 
 
-func cancel_abbey(hero: HeroRecord) -> void:
-	if hero.abbey_activity >= 0:
-		gold += abbey_price(hero, hero.abbey_activity)
-		hero.abbey_activity = -1
+func cancel_activity(hero: HeroRecord) -> void:
+	if hero.activity != &"":
+		gold += activity_price(hero, hero.activity)
+		hero.activity = &""
 
 
 func treatment_price(hero: HeroRecord) -> int:
@@ -231,6 +292,31 @@ func treat(hero: HeroRecord) -> String:
 	gold -= treatment_price(hero)
 	hero.wounded = false
 	return ""
+
+
+# --- Heirloom Exchange ---
+
+## Trade `index` in CampaignRules.EXCHANGE_TRADES, if the Exchange is open and
+## the heirlooms are there.
+func can_exchange(index: int) -> String:
+	if not building_open(&"exchange"):
+		return "The Heirloom Exchange isn't open yet."
+	var give: Dictionary = CampaignRules.EXCHANGE_TRADES[index][0]
+	for heirloom: StringName in give:
+		if heirlooms[heirloom] < give[heirloom]:
+			return "Not enough %s." % CampaignRules.HEIRLOOM_NAMES[heirloom]
+	return ""
+
+
+func exchange(index: int) -> String:
+	var reason := can_exchange(index)
+	if reason == "":
+		var trade: Array = CampaignRules.EXCHANGE_TRADES[index]
+		for heirloom: StringName in trade[0]:
+			heirlooms[heirloom] -= trade[0][heirloom]
+		for heirloom: StringName in trade[1]:
+			heirlooms[heirloom] += trade[1][heirloom]
+	return reason
 
 
 # --- Missions ---
@@ -264,15 +350,17 @@ func can_embark(mission: Mission, party: Array[HeroRecord]) -> String:
 	return ""
 
 
-## With nobody fit to go (everyone wounded or at the Abbey, nobody waiting at
-## the Stagecoach) the week can pass without a mission, so a wipe never strands
-## a campaign that can't afford treatment.
+## With nobody fit to go (everyone wounded or busy in town, no recruit waiting
+## to join) the week can pass without a mission, so a wipe never strands a
+## campaign that can't afford treatment.
 func can_wait() -> String:
 	if run:
 		return "A mission is already under way."
 	for hero in heroes:
-		if hero.arrived and not hero.wounded and hero.abbey_activity < 0:
+		if hero.recruited and not hero.wounded and not hero.is_busy():
 			return "Someone can still go on a mission."
+	if recruits_waiting > 0 and not recruit_choices().is_empty():
+		return "A new hero is waiting to join."
 	return ""
 
 
@@ -300,7 +388,8 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 func _draw_map(mission: Mission) -> MissionMap:
 	if mission.region == null:
 		mission.region = def.regions[0]
-	return MissionMap.generate(mission.region, mission.length, _events_for(mission), rng)
+	return MissionMap.generate(mission.region, mission.length, _events_for(mission), rng,
+			mission.region.boss if mission.boss else null)
 
 
 ## The shared events and the mission's region's own.
@@ -314,14 +403,15 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 
 ## Settles a finished mission and ends the week. Returns a summary for the
 ## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups,
-## bonds (level-up lines), wounded}. Completing pays everything; retreating
-## keeps what was earned on the way. Every pair in the party bonds a little,
-## more for completing.
+## bonds (level-up lines), wounded, town (the week's report), recruit (a new
+## hero may join)}. Completing pays everything, and counts towards the region's
+## boss; retreating keeps what was earned on the way. Every pair in the party
+## bonds a little, more for completing. Tavern perks for this mission end.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
 		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
-		bonds = run.new_bonds.duplicate(),
+		bonds = run.new_bonds.duplicate(), recruit = false,
 	}
 	var bond_points := CampaignRules.BOND_COMPLETED_POINTS if run.outcome == MissionRun.Outcome.COMPLETED \
 			else CampaignRules.BOND_MISSION_POINTS
@@ -331,10 +421,10 @@ func finish_mission() -> Dictionary:
 			var b := run.party[j]
 			if bonds.add(a, b, bond_points):
 				summary.bonds.append(Bonds.level_up_line(a, b, bonds.level(a, b)))
-				if Bonds.key(a, b) not in bonds.boosts_waiting:
-					bonds.boosts_waiting.append(Bonds.key(a, b))
+				bonds.hold_boost(a, b)
 	for i in run.party.size():
 		run.party[i].stress = clampi(run.combatants[i].stress, 0, Rules.STRESS_MAX)
+		run.party[i].next_mission.clear()
 	if run.outcome != MissionRun.Outcome.FAILED:
 		summary.gold = run.gold_earned
 		summary.heirlooms = run.heirlooms_earned.duplicate()
@@ -350,6 +440,7 @@ func finish_mission() -> Dictionary:
 				hero.xp += summary.xp
 				if hero.level() > before:
 					summary.level_ups.append(hero)
+			summary.recruit = _region_progresses(mission)
 		MissionRun.Outcome.RETREATED:
 			for hero in run.party:
 				hero.stress = mini(hero.stress + CampaignRules.RETREAT_STRESS, Rules.STRESS_MAX)
@@ -363,27 +454,86 @@ func finish_mission() -> Dictionary:
 	for hero in defeated:
 		hero.wounded = true
 		summary.wounded.append(hero)
+	summary.town = week_report.duplicate()
+	week_report.clear()
 	return summary
 
 
-## Abbey visits and wounds resolve, idle heroes rest, a new hero may arrive, and the board refreshes.
+## Abbey and Tavern visits resolve (with the Tavern's side effects and the
+## Bar's bonds), heroes away come back, wounds heal, idle heroes rest, and the
+## board refreshes. Town news goes in week_report.
 func _advance_week(party: Array[HeroRecord]) -> void:
 	week += 1
+	week_report.clear()
+	var at_bar: Array[HeroRecord] = []
 	for hero in roster():
-		if hero.abbey_activity >= 0:
-			hero.stress = maxi(0, hero.stress - abbey_relief(hero.abbey_activity))
-			hero.abbey_activity = -1
+		if hero.away_weeks > 0:
+			hero.away_weeks -= 1
+			if hero.away_weeks == 0:
+				week_report.append("%s is back from the Tavern." % hero.display_name)
+			continue
+		if hero.activity != &"":
+			if hero.activity == &"bar":
+				at_bar.append(hero)
+			_finish_activity(hero)
 			continue
 		hero.wounded = false
 		if hero not in party:
 			hero.stress = maxi(0, hero.stress - CampaignRules.IDLE_STRESS_RELIEF)
-	for hero in heroes:
-		if not hero.arrived:
-			hero.arrived = true
-			var level := buildings[&"stagecoach"]
-			hero.xp = CampaignRules.LEVEL_XP[level - 1] if level > 0 else 0
-			break
+	_drink_together(at_bar)
 	_refresh_board()
+
+
+## Takes the activity's stress off and, at the Tavern, rolls its side effect.
+func _finish_activity(hero: HeroRecord) -> void:
+	var activity := hero.activity
+	hero.activity = &""
+	var relief := activity_relief(activity)
+	hero.stress = maxi(0, hero.stress - relief)
+	var line := "%s, %s: -%d stress" % [hero.display_name, CampaignRules.ACTIVITIES[activity].name, relief]
+	var effects: Array = CampaignRules.SIDE_EFFECTS.get(activity, [])
+	if not effects.is_empty():
+		var roll := rng.randf()
+		for effect: Array in effects:
+			roll -= effect[0]
+			if roll < 0.0:
+				line += ". " + _side_effect(hero, effect[1], effect[2])
+				break
+	week_report.append(line + ".")
+
+
+## Applies a Tavern side effect and describes it.
+func _side_effect(hero: HeroRecord, effect: StringName, amount: float) -> String:
+	match effect:
+		&"max_hp":
+			hero.next_mission[&"max_hp"] = amount
+			return "Feels hale: +%d%% max HP next mission" % roundi(amount * 100)
+		&"speed":
+			hero.next_mission[&"speed"] = amount
+			return "Light on their feet: +%d speed next mission" % roundi(amount)
+		&"relief":
+			hero.stress = maxi(0, hero.stress - roundi(amount))
+			return "Truly unwinds: -%d more stress" % roundi(amount)
+		&"away":
+			hero.away_weeks = roundi(amount)
+			return "Lost track of time: away next week too"
+	var before := gold
+	gold = maxi(0, gold + roundi(amount))
+	return "Won %d gold" % (gold - before) if amount > 0 else "Lost %d gold" % (before - gold)
+
+
+## Every pair of heroes at the Bar this week gains bond points.
+func _drink_together(at_bar: Array[HeroRecord]) -> void:
+	if at_bar.size() < 2:
+		return
+	week_report.append("%s drank together: +%d bond points for each pair." % [
+			" and ".join(at_bar.map(func(h: HeroRecord) -> String: return h.display_name)),
+			CampaignRules.BAR_BOND_POINTS])
+	for i in at_bar.size():
+		for j in range(i + 1, at_bar.size()):
+			if bonds.add(at_bar[i], at_bar[j], CampaignRules.BAR_BOND_POINTS):
+				week_report.append(Bonds.level_up_line(at_bar[i], at_bar[j], bonds.level(at_bar[i], at_bar[j])))
+				bonds.hold_boost(at_bar[i], at_bar[j])
 
 
 ## Two missions per region at random unlocked tiers and lengths, but always at
@@ -402,6 +552,43 @@ func _refresh_board() -> void:
 			var random_tier: int = tiers[rng.randi_range(0, tiers.size() - 1)]
 			var length := rng.randi_range(0, CampaignRules.LENGTH_NAMES.size() - 1)
 			board.append(_make_mission(forced.get(board.size(), random_tier), length, region))
+	for region in def.regions:
+		if boss_ready(region):
+			var mission := _make_mission(boss_tier(region), CampaignRules.Length.LONG, region)
+			mission.boss = true
+			board.append(mission)
+
+
+# --- Region bosses ---
+
+## The tier the region's boss comes at next, or 3 once all three are beaten.
+func boss_tier(region: RegionDef) -> int:
+	return bosses_beaten.get(region.id, 0)
+
+
+## Whether the region's boss mission is on the board: after BOSS_UNLOCK_MISSIONS
+## missions completed there since the last boss win. It stays until beaten.
+func boss_ready(region: RegionDef) -> bool:
+	return region.boss != null and boss_tier(region) < CampaignRules.TIER_NAMES.size() \
+			and region_progress.get(region.id, 0) >= CampaignRules.BOSS_UNLOCK_MISSIONS
+
+
+## Counts a completed mission towards the region's next boss, or records a boss
+## win: the region starts again towards the next tier's boss, and the first win
+## lets a new hero join. Returns true when that first win earned a recruit.
+func _region_progresses(mission: Mission) -> bool:
+	var region := mission.region
+	if region == null or boss_tier(region) >= CampaignRules.TIER_NAMES.size():
+		return false
+	if not mission.boss:
+		region_progress[region.id] = mini(region_progress.get(region.id, 0) + 1, CampaignRules.BOSS_UNLOCK_MISSIONS)
+		return false
+	bosses_beaten[region.id] = boss_tier(region) + 1
+	region_progress[region.id] = 0
+	if bosses_beaten[region.id] == 1 and recruit_choices().size() > recruits_waiting:
+		recruits_waiting += 1
+		return true
+	return false
 
 
 ## A mission in `region` (the first region if none is given).
@@ -426,12 +613,13 @@ func _heroes_where(predicate: Callable) -> Array[HeroRecord]:
 
 func to_dict() -> Dictionary:
 	var data := {
-		version = SAVE_VERSION, week = week, gold = gold, heirlooms = heirlooms, buildings = buildings,
+		version = SAVE_VERSION, week = week, gold = gold, heirlooms = heirlooms, upgrades = upgrades,
 		# 64-bit RNG values don't survive JSON numbers, so they are stored as text.
 		seed = str(rng.seed), rng_state = str(rng.state),
 		heroes = heroes.map(func(h: HeroRecord) -> Dictionary: return h.to_dict()),
 		board = board.map(func(m: Mission) -> Dictionary: return m.to_dict()),
 		bonds = bonds.to_dict(),
+		region_progress = region_progress, bosses_beaten = bosses_beaten, recruits_waiting = recruits_waiting,
 		run = null,
 	}
 	if run:
@@ -448,8 +636,22 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	campaign.gold = int(data.gold)
 	for id: String in data.heirlooms:
 		campaign.heirlooms[StringName(id)] = int(data.heirlooms[id])
-	for id: String in data.buildings:
-		campaign.buildings[StringName(id)] = int(data.buildings[id])
+	if data.has("upgrades"):
+		for line: String in data.upgrades:
+			if CampaignRules.UPGRADES.has(StringName(line)):
+				campaign.upgrades[StringName(line)] = int(data.upgrades[line])
+	else:
+		# Saves from before upgrade lines kept one level per building, and one
+		# Abbey level for all three activities.
+		for id: String in data.buildings:
+			for line: StringName in ([&"meditation", &"prayer", &"flagellation"] if id == "abbey" else [StringName(id)]):
+				if CampaignRules.UPGRADES.has(line):
+					campaign.upgrades[line] = int(data.buildings[id])
+	for region: String in data.get("region_progress", {}):
+		campaign.region_progress[StringName(region)] = int(data.region_progress[region])
+	for region: String in data.get("bosses_beaten", {}):
+		campaign.bosses_beaten[StringName(region)] = int(data.bosses_beaten[region])
+	campaign.recruits_waiting = int(data.get("recruits_waiting", 0))
 	campaign.rng.seed = String(data.seed).to_int()
 	campaign.rng.state = String(data.rng_state).to_int()
 	for hero_data: Dictionary in data.heroes:

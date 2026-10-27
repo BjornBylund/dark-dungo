@@ -72,19 +72,25 @@ const BASIC_SKILL_ICONS := {
 
 const GREYSCALE_SHADER: Shader = preload("res://src/ui/greyscale.gdshader")
 
+# DD1-style frames (art/ui), drawn as 9-slices.
+const FRAME_TEXTURE: Texture2D = preload("res://art/ui/frame.svg")
+const PLATE_TEXTURE: Texture2D = preload("res://art/ui/plate.svg")
+const CARD_TEXTURE: Texture2D = preload("res://art/ui/card.svg")
+const DIVIDER_TEXTURE: Texture2D = preload("res://art/ui/divider.svg")
+## DD1's red, for the main call to action and danger.
+const BLOOD := Color("8e1b1b")
+
 static var _token_icons := {}
 
 
-## The shared theme: Gelasio text, dark panels, quiet text buttons, and an
-## "ActionButton" variation with a frame for town actions.
+## The shared theme, after DD1: Gelasio text, iron-and-bronze framed panels,
+## quiet text buttons, and an "ActionButton" variation on a bronze-rimmed plate.
 static func make_theme() -> Theme:
 	var result := Theme.new()
 	result.default_font = BODY_FONT
 	result.default_font_size = 18
 
-	var panel := box(Color("0e0b0cee"), Color("3a3430"), 1, 4)
-	panel.set_content_margin_all(12)
-	result.set_stylebox("panel", "PanelContainer", panel)
+	result.set_stylebox("panel", "PanelContainer", frame())
 	result.set_stylebox("panel", "TooltipPanel", box(Color("0b0e14f0"), Color("4a4a52"), 1, 3))
 	result.set_color("font_color", "TooltipLabel", TEXT)
 	result.set_font_size("font_size", "TooltipLabel", 15)
@@ -102,18 +108,76 @@ static func make_theme() -> Theme:
 	result.set_color("font_disabled_color", "Button", Color(GREY, 0.45))
 
 	result.set_type_variation(&"ActionButton", &"Button")
-	result.set_stylebox("normal", "ActionButton", box(Color("1c1517"), Color("4a3e34"), 1, 3))
-	result.set_stylebox("hover", "ActionButton", box(Color("251b1c"), GOLD.darkened(0.25), 1, 3))
-	result.set_stylebox("pressed", "ActionButton", box(Color("3a2c22"), GOLD, 2, 3))
-	result.set_stylebox("hover_pressed", "ActionButton", box(Color("3a2c22"), GOLD, 2, 3))
-	result.set_stylebox("disabled", "ActionButton", box(Color("120e0f"), Color("2a2420"), 1, 3))
+	result.set_stylebox("normal", "ActionButton", plate())
+	result.set_stylebox("hover", "ActionButton", plate(Color(1.5, 1.15, 0.95)))
+	result.set_stylebox("pressed", "ActionButton", plate(Color(2.0, 1.5, 1.0)))
+	result.set_stylebox("hover_pressed", "ActionButton", plate(Color(2.0, 1.5, 1.0)))
+	result.set_stylebox("disabled", "ActionButton", plate(Color(0.55, 0.55, 0.55)))
 	result.set_font_size("font_size", "ActionButton", 17)
 	result.set_color("font_color", "ActionButton", TEXT)
 	result.set_color("font_hover_color", "ActionButton", GOLD)
+	result.set_color("font_pressed_color", "ActionButton", GOLD)
+	result.set_color("font_hover_pressed_color", "ActionButton", GOLD)
+	result.set_color("font_disabled_color", "ActionButton", Color(TEXT_DIM, 0.6))
+
+	# DD1's blood-red plate for the main call to action, like Embark.
+	result.set_type_variation(&"PrimaryButton", &"ActionButton")
+	result.set_stylebox("normal", "PrimaryButton", plate(Color(2.4, 0.95, 0.85)))
+	result.set_stylebox("hover", "PrimaryButton", plate(Color(3.0, 1.3, 1.0)))
+	result.set_stylebox("pressed", "PrimaryButton", plate(Color(3.2, 1.6, 1.1)))
+	result.set_stylebox("hover_pressed", "PrimaryButton", plate(Color(3.2, 1.6, 1.1)))
+	result.set_stylebox("disabled", "PrimaryButton", plate(Color(0.9, 0.55, 0.5)))
+	result.set_color("font_color", "PrimaryButton", Color("f2e6d0"))
 
 	result.set_color("font_color", "Label", TEXT)
 	result.set_color("default_color", "RichTextLabel", TEXT)
 	return result
+
+
+## A window or panel's iron-and-bronze frame, DD1's.
+static func frame(margin: float = 18.0) -> StyleBoxTexture:
+	return _nine_slice(FRAME_TEXTURE, 26, margin)
+
+
+## A small card's thin bronze frame, for heroes and slots.
+static func card(tint: Color = Color.WHITE) -> StyleBoxTexture:
+	var style := _nine_slice(CARD_TEXTURE, 12, 6.0)
+	style.modulate_color = tint
+	return style
+
+
+## A button's bronze-rimmed plate; `tint` lights it for hover and press.
+static func plate(tint: Color = Color.WHITE) -> StyleBoxTexture:
+	var style := _nine_slice(PLATE_TEXTURE, 12, 0.0)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	style.modulate_color = tint
+	return style
+
+
+## The ornamental rule under a title.
+static func divider(width: float = 420.0) -> TextureRect:
+	var rule := TextureRect.new()
+	rule.texture = DIVIDER_TEXTURE
+	rule.custom_minimum_size = Vector2(width, 20)
+	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	rule.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rule.stretch_mode = TextureRect.STRETCH_SCALE
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rule
+
+
+static func _nine_slice(texture: Texture2D, corner: int, margin: float) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = corner
+	style.texture_margin_top = corner
+	style.texture_margin_right = corner
+	style.texture_margin_bottom = corner
+	style.set_content_margin_all(margin)
+	return style
 
 
 static func box(background: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
@@ -168,6 +232,19 @@ static func scroll_on_phone(content: Control) -> Control:
 	return scroll
 
 
+## [tag, colour] for where a hero is this week: wounded, at the Abbey or
+## Tavern, away, or "" when free.
+static func hero_status(hero: HeroRecord) -> Array:
+	if hero.wounded:
+		return ["WOUNDED", DAMAGE]
+	if hero.away_weeks > 0:
+		return ["AWAY", GREY]
+	if hero.activity != &"":
+		return ["AT THE %s" % CampaignRules.BUILDINGS[CampaignRules.ACTIVITIES[hero.activity].building].name.to_upper(),
+				GOLD]
+	return ["", GREY]
+
+
 ## [title, text] for the end of a mission, from Campaign.finish_mission()'s summary.
 static func mission_summary(summary: Dictionary) -> Array:
 	var lines: Array[String] = []
@@ -194,6 +271,13 @@ static func mission_summary(summary: Dictionary) -> Array:
 				CampaignRules.BOND_BOOST_STRESS, roundi(CampaignRules.BOND_BOOST_DAMAGE * 100)])
 	for hero: HeroRecord in summary.wounded:
 		lines.append("%s is wounded and sits out next week." % hero.display_name)
+	if summary.recruit:
+		lines.append("With the region's boss defeated, a new hero will join you in town.")
+	if not summary.town.is_empty():
+		lines.append("")
+		lines.append("In town:")
+		for line: String in summary.town:
+			lines.append(line)
 	return [title, "\n".join(lines)]
 
 
@@ -238,6 +322,25 @@ static func draw_clipped(canvas: CanvasItem, texture: Texture2D, points: PackedV
 			t.x = 1.0 - t.x
 		uvs.append((source.position + t * source.size) / size)
 	canvas.draw_colored_polygon(points, modulate, uvs, texture)
+
+
+## A unit's portrait in a thin bronze frame, DD1's, for cards and lists.
+static func draw_portrait(canvas: CanvasItem, rect: Rect2, def: UnitDef) -> void:
+	canvas.draw_rect(rect, Color("0c0a0a"))
+	if def.sprite:
+		canvas.draw_texture_rect_region(def.sprite, rect, portrait_region(def.sprite))
+	else:
+		canvas.draw_rect(rect.grow(-rect.size.x * 0.15), def.color)
+	canvas.draw_rect(rect, Color("060404"), false, 3.0)
+	canvas.draw_rect(rect.grow(-1.5), Color("8a6a3e"), false, 1.5)
+
+
+## DD1's resolve-level badge: the level in a small dark disc on a bronze ring.
+static func draw_level_badge(canvas: CanvasItem, center: Vector2, level: int, radius: float = 11.0) -> void:
+	canvas.draw_circle(center, radius, Color("8a6a3e"))
+	canvas.draw_circle(center, radius - 2.0, Color("140d0b"))
+	canvas.draw_string(DISPLAY_FONT, center + Vector2(-radius, radius * 0.45), str(level), HORIZONTAL_ALIGNMENT_CENTER,
+			radius * 2.0, int(radius * 1.4), GOLD)
 
 
 static var _portrait_regions := {}

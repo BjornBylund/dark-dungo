@@ -108,9 +108,7 @@ func _draw() -> void:
 	draw_string(display, Vector2(0, 24), "Rank %d" % rank, HORIZONTAL_ALIGNMENT_CENTER, size.x, 22,
 			UiStyle.GOLD if hero else UiStyle.TEXT_DIM)
 	var lit := _drop_hover or picked
-	var border := UiStyle.GOLD if lit else Color("3a3430")
-	draw_style_box(UiStyle.box(Color("241b1d") if picked else Color("120e0f"), border, 3 if picked else (2 if lit else 1),
-			3), _figure.grow(4))
+	draw_style_box(UiStyle.card(Color(1.9, 1.5, 1.05) if lit else Color.WHITE), _figure.grow(6))
 	if hero == null:
 		draw_string(body, Vector2(0, _figure.get_center().y), "Empty", HORIZONTAL_ALIGNMENT_CENTER, size.x, 18,
 				UiStyle.TEXT_DIM)

@@ -15,7 +15,7 @@ godot --path .
 
 The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight of a mission.
 
-- **Town:** click a building to open it (Stagecoach, Blacksmith, Guild, Abbey), or a hero in the roster for their sheet. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
+- **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Tavern and Heirloom Exchange), or a hero in the roster for their sheet. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
 - **Mission map:** click a glowing room to go there; hover a room to see what it holds. Fights open the combat screen and come back; rests, caches and events open a panel over the map. **Retreat** (click twice) ends the mission with what you earned on the way.
 - **Combat:** click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for its stats.
@@ -91,9 +91,9 @@ Other art, all replaceable:
 
 ## Add content
 
-- **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Arrivals** (one arrives per week, in order).
+- **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Recruits** (one joins, chosen by the player, for each region boss beaten for the first time).
 - **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. Each region offers two missions a week.
-- **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**.
+- **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**, or its **Boss** on a boss mission.
 - **Events:** `content/events/`, each with a title, flavour text and choices. Each choice has a chance, success and failure outcomes (HP, stress, gold, heirlooms, tokens, or a fight) and can need a class in the party. Shared events are listed under **Events** in `content/campaign.tres`, region events under the region's **Events**.
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
 - **Balance checks:**

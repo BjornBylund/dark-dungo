@@ -1,6 +1,7 @@
 ## A quest on the expedition map, like DD1's: a shield framed in the tier's
 ## colour (Apprentice green, Veteran orange, Champion red) with the mission
-## level inside and one pip per length step below it. Toggles when chosen.
+## level inside and one pip per length step below it, or a skull on a blood-red
+## field for a boss. Toggles when chosen.
 class_name QuestMarker
 extends BaseButton
 
@@ -31,15 +32,26 @@ func _draw() -> void:
 	var shield := _shield(Rect2(Vector2(6, 4), size - Vector2(12, 8)))
 	if button_pressed:
 		draw_colored_polygon(_shield(Rect2(Vector2.ZERO, size)), Color(UiStyle.GOLD, 0.35))
-	draw_colored_polygon(shield, Color("241b1d") if is_hovered() or button_pressed else Color("150f11"))
+	var field := Color("3a1014") if mission.boss else Color("150f11")
+	draw_colored_polygon(shield, field.lightened(0.08) if is_hovered() or button_pressed else field)
 	var outline := shield.duplicate()
 	outline.append(shield[0])
 	draw_polyline(outline, UiStyle.GOLD if button_pressed else color, 4.0 if button_pressed else 3.0, true)
 	draw_string(UiStyle.DISPLAY_FONT, Vector2(0, 42), str(mission.level()), HORIZONTAL_ALIGNMENT_CENTER, size.x, 30,
 			color)
+	if mission.boss:
+		_skull(Vector2(size.x / 2.0, 56))
+		return
 	var pips := int(mission.length) + 1
 	for i in pips:
 		draw_circle(Vector2(size.x / 2.0 + (i - (pips - 1) / 2.0) * 10.0, 54), 3.5, UiStyle.TEXT)
+
+
+func _skull(at: Vector2) -> void:
+	draw_circle(at, 7.0, UiStyle.TEXT)
+	draw_rect(Rect2(at + Vector2(-4, 4), Vector2(8, 6)), UiStyle.TEXT)
+	draw_circle(at + Vector2(-2.6, -0.5), 2.0, Color("3a1014"))
+	draw_circle(at + Vector2(2.6, -0.5), 2.0, Color("3a1014"))
 
 
 ## A heater shield: flat top, straight sides, curving to a point.

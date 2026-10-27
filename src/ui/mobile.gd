@@ -115,9 +115,7 @@ func _build() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_popup.add_child(center)
 	var panel := PanelContainer.new()
-	var style := UiStyle.box(Color("0b0e14f4"), Color("4a4a52"), 1, 4)
-	style.set_content_margin_all(20)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", UiStyle.frame(24.0))
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(panel)
 	var box := VBoxContainer.new()

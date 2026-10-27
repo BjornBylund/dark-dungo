@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EncounterDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_aicix"]
+[ext_resource type="Resource" path="res://content/enemies/maw.tres" id="2_6d67p"]
+[ext_resource type="Resource" path="res://content/enemies/spitter.tres" id="3_25hig"]
+[ext_resource type="Script" path="res://src/core/defs/encounter_def.gd" id="4_j75gt"]
+
+[resource]
+script = ExtResource("4_j75gt")
+display_name = "The Maw"
+enemies = Array[ExtResource("1_aicix")]([ExtResource("2_6d67p"), ExtResource("3_25hig"), ExtResource("3_25hig")])

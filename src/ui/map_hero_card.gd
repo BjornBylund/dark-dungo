@@ -20,18 +20,13 @@ func setup(combatant: Combatant, label: String, is_defeated: bool = false) -> vo
 
 
 func _draw() -> void:
-	draw_style_box(UiStyle.box(Color("1a1416"), Color("3a3430"), 1, 3), Rect2(Vector2.ZERO, size))
+	draw_style_box(UiStyle.card(), Rect2(Vector2.ZERO, size))
 	var body := UiStyle.BODY_FONT
 	draw_string(body, Vector2(0, 20), caption, HORIZONTAL_ALIGNMENT_CENTER, size.x, 14,
 			UiStyle.DAMAGE if defeated else UiStyle.TEXT_DIM)
 	var side := size.y - 40.0
 	var portrait := Rect2(10, 30, side, side)
-	draw_rect(portrait, Color("0c0a0a"))
-	var sprite := unit.def.sprite
-	if sprite:
-		draw_texture_rect_region(sprite, portrait, UiStyle.portrait_region(sprite))
-	else:
-		draw_rect(portrait.grow(-10), unit.def.color)
+	UiStyle.draw_portrait(self, portrait, unit.def)
 	var left := portrait.end.x + 10.0
 	draw_string(UiStyle.DISPLAY_FONT, Vector2(left, 52), unit.display_name, HORIZONTAL_ALIGNMENT_LEFT, size.x - left - 6,
 			20 if Device.phone else 24, UiStyle.GOLD)

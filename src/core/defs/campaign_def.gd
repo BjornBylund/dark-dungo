@@ -4,8 +4,9 @@ extends Resource
 
 ## Heroes in the roster at the start of a campaign.
 @export var starting_heroes: Array[UnitDef] = []
-## Heroes arriving at the Stagecoach, one per week from week 2, in this order.
-@export var arrivals: Array[UnitDef] = []
+## Heroes who can join later: one, chosen by the player, for each region boss
+## beaten for the first time.
+@export var recruits: Array[UnitDef] = []
 ## Places on the expedition map, each with its own enemy groups.
 @export var regions: Array[RegionDef] = []
 ## Events that can happen in any region.

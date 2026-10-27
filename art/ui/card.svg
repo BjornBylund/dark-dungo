@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- A small DD1-style card frame for hero cards and slots, drawn as a
+       9-slice with 12 px corners: a thin bronze border with corner ticks. -->
+  <rect x="1" y="1" width="46" height="46" fill="#140f0d" stroke="#060404" stroke-width="2"/>
+  <rect x="3.5" y="3.5" width="41" height="41" fill="none" stroke="#4e3a26" stroke-width="1.5"/>
+  <g fill="none" stroke="#8a6a3e" stroke-width="2" stroke-linecap="square">
+    <path d="M3 11 L3 3 L11 3"/>
+    <path d="M37 3 L45 3 L45 11"/>
+    <path d="M45 37 L45 45 L37 45"/>
+    <path d="M11 45 L3 45 L3 37"/>
+  </g>
+</svg>

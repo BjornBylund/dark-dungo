@@ -26,8 +26,8 @@
 
 [resource]
 script = ExtResource("17_30rl4")
-starting_heroes = Array[ExtResource("1_rwgop")]([ExtResource("18_3gi35"), ExtResource("19_rqh1u"), ExtResource("20_q6xh7"), ExtResource("21_ahiah")])
-arrivals = Array[ExtResource("1_rwgop")]([ExtResource("2_vuitf"), ExtResource("3_5fm3x"), ExtResource("4_ebf00"), ExtResource("5_dpfic")])
+starting_heroes = Array[ExtResource("1_rwgop")]([ExtResource("18_3gi35"), ExtResource("19_rqh1u"), ExtResource("20_q6xh7"), ExtResource("21_ahiah"), ExtResource("2_vuitf")])
+recruits = Array[ExtResource("1_rwgop")]([ExtResource("3_5fm3x"), ExtResource("4_ebf00"), ExtResource("5_dpfic")])
 regions = Array[ExtResource("7_region")]([ExtResource("8_graveyard"), ExtResource("9_burrows"), ExtResource("10_chapel")])
 events = Array[ExtResource("7_vuitf")]([ExtResource("8_5fm3x"), ExtResource("9_ebf00"), ExtResource("10_dpfic"), ExtResource("11_17eji")])
 battle_background = ExtResource("6_17eji")
