@@ -304,7 +304,8 @@ The combat screen follows DD2's, as measured in [research/darkest-dungeon-ui.md]
 - Wave title before round 1. Fonts: Grenze Gotisch for display text, Gelasio for body text (both SIL Open Font License). Gelasio renders as a multi-channel distance field, because rasterised at a scaled window size it clipped the bottoms of some lines.
 - **Atmosphere** on every screen, over the picture and under the UI (`src/ui/atmosphere.gd`): dark corners, film grain, a torch-like flicker in combat, and the hamlet's lit windows and lamps glowing and guttering.
 - Combat log showing every roll (L, a dev overlay hidden by default) and a 2× speed toggle (S).
-- Mouse first: click a skill, valid targets highlight, click a target. Keyboard: 1–8 pick a skill, Left/Right/Tab move the target, Enter/Space confirm, L log, S speed, R restart. Controller later.
+- Mouse first: click a skill, valid targets highlight, click a target. A hero's turn starts with no skill chosen, so the first clicks can look around; clicking the chosen skill again lets go of it. Keyboard: 1–8 pick a skill, Left/Right/Tab move the target, Enter/Space confirm, Esc close the details or let go of the skill, L log, S speed, R restart. Controller later.
+- **Unit details**, DD2's inspect sheet: clicking any unit that isn't a target of the chosen skill (or right-clicking any unit) opens a panel over the other side of the battlefield, the unit marked with pale brackets. It shows the portrait, rank, HP, speed and stress, the resistance row, tokens, DoTs, Regen and passing buffs with what each does, bond bonuses, and the unit's skills with their rank pips (hover one for its details). It follows the fight as events play, and closes for close-ups and when the unit leaves.
 
 ### Mobile and touch
 
@@ -315,7 +316,7 @@ The web build plays on phones and tablets with touch. Mouse and keyboard on desk
 - **Phone layout** on screens shorter than about 600 CSS pixels: roughly twice the text size and full-size touch targets (about 44 CSS pixels), with each screen rearranged to show less at once. Town building windows go full-screen with scrolling lists, and combat shows skill details only when asked. Tablets keep the normal layout, where text comes out around 13 CSS pixels.
 - **Tap to look, tap again to act** in place of hover:
   - **Map:** tapping a room shows what it holds, with a Go button.
-  - **Combat:** tapping a target shows its stats and the damage preview; tapping it again, or Confirm, uses the skill.
+  - **Combat:** tapping a target shows its stats and the damage preview; tapping it again, or Confirm, uses the skill. Tapping any other unit opens its details over half the screen.
   - **Long press** (about half a second) on anything with extra information shows it: unit stat sheets, why a button is greyed out, skill icons, heirlooms.
 - **Lineup:** tap a hero in a slot to pick them up, tap another slot to swap, tap the picked hero again to take them out. Dragging still works.
 - **Fullscreen:** a button on the title screen. The web build is installable (Godot's progressive web app export), so "Add to Home Screen" opens it fullscreen in landscape. iPhones can't lock orientation from the browser, so they rely on the "turn sideways" screen.
@@ -451,7 +452,7 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
   - **Setup:** up to four heroes in rank order, each with the skills they take (five at most) and two trinkets, against an encounter at a preset. Sliders set the party's starting HP and stress. The setup is kept in `user://balance_arena.json` between sessions.
   - **Live:** 200 fights (about 5 s) play on the main thread, a few each frame, and start again 0.4 s after any change, to the setup or to the content in the form. The fights use the content as it stands, so they need no copy.
   - **Results:** win rate with its margin, HP lost, deaths, rounds and stress, each hero's HP lost and deaths, and how often the bot used each skill. A line compares with the last run that finished before the latest change. More plays 1,000 fights.
-  - **Watch** opens the fight in the real combat screen, played by the bot; **Play it** lets you play it yourself. The screen opens over the tool rather than replacing it, so unsaved edits and the undo history stay. It plays the fight with new dice each time (R again), and Esc or the end panel goes back. The combat screen knows the Arena only as an object with `title`, `bot_plays` and `battle(seed)`, so the game doesn't depend on the tool, which isn't exported.
+  - **Watch** opens the fight in the real combat screen, played by the bot; **Play it** lets you play it yourself. The screen opens over the tool rather than replacing it, so unsaved edits and the undo history stay. It plays the fight with new dice each time (R again), and Esc (once any unit's details are closed and no skill is chosen) or the end panel goes back. The combat screen knows the Arena only as an object with `title`, `bot_plays` and `battle(seed)`, so the game doesn't depend on the tool, which isn't exported.
 
 ## Future features
 
@@ -497,4 +498,4 @@ To decide when we design it:
 - Town features after v1, roughly in DD1's priority: quirks, with their Abbey and Tavern side effects, and the Sanitarium; diseases; quest goals beyond winning every fight; town events; a dungeon map with supplies, light and camping (Survivalist).
 - Relationships, Paths, combat items, skill loadouts.
 - Real art, audio, controller support, multiple save slots.
-- DD2 screen features waiting on mechanics or writing: the Flame emblem at the top, speech-bubble barks, right-click enemy and hero inspect sheets.
+- DD2 screen features waiting on mechanics or writing: the Flame emblem at the top, speech-bubble barks.

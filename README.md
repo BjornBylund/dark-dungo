@@ -21,7 +21,7 @@ The title screen offers Continue, New Campaign and Combat Sandbox, and when runn
 - **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Nomad Wagon, Tavern and Heirloom Exchange), or a hero in the roster for their sheet: click a skill icon to equip or unequip it (hover it for what it does), and a worn trinket to take it off. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
 - **Mission map:** click a glowing room to go there; hover a room to see what it holds. Fights open the combat screen and come back; rests, caches and events open a panel over the map. **Retreat** (click twice) ends the mission with what you earned on the way.
-- **Combat:** click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for its stats.
+- **Combat:** click a skill, then a highlighted target. No skill is chosen when a turn starts: click any unit (or right-click one at any time) for its details: HP, resistances, tokens and what they do, and its skills. Click the chosen skill again to let go of it. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `Esc` close the details or let go of the skill, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for a quick look at its stats.
 
 Launch options go after `--`:
 
@@ -120,7 +120,7 @@ The **balance tool** edits heroes, enemies, encounters and trinkets with their n
   - **Setup:** pick four heroes in rank order, the skills they take (click to toggle, five at most) and their trinkets, an encounter, a preset, and the party's starting HP and stress.
   - **Results:** the win rate, HP lost, deaths and rounds, each hero's HP lost and deaths, and how often each skill was used, with a comparison to before your last change.
   - **Edit** beside a hero or the encounter opens it in the form; changes there re-run the fight.
-  - **▶ Watch** plays the fight in the real combat screen with the bot, and **Play it** lets you play it. R plays it again; Esc goes back.
+  - **▶ Watch** plays the fight in the real combat screen with the bot, and **Play it** lets you play it. R plays it again; Esc goes back (once any unit's details are closed and no skill is chosen).
 - **Keys:** `Ctrl+S` saves the changed files, `Ctrl+Z` / `Ctrl+Y` undo and redo.
 
 The files can also be edited by hand or in the Godot inspector:

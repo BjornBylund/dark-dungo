@@ -6,6 +6,8 @@ class_name UnitView
 extends Control
 
 signal clicked(view: UnitView)
+## A right-click, which always opens the unit's details.
+signal right_clicked(view: UnitView)
 signal hovered(view: UnitView, inside: bool)
 
 enum Highlight { NONE, ENEMY_TARGET, ALLY_TARGET }
@@ -33,6 +35,8 @@ var corpse_shown := false
 var is_active_turn := false
 var highlight := Highlight.NONE
 var focused := false
+## Its details are open; marked with pale brackets.
+var inspecting := false
 ## Tokens the selected attack would use up on this unit; drawn with a gold square.
 var consumed_tokens: Array[StringName] = []
 ## In a close-up the status stack and markers are hidden.
@@ -128,6 +132,9 @@ func _process(delta: float) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed != Device.touch:
 		clicked.emit(self)
+		accept_event()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		right_clicked.emit(self)
 		accept_event()
 
 
@@ -259,6 +266,9 @@ func _draw_brackets() -> void:
 		color = UiStyle.BLUE if highlight == Highlight.ENEMY_TARGET else UiStyle.GREEN
 		if focused:
 			color = color.lightened(0.3)
+		half = _bar_width() / 2.0 + 30.0
+	elif inspecting:
+		color = UiStyle.TEXT
 		half = _bar_width() / 2.0 + 30.0
 	else:
 		return

@@ -41,6 +41,8 @@ var _battle: Battle
 ## Every unit of the current wave by uid, including ones that have left the field.
 var _units: Dictionary[int, Combatant] = {}
 var _views: Dictionary[int, UnitView] = {}
+## A unit's details, opened by clicking a unit that isn't a target or right-clicking any.
+var _inspect: InspectPanel
 var _selected: SkillDef
 var _targets: Array[Combatant] = []
 var _focus_index := 0
@@ -48,7 +50,6 @@ var _speed := 1.0
 var _busy := false
 ## Bumped on restart so animations and loops from the previous run stop.
 var _generation := 0
-var _last_skill: Dictionary[int, StringName] = {}
 var _in_closeup := false
 var _closeup_views: Array[UnitView] = []
 var _floats_per_view: Dictionary[int, int] = {}
@@ -164,7 +165,6 @@ func _new_run() -> void:
 	_end_panel.hide()
 	_end_closeup()
 	_clear_fx()
-	_last_skill.clear()
 	_log.clear()
 	var seed_value := randi() % 1000000
 	_run = SandboxRun.new(SANDBOX, seed_value)
@@ -201,7 +201,6 @@ func _start_arena() -> void:
 	_end_panel.hide()
 	_end_closeup()
 	_clear_fx()
-	_last_skill.clear()
 	_log.clear()
 	_hud.hide()
 	var seed_value := randi() % 1000000
@@ -356,7 +355,6 @@ func _begin_player_turn() -> void:
 	_hero_def = actor.def
 	_hud.queue_redraw()
 	_clear_skill_row()
-	var preferred: SkillDef = null
 	var actions := _battle.actions_for(actor)
 	for i in actions.size():
 		var skill := actions[i]
@@ -367,14 +365,9 @@ func _begin_player_turn() -> void:
 		button.mouse_entered.connect(_show_skill_details.bind(skill))
 		button.mouse_exited.connect(func() -> void: _show_skill_details(_selected))
 		_skill_row.add_child(button)
-		if button.usable and preferred == null and skill.kind == SkillDef.Kind.ACTION:
-			preferred = skill
-		if button.usable and skill.id == _last_skill.get(actor.uid, &""):
-			preferred = skill
-	if preferred == null:
-		preferred = BasicSkills.pass_turn
 	_hud.show()
-	_select_skill(preferred)
+	# No skill to start with, so a click on any unit shows its details first.
+	_deselect()
 	if _autoplay:
 		var generation := _generation
 		var choice := AutoPlayer.best(_battle)
@@ -389,8 +382,14 @@ func _begin_player_turn() -> void:
 			_confirm(choice[1])
 
 
+## Chooses `skill` and highlights its targets; choosing it again lets go of it.
 func _select_skill(skill: SkillDef) -> void:
-	if _busy or _battle.state != Battle.State.AWAITING_INPUT or not _battle.can_use(_battle.current, skill):
+	if _busy or _battle.state != Battle.State.AWAITING_INPUT:
+		return
+	if skill == _selected:
+		_deselect()
+		return
+	if not _battle.can_use(_battle.current, skill):
 		return
 	_selected = skill
 	_armed = null
@@ -412,12 +411,22 @@ func _select_skill(skill: SkillDef) -> void:
 	_update_targeting()
 
 
+## No skill chosen: no targets, and a click on a unit shows its details.
+func _deselect() -> void:
+	_selected = null
+	_armed = null
+	_targets.clear()
+	for button: SkillButton in _skill_row.get_children():
+		button.set_selected(false)
+	_show_skill_details(null)
+	_update_targeting()
+
+
 func _confirm(target: Combatant) -> void:
 	if _busy or _selected == null or target not in _targets:
 		return
-	var actor := _battle.current
-	_last_skill[actor.uid] = _selected.id
 	var skill := _selected
+	_close_inspect()
 	_clear_player_ui()
 	_busy = true
 	var generation := _generation
@@ -560,7 +569,8 @@ func _tested_resists(skill: SkillDef) -> Array[StringName]:
 func _show_skill_details(skill: SkillDef) -> void:
 	if skill == null:
 		_skill_name.text = ""
-		_skill_text.text = ""
+		_skill_text.text = "[color=#%s]Choose a skill. %s any unit for its details.[/color]" % [
+				UiStyle.TEXT_DIM.to_html(false), "Tap" if Device.touch else "Click"]
 		_pips.set_skill(null)
 		return
 	_skill_name.text = skill.display_name
@@ -568,11 +578,13 @@ func _show_skill_details(skill: SkillDef) -> void:
 	_pips.set_skill(skill)
 
 
-## A click attacks at once. On a touch screen the first tap on a target focuses
+## A click on a target of the chosen skill attacks at once; a click on any other
+## unit shows its details. On a touch screen the first tap on a target focuses
 ## it and shows the preview; a second tap on it (or on any target of a skill
 ## that hits them all) attacks.
 func _on_view_clicked(view: UnitView) -> void:
-	if view.unit not in _targets:
+	if _selected == null or view.unit not in _targets:
+		_inspect_unit(view.unit)
 		return
 	if not Device.touch or view.unit == _armed or (_selected.multi_target and _armed != null):
 		_confirm(view.unit)
@@ -580,6 +592,53 @@ func _on_view_clicked(view: UnitView) -> void:
 	_armed = view.unit
 	_focus_index = _targets.find(view.unit)
 	_update_targeting()
+
+
+## Opens the details panel on `unit`, over the other side of the battlefield so
+## the unit stays in view.
+func _inspect_unit(unit: Combatant) -> void:
+	if _in_closeup or _battle == null:
+		return
+	_inspect.show_unit(unit, _battle)
+	for view: UnitView in _views.values():
+		view.inspecting = view.unit == unit
+		view.queue_redraw()
+	_place_inspect.call_deferred()
+
+
+func _place_inspect() -> void:
+	if not _inspect.visible or _inspect.unit == null:
+		return
+	var on_left := not _inspect.unit.is_hero
+	if Device.phone:
+		_inspect.size = Vector2(_ui.size.x * 0.5 - 12.0, _ui.size.y - 16.0)
+		_inspect.position = Vector2(8.0 if on_left else _ui.size.x * 0.5 + 4.0, 8.0)
+		return
+	_inspect.reset_size()
+	_inspect.position = Vector2(40.0 if on_left else STAGE_SIZE.x - 40.0 - _inspect.size.x, TOP_BAND + 10.0)
+
+
+func _close_inspect() -> void:
+	_inspect.hide()
+	_on_inspect_closed()
+
+
+func _on_inspect_closed() -> void:
+	for view: UnitView in _views.values():
+		if view.inspecting:
+			view.inspecting = false
+			view.queue_redraw()
+
+
+## After events play: the details panel catches up, or closes if its unit is gone.
+func _refresh_inspect() -> void:
+	if not _inspect.visible:
+		return
+	if _battle == null or _inspect.unit not in _battle.all_units():
+		_close_inspect()
+		return
+	_inspect.refresh()
+	_place_inspect.call_deferred()
 
 
 func _on_view_hovered(view: UnitView, inside: bool) -> void:
@@ -600,11 +659,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_R:
 			if _mission_run == null:
 				_restart()
-		KEY_ESCAPE:
-			if arena:
-				_close_arena()
-			else:
-				return
 		KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
 			if _end_panel.visible:
 				_end_button.pressed.emit()
@@ -615,6 +669,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				var step := -1 if key == KEY_LEFT else 1
 				_focus_index = posmod(_focus_index + step, _targets.size())
 				_update_targeting()
+		KEY_ESCAPE:
+			# Closes a unit's details, lets go of the chosen skill, or leaves the arena.
+			if _inspect.visible:
+				_close_inspect()
+			elif _selected:
+				_deselect()
+			elif arena:
+				_close_arena()
+			else:
+				return
 		_:
 			if key >= KEY_1 and key <= KEY_9:
 				var index := key - KEY_1
@@ -643,6 +707,7 @@ func _play(events: Array[Dictionary]) -> void:
 			return
 	_end_closeup()
 	_refresh_views()
+	_refresh_inspect()
 	_layout(true)
 	_queue.show_units(_battle.turn_order())
 	if not events.is_empty():
@@ -853,6 +918,7 @@ func _start_closeup(event: Dictionary) -> void:
 	_in_closeup = true
 	_closeup_views = participants
 	_hud.hide()
+	_close_inspect()
 	var time := 0.15 / _speed
 	for view: UnitView in _views.values():
 		view.closeup = view in participants
@@ -985,6 +1051,7 @@ func _clear_fx() -> void:
 # --- Unit views and layout ---
 
 func _rebuild_views() -> void:
+	_close_inspect()
 	for view: UnitView in _views.values():
 		view.queue_free()
 	_views.clear()
@@ -993,6 +1060,7 @@ func _rebuild_views() -> void:
 		var view := UnitView.new()
 		view.setup(unit)
 		view.clicked.connect(_on_view_clicked)
+		view.right_clicked.connect(func(clicked: UnitView) -> void: _inspect_unit(clicked.unit))
 		view.hovered.connect(_on_view_hovered)
 		_field.add_child(view)
 		_views[unit.uid] = view
@@ -1222,6 +1290,12 @@ func _build() -> void:
 	if Device.phone:
 		_ui = _layer(self, size)
 		_build_phone_controls()
+
+	_inspect = InspectPanel.new()
+	_inspect.z_index = 35
+	_inspect.hide()
+	_inspect.closed.connect(_on_inspect_closed)
+	_ui.add_child(_inspect)
 
 	_end_panel = _layer(_ui, STAGE_SIZE)
 	_end_panel.z_index = 40
