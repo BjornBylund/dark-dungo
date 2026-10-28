@@ -74,10 +74,19 @@ The web build plays in mobile browsers, held sideways.
 
 ## Add art
 
+Each unit keeps all its images in one folder named after its class, `art/characters/<class>/`, e.g. `crusader/`, `man_at_arms/` or `gravelord/`:
+
+| File | Shown |
+|---|---|
+| `sprite.png` | On the battlefield, and cropped for portraits |
+| `hurt.png` | In an attack close-up while the unit is hit |
+| `<skill id>.png` | In the close-up while the unit uses that skill, e.g. `smite.png` |
+
 Units draw a coloured placeholder until they have a sprite.
 
-1. Put a transparent PNG in the project, e.g. `art/units/ghoul.png`. Draw every unit facing right with its feet on the bottom edge; enemies are mirrored automatically.
+1. Put a transparent `sprite.png` in the unit's folder, e.g. `art/characters/ghoul/sprite.png`. Draw every unit facing right with its feet on the bottom edge; enemies are mirrored automatically.
 2. Open the unit's `.tres` in `content/` and drag the PNG into its **Sprite** field (Art group). Adjust **Sprite Scale** if it should stand taller or shorter.
+3. Poses are found by their file names next to the sprite, with no field to set. A missing pose shows the normal sprite. `tools/make_poses.gd` writes placeholders for missing ones.
 
 Sprites are fitted into the unit's slot, keeping their aspect ratio. Units stand about 380 px tall on a 1080p screen and up to 1.5× that in close-ups, so draw them at least 560 px tall (around 300×560 for a normal unit, 680×560 for a 2-rank one). Textures import with mipmaps so they stay smooth when scaled down.
 
@@ -121,7 +130,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, trinkets, the campaign and the sandbox as `.tres` files |
-| `art/` | Unit sprites, close-up poses (`art/poses/<unit>/<skill>.png` and `hurt.png`), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
+| `art/` | One folder per unit under `art/characters/` (sprite and close-up poses), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |
 | `scripts/` | `test.ps1` runs the tests, `balance.ps1` plays missions in parallel for balance numbers, `serve_web.ps1` serves the web export locally |
@@ -129,4 +138,4 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
 | `tools/balance_probe.gd` | Fresh random parties against every enemy group: win rate, HP lost, stress |
 | `tools/mission_probe.gd` | Random parties play whole missions; `scripts/balance.ps1` runs it in parallel |
-| `tools/make_poses.gd` | Writes placeholder attack and hurt poses into `art/poses/` (keeps existing files unless `--overwrite`) |
+| `tools/make_poses.gd` | Writes placeholder attack and hurt poses into each unit's `art/characters/` folder (keeps existing files unless `--overwrite`) |

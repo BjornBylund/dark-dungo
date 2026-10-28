@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_i7bbv"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_27v0x"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_fymlx"]
-[ext_resource type="Texture2D" path="res://art/units/maw.png" id="4_hdbla"]
+[ext_resource type="Texture2D" path="res://art/characters/maw/sprite.png" id="4_hdbla"]
 
 [sub_resource type="Resource" id="Resource_i7bbv"]
 script = ExtResource("3_fymlx")

@@ -25,7 +25,7 @@ func _initialize() -> void:
 			if base.is_compressed():
 				base.decompress()
 			base.convert(Image.FORMAT_RGBA8)
-			var folder := "res://art/poses/%s" % unit.id
+			var folder := Poses.folder(unit)
 			DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
 			written += _save(_hurt(base), folder.path_join("hurt.png"), overwrite)
 			if dir.ends_with("heroes"):

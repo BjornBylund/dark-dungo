@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_nwqc5"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_cktqj"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_f0ij0"]
-[ext_resource type="Texture2D" path="res://art/units/gravelord.png" id="4_blhek"]
+[ext_resource type="Texture2D" path="res://art/characters/gravelord/sprite.png" id="4_blhek"]
 
 [sub_resource type="Resource" id="Resource_nwqc5"]
 script = ExtResource("2_cktqj")
