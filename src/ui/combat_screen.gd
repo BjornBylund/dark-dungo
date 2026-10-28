@@ -1030,7 +1030,7 @@ func _build() -> void:
 	_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_field.add_child(_tint)
 	# Over the battlefield and its units, under the bands and the HUD; the light flickers like a torch.
-	_stage.add_child(Atmosphere.new(0.12, 0.35))
+	_stage.add_child(Atmosphere.new(0.35))
 
 	_ink = _layer(_stage, STAGE_SIZE)
 	_ink.draw.connect(_draw_ink)

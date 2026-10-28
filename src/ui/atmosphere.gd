@@ -1,7 +1,7 @@
 ## The mood over a screen's picture, under its UI (atmosphere.gdshader): dark
-## corners, slow fog, film grain, and if asked a flicker in the light and lamps
-## that glow and gutter. Fills its parent; screens add it just above what they
-## draw behind everything.
+## corners, film grain, and if asked a flicker in the light and lamps that glow
+## and gutter. Fills its parent; screens add it just above what they draw
+## behind everything.
 class_name Atmosphere
 extends ColorRect
 
@@ -9,11 +9,10 @@ const SHADER: Shader = preload("res://src/ui/atmosphere.gdshader")
 const MAX_LIGHTS := 8
 
 
-func _init(fog: float = 0.1, flicker: float = 0.0) -> void:
+func _init(flicker: float = 0.0) -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	material = ShaderMaterial.new()
 	material.shader = SHADER
-	material.set_shader_parameter("fog", fog)
 	material.set_shader_parameter("flicker", flicker)
 	resized.connect(_update_size)
 

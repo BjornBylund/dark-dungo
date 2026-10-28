@@ -152,7 +152,7 @@ func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	theme = UiStyle.make_theme()
-	add_child(Atmosphere.new(0.1))
+	add_child(Atmosphere.new())
 
 	_glow = TextureRect.new()
 	var light := GradientTexture2D.new()

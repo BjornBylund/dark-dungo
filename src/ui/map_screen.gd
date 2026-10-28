@@ -551,7 +551,7 @@ func _center_stage() -> void:
 
 func _build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(Atmosphere.new(0.14))
+	add_child(Atmosphere.new())
 	_stage = Control.new()
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE

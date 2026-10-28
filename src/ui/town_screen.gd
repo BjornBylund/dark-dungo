@@ -1331,7 +1331,7 @@ func _center_stage() -> void:
 
 func _build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	_atmosphere = Atmosphere.new(0.08)
+	_atmosphere = Atmosphere.new()
 	add_child(_atmosphere)
 	_stage = Control.new()
 	_stage.size = STAGE_SIZE
