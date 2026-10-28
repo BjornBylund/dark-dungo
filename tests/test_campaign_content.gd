@@ -110,7 +110,7 @@ func test_elite_fights_are_winnable() -> void:
 					break
 				battle.advance()
 				if battle.state == Battle.State.AWAITING_INPUT:
-					var choice := AutoPlayer.sensible(battle)
+					var choice := AutoPlayer.best(battle)
 					battle.submit(choice[0], choice[1])
 			wins += int(battle.state == Battle.State.VICTORY)
 		assert_true(wins > 0, "nobody beats %s" % region.elites[0].display_name)

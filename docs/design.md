@@ -17,7 +17,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 
 - **Combat core** (`src/core/`) is pure logic: plain GDScript classes (no nodes), a seeded RNG so any fight replays exactly from its seed, and an event stream ("X used Y on Z, crit, 7 damage, Bleed applied") as its only output.
 - **Presentation** (`src/ui/`) renders those events and sends the player's choices back to the core. It never decides outcomes.
-- **Content** (`content/`) — heroes, enemies, skills, waves — is data, stored as Godot Resources (`.tres`), not code. Edit them in the Godot inspector.
+- **Content** (`content/`) — heroes, enemies, skills, waves — is data, stored as Godot Resources (`.tres`), not code. Edit them in the [balance tool](#balance-tool) or the Godot inspector.
 - Combat takes a party in and hands it back out (HP, stress, Death's Door, deaths, long-lasting buffs), so it plugs into whichever game loop is chosen later.
 
 ## Combat model
@@ -76,7 +76,7 @@ After DD1's region progress and bosses:
 - **A boss mission** is a **long** map (20 columns) that ends at the region's boss instead of its finale. It pays a long mission's gold and XP and **double** heirlooms.
 - **The first win** against each region's boss lets a new hero join (see Recruiting), and opens the next region. A window in town offers the choice of hero.
 - **Coming back harder:** after a win the region's progress starts again from empty, and when it's full again its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
-- **The bosses**, each with escorts, built from mechanics the engine already has and tuned with `tools/balance_probe.gd` so fresh level-0 random parties win about 40–46% at Apprentice:
+- **The bosses**, each with escorts, built from mechanics the engine already has. They were tuned so fresh level-0 random parties won about 40–46% at Apprentice against the old bot. With the value-based bot, random loadouts and parties lined up by their skills' ranks, the balance tool's Quick sweep at Base now gives the Gravelord 92%, the Maw 65% and the Hollow Saint 48% (target 40–46%, in `content/balance_targets.tres`):
 
 | Region | Boss | Kit |
 |---|---|---|
@@ -153,7 +153,7 @@ One per region, fought in elite rooms with two regular enemies of the region, us
 | Burrows | **Broodmother** (2 ranks) | Blight sprays at the back ranks, a bleeding bite across the front two, a stress shriek |
 | Chapel | **High Priest** (ranks 2–4) | Party-wide stress, Vulnerable and Weaken curses, a sweeping scourge, heals its followers |
 
-Tuned with `tools/balance_probe.gd` so that a fresh level-0 party loses about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale.
+Tuned so that a fresh level-0 party lost about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale, with the old bot. The value-based bot loses less at Base: about 51–55% to elites, 19–29% to normal fights and 31–40% to finales.
 
 ### Hero growth
 
@@ -275,7 +275,7 @@ Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
   - The party's token, the front hero's framed portrait on a pennant, stands over the current room (below it when the top band would hide it) and walks to each room chosen. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
 - **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
 - One autosave slot, written after every town action and every fight on a mission (`user://`, which is browser storage on the web build).
-- A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
+- A title screen offers Continue, New Campaign and the Combat Sandbox, and from the project folder the [balance tool](#balance-tool). Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`, `--balance`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
 
 ## Deviations from DD2
 
@@ -394,14 +394,64 @@ The kits brought these mechanics to the combat engine:
 
 ### Balance snapshot
 
-`tests/test_simulation.gd` plays full sandbox runs with scripted players and prints:
+**The bot.** Every simulated fight, `--autoplay` and the map auto-player use `AutoPlayer.best`. It scores every usable skill on every target by the HP it is worth and picks the best. The scoring counts:
+- damage, plus the share of the enemy's threat it wears down, and kills
+- healing where HP is missing, more on Death's Door, and stress relieved
+- Block, Dodge, Stealth and Guard by the hits they are likely to stop (Guard only when the guard is the sturdier one)
+- Stun, Blind and Weak by the enemy turns they spoil; Vulnerable and Combo by the party's next hits
+- buffs, debuffs, DoTs after resistance, and costs like self-damage, stress, or moving out of range
+- moves and swaps by the attacks they open up against living enemies
+- ending the fight, which a kill of the last enemy is worth well above its costs
 
-- Sensible player (heals the hurt, calms the stressed, otherwise hits hardest on the weakest foe): wins ~100% of runs, losing ~1 hero per run.
-- Random player: wins ~34% of runs.
+Past round 20 everything but damage, costs included, counts for a third, so long fights end instead of turning into a stand-off of defending.
 
-A human should land between the two. Retune once it has been played.
+It replaced a "sensible" bot that only healed allies under 50%, calmed stress of 5 or more, and otherwise hit hardest. That bot never used tokens, Guard, moves or Combo, so kits built on them looked weak.
 
-`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 46% of short missions, 28% of medium and 20% of long (heroes without trinkets). Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear. The bot is a pessimistic stand-in for a human, who picks a party and a route on purpose.
+`tests/test_simulation.gd` plays full sandbox runs with the bot and a random player as a guard against stalemates. A human should land between the two.
+
+`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 71% of short missions, 63% of medium and 43% of long (heroes without trinkets). The old bot finished 46%, 28% and 20%. None of 720 missions had a fight reach the 60-round cap. The sweep's rare stalls are a lone hero left at rank 1 with no attack from there, against an enemy that heals faster than it's hurt. Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear.
+
+## Balance tool
+
+A dev app inside the game (`src/balance/`) for designing and balancing heroes, enemies, bosses and items. It opens with `-- --balance`, or from a title-screen button that only shows when running from the project folder, and is left out of exports. Desktop only.
+
+- **Why in the game, not an editor plugin:** the Godot editor isn't part of the workflow. All of it is GDScript on the real content and combat code.
+- **What it edits:** every field of the heroes, enemies (bosses included) and trinkets, and every encounter's lineup. Forms are built from each resource's exported fields, so new fields, and new kinds of equipment later, get an editor without extra work. `campaign_rules.gd`, events and regions are out of scope, except listing content in the campaign.
+- **Editing:** a table per kind (Heroes, Enemies, Encounters with a Fight / Elite / Finale / Boss filter, Trinkets) beside a form for the selected one. Units expand into their skills. Undo and redo cover the session; git is the long-term history. Save writes the changed `.tres` files only, and a file saved unchanged comes out byte-identical. Quitting or leaving with unsaved changes asks first.
+- **New content:** Duplicate copies a hero, enemy, encounter or trinket with its own skills and effects (art and listed units are shared) and a new id. List in campaign puts it in Starting Heroes or Recruits, a region's fights, elites, finales or boss, or the trinket list. Ids lock once saved, because saves refer to them. Deleting stays manual.
+- **Numbers on paper** (`BalanceStats`), live as you edit, sortable, tinted by rank within their group:
+  - **Heroes and enemies:** HP, speed, size, resistances, the most expected damage in one turn, damage, heal and stress per round, the best chance a stun or move sticks, and the ranks used and reached.
+  - **Skills:** the damage roll, crit, cooldown and uses, expected damage per use (crits, every target, DoTs after resistance), and the per-round numbers with its cooldown.
+  - **Encounters:** totals of HP, damage and stress per round, the best stun, and average speed.
+  - **Trinkets:** rarity, class, price, whether listed, and their effects in words.
+  - **Assumptions:** base heroes (level 0, rank-1 skills, the first 5 skills) against Apprentice enemies, over a 6-round fight. A unit uses its best ready skill each turn, so cooldowns and use limits count. Resisted effects are measured against the other side's average resistance. Effects that need a token or tier tokens (Stun vs Combo) don't count.
+- **Sweeps** (`BalanceSweep`, ▶ Run): simulated fights of the content on screen, saved or not, played by [the bot](#balance-snapshot) at one preset.
+  - **The sweep:** 100 fights per encounter (Quick). Each is a random party of four with five random skills each, at least one of them an attack when the hero has any, lined up by the average rank their skills are used from. At presets with trinkets, each hero also wears two random trinkets they may wear, drawn with the tier's drop odds.
+  - **Paired fights** for every hero skill (20 pairs at Quick) and trinket (16 pairs), on random elites, finales and bosses. Each pair is the same party, seed and encounter, once with it and once without: the skill is swapped for another of the hero's, the trinket taken off. The difference in wins and in party HP lost is what it is worth. HP lost is the sharper of the two, since most fights are won.
+  - **Fixed seeds:** each fight's seed comes from what it measures and its number, so runs of the same content share their dice, and differences come from the changes.
+  - **Run size:** Quick is about 7,400 fights in about 15 s. Thorough plays 4 times as many, in about a minute.
+  - **Worker processes:** GDScript slows down on several threads in this build (two threads take 5 times as long as one), so the fights run in headless Godot processes (`tools/balance_worker.gd`), one per processor but two. The sweep saves its copy of the content to `user://balance_runs/`, each worker rebuilds the same plan from it, and the app reads their results back.
+- **Results** sit in columns before the numbers on paper. Hovering a cell gives its margin of error.
+  - **Heroes:** win rate with them against the cast's average, their HP lost and deaths.
+  - **Skills:** with against without, and how often the bot picked them.
+  - **Enemies:** win rate and HP lost in fights against them, and their skills' use.
+  - **Encounters:** win, HP lost, stress, deaths, rounds and their target.
+  - **Trinkets:** with against without.
+  - **Out of date:** results grey out once anything is edited, and come back when undo returns to the content they were run on. Each change gives the content a new state; undo gives the old one back.
+  - **Pin:** keeps a run, and later runs show their change against it.
+- **Presets and targets** live in `content/balance_targets.tres`, edited from the Targets button and left out of exports.
+  - **Presets:** Base (level 0, rank-1 gear and skills, no trinkets), Apprentice (level 1, trinkets), Veteran (level 3, rank 3, Veteran enemies), Champion (level 5, rank 5, Champion enemies).
+  - **Default targets at Base:** bosses won 40–46%; HP lost 25–35% to normal fights, 50–60% to elites and 40–50% to finales.
+  - **Flags:**
+    - an encounter outside its target
+    - a hero more than 5 points from the cast's average win rate
+    - a skill or trinket whose win difference strays more than 8 points, or whose HP-lost difference strays more than 4, from its group's middle and beyond its margin of error
+- **From the terminal:** `tools/balance_probe.gd` runs the same sweep and prints the encounters, heroes, and the skills and trinkets that stand out.
+- **Arena** (`BalanceArena`, the Arena tab): one hand-picked fight, played over and over by the bot.
+  - **Setup:** up to four heroes in rank order, each with the skills they take (five at most) and two trinkets, against an encounter at a preset. Sliders set the party's starting HP and stress. The setup is kept in `user://balance_arena.json` between sessions.
+  - **Live:** 200 fights (about 5 s) play on the main thread, a few each frame, and start again 0.4 s after any change, to the setup or to the content in the form. The fights use the content as it stands, so they need no copy.
+  - **Results:** win rate with its margin, HP lost, deaths, rounds and stress, each hero's HP lost and deaths, and how often the bot used each skill. A line compares with the last run that finished before the latest change. More plays 1,000 fights.
+  - **Watch** opens the fight in the real combat screen, played by the bot; **Play it** lets you play it yourself. The screen opens over the tool rather than replacing it, so unsaved edits and the undo history stay. It plays the fight with new dice each time (R again), and Esc or the end panel goes back. The combat screen knows the Arena only as an object with `title`, `bot_plays` and `battle(seed)`, so the game doesn't depend on the tool, which isn't exported.
 
 ## Future features
 

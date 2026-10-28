@@ -8,6 +8,8 @@ const TOWN := "res://src/ui/town_screen.tscn"
 const EXPEDITION := "res://src/ui/expedition_screen.tscn"
 const MAP := "res://src/ui/map_screen.tscn"
 const BATTLE := "res://src/ui/combat_screen.tscn"
+## The balance tool; left out of exports.
+const BALANCE := "res://src/balance/balance_app.tscn"
 
 ## Null in the main menu and the combat sandbox.
 var campaign: Campaign
@@ -73,3 +75,14 @@ func go_to_menu() -> void:
 func play_sandbox() -> void:
 	campaign = null
 	get_tree().change_scene_to_file(BATTLE)
+
+
+## Opens the balance tool, for designing and balancing heroes, enemies and items.
+func open_balance_tool() -> void:
+	campaign = null
+	get_tree().change_scene_to_file(BALANCE)
+
+
+## Whether the balance tool is here: running from the project folder, not an export.
+func has_balance_tool() -> bool:
+	return not OS.has_feature("template")

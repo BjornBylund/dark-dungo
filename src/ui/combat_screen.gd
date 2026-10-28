@@ -1,11 +1,14 @@
 ## The combat screen, laid out like Darkest Dungeon 2: the battlefield in the top
 ## ~70% fading to black, a frameless HUD below it, the turn queue at the top right,
 ## and a letterboxed close-up for every attack. Plays the campaign's mission in
-## progress (Game.campaign.run), or the combat sandbox when there is none, and
-## plays the battle's events back as short animations.
+## progress (Game.campaign.run), a fight the balance tool hands it (`arena`), or
+## the combat sandbox, and plays the battle's events back as short animations.
 ## Authored for 1920x1080 on a centred stage; measurements come from
 ## docs/research/darkest-dungeon-ui.md.
 extends Control
+
+## Arena mode is over: the player went back to the balance tool.
+signal closed
 
 const SANDBOX: SandboxDef = preload("res://content/sandbox.tres")
 const STAGE_SIZE := Vector2(1920, 1080)
@@ -26,6 +29,10 @@ const CLOSEUP_ENEMY_X := 1300.0
 const CLOSEUP_SCALES := [1.5, 1.25, 1.0]
 const CLOSEUP_TINT := Color(0.3, 0.1, 0.08, 0.6)
 
+## Arena mode, from the balance tool's Watch: an object with `title`,
+## `bot_plays` and `battle(seed) -> Battle`. Set it before adding the screen,
+## which then plays that fight (again with R) and emits `closed` when done.
+var arena: Object
 ## Sandbox mode: the fixed party against three waves.
 var _run: SandboxRun
 ## Campaign mode: the mission in progress.
@@ -101,7 +108,9 @@ func _ready() -> void:
 		elif arg.begins_with("--start-wave="):
 			_start_wave_number = int(arg.trim_prefix("--start-wave="))
 	theme = UiStyle.make_theme()
-	if Game.campaign and Game.campaign.run:
+	if arena:
+		_autoplay = _autoplay or arena.bot_plays
+	elif Game.campaign and Game.campaign.run:
 		_mission_run = Game.campaign.run
 		if not _mission_run.has_pending_fight():
 			Game.go_to_map.call_deferred()
@@ -111,6 +120,8 @@ func _ready() -> void:
 	_center_stage()
 	if _mission_run:
 		_start_fight()
+	elif arena:
+		_start_arena()
 	else:
 		_new_run()
 
@@ -182,6 +193,47 @@ func _start_wave() -> void:
 		_pump()
 
 
+## Arena mode: a fresh play of the balance tool's fight, with new dice.
+func _start_arena() -> void:
+	_generation += 1
+	var generation := _generation
+	_busy = false
+	_end_panel.hide()
+	_end_closeup()
+	_clear_fx()
+	_last_skill.clear()
+	_log.clear()
+	_hud.hide()
+	var seed_value := randi() % 1000000
+	_battle = arena.battle(seed_value)
+	_units.clear()
+	for unit in _battle.all_units():
+		_units[unit.uid] = unit
+	_rebuild_views()
+	_wave_label.text = "Arena   %s   Seed %d   Esc: back to the balance tool" % [arena.title, seed_value]
+	_round_label.text = ""
+	_queue.show_units([])
+	_log_line("[color=#d9b45a]== Arena: %s, seed %d ==[/color]" % [arena.title, seed_value])
+	_show_wave_title(arena.title + "!")
+	await _wait(1.6)
+	if generation == _generation:
+		_pump()
+
+
+## Restart (R) outside the campaign: the Arena's fight again, or a new sandbox run.
+func _restart() -> void:
+	if arena:
+		_start_arena()
+	else:
+		_new_run()
+
+
+func _close_arena() -> void:
+	_generation += 1
+	closed.emit()
+	queue_free()
+
+
 ## Plays out turns until the player has to choose or the battle ends.
 func _pump() -> void:
 	var generation := _generation
@@ -199,6 +251,8 @@ func _pump() -> void:
 		Battle.State.DEFEAT:
 			if _mission_run:
 				_on_fight_over()
+			elif arena:
+				_show_end("Defeat", "The party has fallen. R plays it again.", "Back to the balance tool", _close_arena)
 			else:
 				_show_end("Defeat", "The party has fallen on wave %d." % (_run.wave_index + 1), "Try again", _new_run)
 
@@ -206,6 +260,11 @@ func _pump() -> void:
 func _on_victory() -> void:
 	if _mission_run:
 		_on_fight_over()
+		return
+	if arena:
+		var standing := "\n".join(_battle.heroes.map(func(h: Combatant) -> String:
+			return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
+		_show_end("Victory", standing + "\nR plays it again.", "Back to the balance tool", _close_arena)
 		return
 	var survivors := "\n".join(_battle.heroes.map(func(h: Combatant) -> String:
 		return "%s   %d/%d HP   %d stress" % [h.display_name, h.hp, h.max_hp, h.stress]))
@@ -223,7 +282,7 @@ func _show_end(title: String, text: String, button: String, action: Callable) ->
 	_end_button.text = button if Device.handheld else button + "  (Enter)"
 	_end_action = action
 	_end_panel.show()
-	if _autoplay:
+	if _autoplay and arena == null:
 		var generation := _generation
 		await get_tree().create_timer(2.0).timeout
 		if generation == _generation and _end_panel.visible:
@@ -318,7 +377,7 @@ func _begin_player_turn() -> void:
 	_select_skill(preferred)
 	if _autoplay:
 		var generation := _generation
-		var choice := AutoPlayer.sensible(_battle)
+		var choice := AutoPlayer.best(_battle)
 		await _wait(0.4)
 		if generation != _generation:
 			return
@@ -540,7 +599,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_speed()
 		KEY_R:
 			if _mission_run == null:
-				_new_run()
+				_restart()
+		KEY_ESCAPE:
+			if arena:
+				_close_arena()
+			else:
+				return
 		KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
 			if _end_panel.visible:
 				_end_button.pressed.emit()
@@ -1051,7 +1115,7 @@ func _build() -> void:
 	for node: Control in [_wave_label, _log_button, _speed_button]:
 		top_left.add_child(node)
 	if _mission_run == null:
-		top_left.add_child(_button("Restart (R)", _new_run))
+		top_left.add_child(_button("Restart (R)", _restart))
 	_round_label = _label(28, UiStyle.GREY, UiStyle.DISPLAY_FONT)
 	_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_round_label.position = Vector2(1240, 14)
@@ -1201,7 +1265,7 @@ func _build_phone_controls() -> void:
 	_phone_speed = _phone_button("Speed %dx" % roundi(_speed), _toggle_speed, Vector2(116, 44), 18)
 	top.add_child(_phone_speed)
 	if _mission_run == null:
-		top.add_child(_phone_button("Restart", _new_run, Vector2(110, 44), 18))
+		top.add_child(_phone_button("Restart", _restart, Vector2(110, 44), 18))
 
 	_touch_hud = _layer(_ui, size)
 	_touch_hud.hide()

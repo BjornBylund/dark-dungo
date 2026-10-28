@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="BalanceTargets" format=3]
+
+[ext_resource type="Script" path="res://src/balance/balance_targets.gd" id="1_targets"]
+[ext_resource type="Script" path="res://src/balance/balance_preset.gd" id="2_preset"]
+[ext_resource type="Script" path="res://src/balance/balance_target.gd" id="3_target"]
+
+[sub_resource type="Resource" id="Resource_base"]
+script = ExtResource("2_preset")
+name = "Base"
+
+[sub_resource type="Resource" id="Resource_apprentice"]
+script = ExtResource("2_preset")
+name = "Apprentice"
+level = 1
+trinkets = true
+
+[sub_resource type="Resource" id="Resource_veteran"]
+script = ExtResource("2_preset")
+name = "Veteran"
+level = 3
+gear_rank = 3
+skill_rank = 3
+trinkets = true
+tier = 1
+
+[sub_resource type="Resource" id="Resource_champion"]
+script = ExtResource("2_preset")
+name = "Champion"
+level = 5
+gear_rank = 5
+skill_rank = 5
+trinkets = true
+tier = 2
+
+[sub_resource type="Resource" id="Resource_boss_win"]
+script = ExtResource("3_target")
+role = 3
+low = 0.4
+high = 0.46
+
+[sub_resource type="Resource" id="Resource_fight_hp"]
+script = ExtResource("3_target")
+metric = 1
+low = 0.25
+high = 0.35
+
+[sub_resource type="Resource" id="Resource_elite_hp"]
+script = ExtResource("3_target")
+role = 1
+metric = 1
+low = 0.5
+high = 0.6
+
+[sub_resource type="Resource" id="Resource_finale_hp"]
+script = ExtResource("3_target")
+role = 2
+metric = 1
+low = 0.4
+high = 0.5
+
+[resource]
+script = ExtResource("1_targets")
+presets = Array[ExtResource("2_preset")]([SubResource("Resource_base"), SubResource("Resource_apprentice"), SubResource("Resource_veteran"), SubResource("Resource_champion")])
+targets = Array[ExtResource("3_target")]([SubResource("Resource_boss_win"), SubResource("Resource_fight_hp"), SubResource("Resource_elite_hp"), SubResource("Resource_finale_hp")])

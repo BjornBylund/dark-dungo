@@ -1,5 +1,6 @@
-## Title screen: continue or start a campaign, or open the combat sandbox.
-## Launch options skip the menu: `-- --sandbox`, `-- --new-campaign`, `-- --continue`.
+## Title screen: continue or start a campaign, or open the combat sandbox, or
+## from the project folder the balance tool. Launch options skip the menu:
+## `-- --sandbox`, `-- --new-campaign`, `-- --continue`, `-- --balance`.
 extends Control
 
 var _continue: Button
@@ -11,6 +12,9 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if "--sandbox" in args:
 		Game.play_sandbox.call_deferred()
+		return
+	if "--balance" in args and Game.has_balance_tool():
+		Game.open_balance_tool.call_deferred()
 		return
 	if "--new-campaign" in args:
 		Game.new_campaign.call_deferred()
@@ -57,6 +61,8 @@ func _ready() -> void:
 	_new = _menu_button("New Campaign", _on_new)
 	for button: Button in [_continue, _new, _menu_button("Combat Sandbox", Game.play_sandbox)]:
 		column.add_child(button)
+	if Game.has_balance_tool():
+		column.add_child(_menu_button("Balance Tool", Game.open_balance_tool))
 	if OS.has_feature("web"):
 		var fullscreen := _menu_button("Fullscreen", _toggle_fullscreen)
 		fullscreen.theme_type_variation = &""

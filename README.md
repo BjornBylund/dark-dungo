@@ -15,7 +15,7 @@ Open the folder in Godot 4.7 and press Play, or from a terminal:
 godot --path .
 ```
 
-The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight of a mission.
+The title screen offers Continue, New Campaign and Combat Sandbox, and when running from the project folder the Balance Tool. The campaign autosaves after every town action and every fight of a mission.
 
 - **Dialogue scenes** play in town when a campaign starts, when a hero joins and when one levels up: click, tap, `Enter` or `Space` to go on, **Skip** or `Esc` to skip the scene.
 - **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Nomad Wagon, Tavern and Heirloom Exchange), or a hero in the roster for their sheet: click a skill icon to equip or unequip it (hover it for what it does), and a worn trinket to take it off. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
@@ -30,6 +30,7 @@ Launch options go after `--`:
 | `--continue` | Load the save and skip the title screen |
 | `--new-campaign` | Start a new campaign, replacing the save |
 | `--sandbox` | Open the combat sandbox |
+| `--balance` | Open the balance tool (not in exports) |
 | `--autoplay` | Play itself: the town hires, treats the wounded and embarks; the map picks rooms, rests and event choices; fights pick sensible moves |
 | `--speed=N` | Combat animation speed |
 | `--start-wave=N` | Sandbox: start at wave N |
@@ -103,6 +104,27 @@ Other art, all replaceable:
 
 ## Add content
 
+The **balance tool** edits heroes, enemies, encounters and trinkets with their numbers on paper beside them: `godot --path . -- --balance`, or Balance Tool on the title screen.
+- **Tables:** one per kind. Click a column title to sort. Green and red cells rank strong and weak within their group; hover one for its rank. A hero or enemy expands into its skills.
+- **Editing:** the form edits the selected row. Fields changed from their default are named in gold; hover a name for what it does.
+- **New content:** **Duplicate** makes a new one from a copy. **List in campaign** decides where the game uses it.
+- **Simulating:** pick a preset (Base, Apprentice, Veteran, Champion) and Quick (about 15 s) or Thorough (about a minute), then **▶ Run**. It simulates what's on screen, saved or not.
+  - **The sweep:** random parties of four with random loadouts fight every encounter.
+  - **Paired fights:** every hero skill and trinket is measured with and without it.
+  - **Result columns:** what the run found, beside the numbers on paper. Hover a cell for its margin of error.
+  - **Flags:** amber marks an encounter that misses its target, or a hero, skill or trinket that stands out.
+  - **Out of date:** results grey out after an edit, and come back if you undo it.
+  - **Pin:** keeps a run to compare later ones with, in the **vs pin** column.
+  - **Targets:** opens the presets and targets (`content/balance_targets.tres`).
+- **Arena tab:** one fight of your choosing, played 200 times again after every change.
+  - **Setup:** pick four heroes in rank order, the skills they take (click to toggle, five at most) and their trinkets, an encounter, a preset, and the party's starting HP and stress.
+  - **Results:** the win rate, HP lost, deaths and rounds, each hero's HP lost and deaths, and how often each skill was used, with a comparison to before your last change.
+  - **Edit** beside a hero or the encounter opens it in the form; changes there re-run the fight.
+  - **▶ Watch** plays the fight in the real combat screen with the bot, and **Play it** lets you play it. R plays it again; Esc goes back.
+- **Keys:** `Ctrl+S` saves the changed files, `Ctrl+Z` / `Ctrl+Y` undo and redo.
+
+The files can also be edited by hand or in the Godot inspector:
+
 - **Trinkets:** `content/trinkets/`, listed under **Trinkets** in `content/campaign.tres`. Each has a rarity, an optional class, a price, stats (fractions like 0.15 for +15%, speed in points, `max_hp` as a share of base HP), **Bonuses** (stats with a condition) and **Triggers** (effects fired by combat events, like Apply on Hit). An empty **Icon** draws a placeholder in the rarity's colour.
 - **Dialogue:** plain-text scripts in `content/dialogue/`, one per hero (named by class, set in the hero's **Dialogue** field) and `ancestor.txt` for the opening and the homecoming lines (**Dialogue** in `content/campaign.tres`). A hero's script has `== join` (recruits), `== level 1` to `== level 6`, and `== reflect` with variants like `? boss`, `? with Vestal` or `? region chapel`. Each line reads `Speaker: text`. The format is explained at the top of `src/campaign/dialogue.gd`, and `tests/test_dialogue.gd` checks every script.
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Recruits** (one joins, chosen by the player, for each region boss beaten for the first time).
@@ -112,7 +134,7 @@ Other art, all replaceable:
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
 - **Balance checks:**
   - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, how far parties get, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size.
-  - `godot --headless --path . --script res://tools/balance_probe.gd` prints how fresh random parties fare against every enemy group.
+  - `godot --headless --path . --script res://tools/balance_probe.gd -- --preset=Base` runs the balance tool's sweep from the terminal. It prints every encounter against its targets, every hero against the cast's average, and the skills and trinkets that stand out (`--all` for every one). `--thorough` plays 4 times as many fights.
 
 ## Test it
 
@@ -126,10 +148,11 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 
 | Path | What |
 |---|---|
-| `src/core/` | Combat rules: `battle.gd` (turns, hits, death, stress), `combatant.gd` (unit state), `tokens.gd` and `rules.gd` (DD2 numbers), `enemy_ai.gd`, `sandbox_run.gd` |
+| `src/core/` | Combat rules: `battle.gd` (turns, hits, death, stress), `combatant.gd` (unit state), `tokens.gd` and `rules.gd` (DD2 numbers), `enemy_ai.gd`, `auto_player.gd` (the hero bot: scores every skill and target by the HP it's worth), `sandbox_run.gd` |
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `TrinketDef` (with `TrinketBonus` and `TrinketTrigger`), `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
 | `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, trinkets, saving), `trinkets.gd` (trinket drops), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `dialogue.gd` and `dialogue_scene.gd` (dialogue scenes from the scripts), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
+| `src/balance/` | The balance tool: `balance_app.gd` (the screen), `balance_library.gd` (loading, undo, saving, duplicating, listing), `balance_stats.gd` (numbers on paper), `balance_sweep.gd` (simulated fights in worker processes), `balance_arena.gd` and `balance_arena_panel.gd` (the Arena), `balance_flags.gd` and `balance_result_columns.gd` (what a run found, flagged against `content/balance_targets.tres`), `resource_form.gd` (forms built from exported fields), `balance_table.gd` (sortable, ranked tables) |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, trinkets, the campaign and the sandbox as `.tres` files, and the dialogue scripts in `content/dialogue/` |
 | `art/` | One folder per unit under `art/characters/` (sprite and close-up poses), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
@@ -138,6 +161,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `scripts/` | `test.ps1` runs the tests, `balance.ps1` plays missions in parallel for balance numbers, `serve_web.ps1` serves the web export locally |
 | `tests/` | Headless tests and the runner |
 | `tools/capture.gd` | Runs the game and saves screenshots, for checking visuals |
-| `tools/balance_probe.gd` | Fresh random parties against every enemy group: win rate, HP lost, stress |
+| `tools/balance_probe.gd` | The balance tool's sweep from the terminal |
+| `tools/balance_worker.gd` | One worker process of a sweep |
 | `tools/mission_probe.gd` | Random parties play whole missions; `scripts/balance.ps1` runs it in parallel |
 | `tools/make_poses.gd` | Writes placeholder attack and hurt poses into each unit's `art/characters/` folder (keeps existing files unless `--overwrite`) |
