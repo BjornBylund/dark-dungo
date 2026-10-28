@@ -45,7 +45,7 @@ static func choose_event(run: MissionRun) -> int:
 
 
 ## Plays a whole mission: routes, rests and events with the choices above, and
-## fights with AutoPlayer.sensible. Returns false if a fight stalled past
+## fights with AutoPlayer.best. Returns false if a fight stalled past
 ## `max_rounds` (the mission is left in progress).
 static func play(run: MissionRun, max_rounds: int = 60) -> bool:
 	while run.outcome == MissionRun.Outcome.IN_PROGRESS:
@@ -56,7 +56,7 @@ static func play(run: MissionRun, max_rounds: int = 60) -> bool:
 					return false
 				battle.advance()
 				if battle.state == Battle.State.AWAITING_INPUT:
-					var choice := AutoPlayer.sensible(battle)
+					var choice := AutoPlayer.best(battle)
 					battle.submit(choice[0], choice[1])
 			run.finish_fight()
 		elif not run.room_done:

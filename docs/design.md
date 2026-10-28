@@ -76,7 +76,7 @@ After DD1's region progress and bosses:
 - **A boss mission** is a **long** map (20 columns) that ends at the region's boss instead of its finale. It pays a long mission's gold and XP and **double** heirlooms.
 - **The first win** against each region's boss lets a new hero join (see Recruiting), and opens the next region. A window in town offers the choice of hero.
 - **Coming back harder:** after a win the region's progress starts again from empty, and when it's full again its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
-- **The bosses**, each with escorts, built from mechanics the engine already has and tuned with `tools/balance_probe.gd` so fresh level-0 random parties win about 40–46% at Apprentice:
+- **The bosses**, each with escorts, built from mechanics the engine already has. They were tuned so fresh level-0 random parties won about 40–46% at Apprentice against the old bot. With the value-based bot, random loadouts and parties lined up by their skills' ranks, the balance tool's Quick sweep at Base now gives the Gravelord 95%, the Maw 64% and the Hollow Saint 46% (target 40–46%, in `content/balance_targets.tres`):
 
 | Region | Boss | Kit |
 |---|---|---|
@@ -153,7 +153,7 @@ One per region, fought in elite rooms with two regular enemies of the region, us
 | Burrows | **Broodmother** (2 ranks) | Blight sprays at the back ranks, a bleeding bite across the front two, a stress shriek |
 | Chapel | **High Priest** (ranks 2–4) | Party-wide stress, Vulnerable and Weaken curses, a sweeping scourge, heals its followers |
 
-Tuned with `tools/balance_probe.gd` so that a fresh level-0 party loses about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale.
+Tuned so that a fresh level-0 party lost about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale, with the old bot. The value-based bot loses less at Base: about 50–54% to elites, 19–29% to normal fights and 30–39% to finales.
 
 ### Hero growth
 
@@ -241,7 +241,7 @@ DD2's ([research/darkest-dungeon-2-trinkets.md](research/darkest-dungeon-2-trink
 - **Mission map screen:** the map drawn over one shared placeholder backdrop (a dark trail), the region's name in the header, the party's marker, and the reachable rooms highlighted. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
 - **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
 - One autosave slot, written after every town action and every fight on a mission (`user://`, which is browser storage on the web build).
-- A title screen offers Continue, New Campaign and the Combat Sandbox. Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
+- A title screen offers Continue, New Campaign and the Combat Sandbox, and from the project folder the [balance tool](#balance-tool). Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`, `--balance`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
 
 ## Deviations from DD2
 
@@ -359,14 +359,18 @@ The kits brought these mechanics to the combat engine:
 
 ### Balance snapshot
 
-`tests/test_simulation.gd` plays full sandbox runs with scripted players and prints:
+**The bot.** Every simulated fight, `--autoplay` and the map auto-player use `AutoPlayer.best`. It scores every usable skill on every target by the HP it is worth and picks the best. The scoring counts:
+- damage, plus the share of the enemy's threat it wears down, and kills
+- healing where HP is missing, more on Death's Door, and stress relieved
+- Block, Dodge, Stealth and Guard by the hits they are likely to stop (Guard only when the guard is the sturdier one)
+- Stun, Blind and Weak by the enemy turns they spoil; Vulnerable and Combo by the party's next hits
+- buffs, debuffs, DoTs after resistance, and costs like self-damage, stress, or moving out of range
 
-- Sensible player (heals the hurt, calms the stressed, otherwise hits hardest on the weakest foe): wins ~100% of runs, losing ~1 hero per run.
-- Random player: wins ~34% of runs.
+It replaced a "sensible" bot that only healed allies under 50%, calmed stress of 5 or more, and otherwise hit hardest. That bot never used tokens, Guard, moves or Combo, so kits built on them looked weak.
 
-A human should land between the two. Retune once it has been played.
+`tests/test_simulation.gd` plays full sandbox runs with the bot and a random player as a guard against stalemates. A human should land between the two.
 
-`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 46% of short missions, 28% of medium and 20% of long (heroes without trinkets). Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear. The bot is a pessimistic stand-in for a human, who picks a party and a route on purpose.
+`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 70% of short missions, 57% of medium and 46% of long (heroes without trinkets). The old bot finished 46%, 28% and 20%. About 1 in 400 missions has a fight reach the 60-round cap. Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear.
 
 ## Balance tool
 
@@ -382,15 +386,29 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
   - **Encounters:** totals of HP, damage and stress per round, the best stun, and average speed.
   - **Trinkets:** rarity, class, price, whether listed, and their effects in words.
   - **Assumptions:** base heroes (level 0, rank-1 skills, the first 5 skills) against Apprentice enemies, over a 6-round fight. A unit uses its best ready skill each turn, so cooldowns and use limits count. Resisted effects are measured against the other side's average resistance. Effects that need a token or tier tokens (Stun vs Combo) don't count.
-- **Still to build:**
-  - **Measuring:** a value-based hero bot replacing `AutoPlayer.sensible` everywhere, scoring tokens, Guard, DoTs, Stun, buffs, Combo and moves. Then:
-    - Background sweeps of random parties with random loadouts against every encounter.
-    - Paired fights (same seed, with and without) to value each skill and trinket.
-    - Power presets: Base, Apprentice, Veteran and Champion levels, gear, skill ranks, and trinkets drawn by drop odds.
-    - Targets with flags, kept in `content/balance_targets.tres`.
-    - A pinned baseline, and margins of error.
-    - The same engine headless, replacing `tools/balance_probe.gd`.
-  - **Arena:** a focused fight of chosen heroes, loadouts, trinkets and encounter. It re-runs after each edit, has starting HP and stress sliders, and a Watch button that opens the real combat screen.
+- **Sweeps** (`BalanceSweep`, ▶ Run): simulated fights of the content on screen, saved or not, played by [the bot](#balance-snapshot) at one preset.
+  - **The sweep:** 100 fights per encounter (Quick). Each is a random party of four with five random skills each, lined up by the average rank their skills are used from. At presets with trinkets, each hero also wears two random trinkets they may wear, drawn with the tier's drop odds.
+  - **Paired fights** for every hero skill (20 pairs at Quick) and trinket (16 pairs), on random elites, finales and bosses. Each pair is the same party, seed and encounter, once with it and once without: the skill is swapped for another of the hero's, the trinket taken off. The difference in wins and in party HP lost is what it is worth. HP lost is the sharper of the two, since most fights are won.
+  - **Fixed seeds:** each fight's seed comes from what it measures and its number, so runs of the same content share their dice, and differences come from the changes.
+  - **Run size:** Quick is about 7,400 fights in about 15 s. Thorough plays 4 times as many, in about a minute.
+  - **Worker processes:** GDScript slows down on several threads in this build (two threads take 5 times as long as one), so the fights run in headless Godot processes (`tools/balance_worker.gd`), one per processor but two. The sweep saves its copy of the content to `user://balance_runs/`, each worker rebuilds the same plan from it, and the app reads their results back.
+- **Results** sit in columns before the numbers on paper. Hovering a cell gives its margin of error.
+  - **Heroes:** win rate with them against the cast's average, their HP lost and deaths.
+  - **Skills:** with against without, and how often the bot picked them.
+  - **Enemies:** win rate and HP lost in fights against them, and their skills' use.
+  - **Encounters:** win, HP lost, stress, deaths, rounds and their target.
+  - **Trinkets:** with against without.
+  - **Out of date:** results grey out once anything is edited.
+  - **Pin:** keeps a run, and later runs show their change against it.
+- **Presets and targets** live in `content/balance_targets.tres`, edited from the Targets button and left out of exports.
+  - **Presets:** Base (level 0, rank-1 gear and skills, no trinkets), Apprentice (level 1, trinkets), Veteran (level 3, rank 3, Veteran enemies), Champion (level 5, rank 5, Champion enemies).
+  - **Default targets at Base:** bosses won 40–46%; HP lost 25–35% to normal fights, 50–60% to elites and 40–50% to finales.
+  - **Flags:**
+    - an encounter outside its target
+    - a hero more than 5 points from the cast's average win rate
+    - a skill or trinket whose win difference strays more than 8 points, or whose HP-lost difference strays more than 4, from its group's middle and beyond its margin of error
+- **From the terminal:** `tools/balance_probe.gd` runs the same sweep and prints the encounters, heroes, and the skills and trinkets that stand out.
+- **Still to build — Arena:** a focused fight of chosen heroes, loadouts, trinkets and encounter. It re-runs after each edit, has starting HP and stress sliders, and a Watch button that opens the real combat screen.
 
 ## Future features
 

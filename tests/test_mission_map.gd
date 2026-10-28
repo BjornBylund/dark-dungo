@@ -75,7 +75,7 @@ func _win(run: MissionRun) -> void:
 			break
 		battle.advance()
 		if battle.state == Battle.State.AWAITING_INPUT:
-			var choice := AutoPlayer.sensible(battle)
+			var choice := AutoPlayer.best(battle)
 			battle.submit(choice[0], choice[1])
 	run.finish_fight()
 

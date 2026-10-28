@@ -309,7 +309,7 @@ func _begin_player_turn() -> void:
 	_select_skill(preferred)
 	if _autoplay:
 		var generation := _generation
-		var choice := AutoPlayer.sensible(_battle)
+		var choice := AutoPlayer.best(_battle)
 		await _wait(0.4)
 		if generation != _generation:
 			return

@@ -16,7 +16,8 @@ const WEAK := Color(0.85, 0.3, 0.3)
 var column_defs: Array[Dictionary] = []
 ## Each row: {resource, cells, children (rows), dim}. `cells` has one entry
 ## per column: null for blank, or {value (a number or text, for sorting and
-## tints), text, tip, left (to align a number's text left)}.
+## tints), text, tip, left (to align a number's text left), center, flag
+## (marked in amber), stale (greyed: out of date)}.
 var _rows: Array[Dictionary] = []
 var _sort_column := -1
 var _sort_descending := true
@@ -115,9 +116,17 @@ func _write(item: TreeItem, row: Dictionary, tints: Array[Dictionary]) -> void:
 	item.set_metadata(0, row.resource)
 	for i in column_defs.size():
 		var cell: Variant = row.cells[i] if i < row.cells.size() else null
-		item.set_text(i, cell.text if cell else "")
+		var flagged: bool = cell != null and cell.get("flag", false)
+		item.set_text(i, ("⚑ " if flagged else "") + cell.text if cell else "")
+		if flagged:
+			item.set_custom_color(i, UiStyle.AMBER.darkened(0.4) if cell.get("stale", false) else UiStyle.AMBER)
+		elif cell != null and cell.get("stale", false):
+			item.set_custom_color(i, UiStyle.TEXT_DIM.darkened(0.3))
+		elif i > 0:
+			item.clear_custom_color(i)
 		var left: bool = i == 0 or (cell != null and (cell.value is String or cell.get("left", false)))
-		item.set_text_alignment(i, HORIZONTAL_ALIGNMENT_LEFT if left else HORIZONTAL_ALIGNMENT_RIGHT)
+		var alignment := HORIZONTAL_ALIGNMENT_LEFT if left else HORIZONTAL_ALIGNMENT_RIGHT
+		item.set_text_alignment(i, HORIZONTAL_ALIGNMENT_CENTER if cell != null and cell.get("center", false) else alignment)
 		var tip: String = cell.get("tip", "") if cell else ""
 		var tint: Dictionary = tints[i].get(row.resource, {})
 		if tint.is_empty():

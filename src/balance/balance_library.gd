@@ -13,6 +13,7 @@ enum Kind { HERO, ENEMY, ENCOUNTER, TRINKET, OTHER }
 
 const CAMPAIGN_PATH := "res://content/campaign.tres"
 const SANDBOX_PATH := "res://content/sandbox.tres"
+const TARGETS_PATH := "res://content/balance_targets.tres"
 ## Edits of the same field this close together undo as one step (typing,
 ## dragging). UndoRedo merges only within 0.8 s.
 const MERGE_SECONDS := 0.8
@@ -26,6 +27,10 @@ var folders: Dictionary[Kind, String] = {
 }
 var campaign: CampaignDef
 var sandbox: SandboxDef
+## The tool's presets and targets.
+var targets: BalanceTargets
+## Counts every change, undo and redo, so results can tell they are out of date.
+var version := 0
 var heroes: Array[UnitDef] = []
 var enemies: Array[UnitDef] = []
 var encounters: Array[EncounterDef] = []
@@ -67,6 +72,7 @@ func _init() -> void:
 	_relay.library = weakref(self)
 	campaign = load(CAMPAIGN_PATH)
 	sandbox = load(SANDBOX_PATH)
+	targets = load(TARGETS_PATH)
 	heroes.assign(_load_all(folders[Kind.HERO]))
 	enemies.assign(_load_all(folders[Kind.ENEMY]))
 	encounters.assign(_load_all(folders[Kind.ENCOUNTER]))
@@ -91,7 +97,8 @@ func _load_all(folder: String) -> Array[Resource]:
 	return result
 
 
-## Everything that can be edited and saved: the content files, the campaign and its regions.
+## Everything that can be edited and saved: the content files, the campaign
+## and its regions, and the tool's targets.
 func roots() -> Array[Resource]:
 	var result: Array[Resource] = []
 	result.append_array(heroes)
@@ -100,6 +107,7 @@ func roots() -> Array[Resource]:
 	result.append_array(trinkets)
 	result.append(campaign)
 	result.append_array(campaign.regions)
+	result.append(targets)
 	return result
 
 
@@ -165,6 +173,7 @@ func _commit(action: String, touched: Array[Resource], steps: Callable, merge: b
 
 
 func _announce(touched: Array[Resource]) -> void:
+	version += 1
 	edited.emit(touched, not history.is_committing_action())
 
 
@@ -300,6 +309,18 @@ func roles_of(encounter: EncounterDef) -> Array[String]:
 	return result
 
 
+## The kinds of room a region uses an encounter for: &"fights", &"elites", &"finales", &"boss".
+func role_keys(encounter: EncounterDef) -> Array[StringName]:
+	var result: Array[StringName] = []
+	for region in campaign.regions:
+		for key: StringName in BalanceTarget.ROLE_KEYS:
+			var property := &"encounters" if key == &"fights" else key
+			var value: Variant = region.get(property)
+			if (encounter in value if value is Array else value == encounter) and key not in result:
+				result.append(key)
+	return result
+
+
 ## The encounters an enemy stands in.
 func encounters_with(enemy: UnitDef) -> Array[EncounterDef]:
 	var result: Array[EncounterDef] = []
@@ -352,3 +373,4 @@ func discard() -> void:
 	_entries.clear()
 	_saved_at.clear()
 	_last_field = ""
+	version += 1

@@ -252,7 +252,9 @@ func _item_title(item: Resource) -> String:
 		return UiStyle.trinket_stat_text(item.stat, item.amount)
 	if item is TrinketTrigger:
 		return "%s → %s" % [TrinketTrigger.When.keys()[item.when].capitalize(), TrinketTrigger.To.keys()[item.to].capitalize()]
-	for field: StringName in [&"display_name", &"id", &"title"]:
+	if item.has_method(&"describe"):
+		return item.describe()
+	for field: StringName in [&"display_name", &"name", &"id", &"title"]:
 		if field in item and str(item.get(field)) != "":
 			return str(item.get(field))
 	return String(item.get_script().get_global_name())

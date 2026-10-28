@@ -66,5 +66,5 @@ foreach ($length in 0, 1, 2) {
     $rates = foreach ($name in $classes.Keys) { "{0} {1:N0}%" -f $name, (100 * $classes[$name][0] / $classes[$name][1]) }
     Write-Output ("          by class: " + ($rates -join ", "))
 }
-Get-ChildItem $out -Filter *.err | Where-Object { $_.Length -gt 0 } | ForEach-Object { Get-Content $_ | Select-Object -First 3 }
+Get-ChildItem $out -Filter *.err | Where-Object { $_.Length -gt 0 } | ForEach-Object { Get-Content $_.FullName | Select-Object -First 3 }
 Remove-Item -Recurse -Force $out

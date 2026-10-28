@@ -12,9 +12,9 @@ func test_random_player_runs_always_finish() -> void:
 	assert_eq(stats.stalled, 0, "battles that hit %d rounds" % MAX_ROUNDS)
 
 
-func test_sensible_player_runs_always_finish() -> void:
-	var stats := _simulate(AutoPlayer.sensible)
-	print("        sensible player: %s" % _summary(stats))
+func test_best_player_runs_always_finish() -> void:
+	var stats := _simulate(AutoPlayer.best)
+	print("        best player:     %s" % _summary(stats))
 	assert_eq(stats.stalled, 0, "battles that hit %d rounds" % MAX_ROUNDS)
 
 

@@ -1,7 +1,8 @@
 ## The balance tool: tables of every hero, enemy, encounter and trinket with
-## their numbers on paper, and a form to edit the selected one. Opened with
-## `-- --balance`, or from the title screen when running from the project
-## folder. Ctrl+S saves, Ctrl+Z and Ctrl+Y undo and redo.
+## their numbers on paper and what the last sweep of simulated fights found,
+## and a form to edit the selected one. Opened with `-- --balance`, or from the
+## title screen when running from the project folder. Ctrl+S saves, Ctrl+Z and
+## Ctrl+Y undo and redo.
 extends Control
 
 enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS }
@@ -12,6 +13,7 @@ const TAB_KINDS := [BalanceLibrary.Kind.HERO, BalanceLibrary.Kind.ENEMY, Balance
 const KIND_NAMES := {
 	BalanceLibrary.Kind.HERO: "Hero", BalanceLibrary.Kind.ENEMY: "Enemy",
 	BalanceLibrary.Kind.ENCOUNTER: "Encounter", BalanceLibrary.Kind.TRINKET: "Trinket",
+	BalanceLibrary.Kind.OTHER: "Settings",
 }
 ## Encounter filter: [label, the end of the role it matches ("" for all, "-" for none)].
 const ROLE_FILTERS := [["All", ""], ["Fights", "fights"], ["Elites", "elites"], ["Finales", "finales"],
@@ -26,6 +28,8 @@ const NOTES := "Numbers on paper: base heroes (level 0, rank-1 skills, the first
 		+ "against Apprentice enemies, over a %d-round fight. Resisted effects use the other side's average " \
 		+ "resistance; effects that need a token (like Stun vs Combo) don't count; per-round heal and stress " \
 		+ "assume every turn goes to it. Hover a cell for its rank. Ctrl+S saves, Ctrl+Z / Ctrl+Y undo and redo."
+## How often the progress of a running sweep is read, in seconds.
+const POLL_EVERY := 0.25
 
 var library := BalanceLibrary.new()
 var _tab := Tab.HEROES
@@ -41,8 +45,20 @@ var _listing: MenuButton
 var _undo: Button
 var _redo: Button
 var _save: Button
+var _preset_pick: OptionButton
+var _size_pick: OptionButton
+var _run: Button
+var _pin: Button
+var _progress: Label
 var _status: Label
 var _refresh_timer: Timer
+## The sweep running now, the last one's results, and the pinned ones.
+var _sweep: BalanceSweep
+var _results: BalanceSweep.Results
+var _pinned: BalanceSweep.Results
+var _poll := 0.0
+## The result cells for the rows being built.
+var _found: BalanceResultColumns
 ## The content file shown in the form.
 var _current: Resource
 ## Per tab, the row last selected.
@@ -93,6 +109,8 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	if _sweep:
+		_sweep.cancel()
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	get_window().title = ProjectSettings.get_setting("application/config/name")
 	get_tree().auto_accept_quit = true
@@ -136,12 +154,54 @@ func _make_toolbar() -> Control:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(spacer)
+	bar.add_child(_make_sweep_controls())
+	bar.add_child(VSeparator.new())
 	_undo = _tool_button("Undo", "Ctrl+Z", _do_undo)
 	_redo = _tool_button("Redo", "Ctrl+Y", _do_redo)
 	_save = _tool_button("Save", "Ctrl+S: write every changed file", _do_save)
 	for button in [_undo, _redo, _save, _tool_button("Back to the title", "", _leave.bind(Game.go_to_menu))]:
 		bar.add_child(button)
 	return bar
+
+
+## The preset, Quick or Thorough, Run, Pin, the targets, and the progress of a run.
+func _make_sweep_controls() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_progress = Label.new()
+	_progress.add_theme_color_override("font_color", UiStyle.TEXT_DIM)
+	_progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_progress)
+	_preset_pick = OptionButton.new()
+	_preset_pick.tooltip_text = "The heroes' level, gear, skill ranks and trinkets, and the enemies' tier"
+	_preset_pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_preset_pick)
+	_size_pick = OptionButton.new()
+	_size_pick.add_item("Quick")
+	_size_pick.add_item("Thorough")
+	_size_pick.tooltip_text = "Thorough plays %d times as many fights, for narrower margins of error" \
+			% BalanceSweep.THOROUGH_SCALE
+	_size_pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_size_pick)
+	_run = _tool_button("▶ Run", "Simulate what's on screen, saved or not", _toggle_run)
+	_run.add_theme_color_override("font_color", UiStyle.GOLD)
+	row.add_child(_run)
+	_pin = _tool_button("Pin", "Keep these results to compare later runs with (vs pin)", _pin_results)
+	row.add_child(_pin)
+	row.add_child(_tool_button("Targets", "Edit the presets and targets", func() -> void: _show(library.targets)))
+	_refresh_presets()
+	return row
+
+
+func _refresh_presets() -> void:
+	var chosen := _preset_pick.get_item_text(_preset_pick.selected) if _preset_pick.selected >= 0 else "Base"
+	_preset_pick.clear()
+	for preset in library.targets.presets:
+		_preset_pick.add_item(preset.name)
+		if preset.name == chosen:
+			_preset_pick.select(_preset_pick.item_count - 1)
+	if _preset_pick.selected < 0 and _preset_pick.item_count > 0:
+		_preset_pick.select(0)
 
 
 func _tool_button(text: String, tooltip: String, action: Callable) -> Button:
@@ -229,6 +289,7 @@ func _switch_tab(tab: Tab) -> void:
 
 
 func _refresh() -> void:
+	_found = BalanceResultColumns.new(library, _results, _pinned)
 	match _tab:
 		Tab.HEROES:
 			_table.show_rows(_unit_rows(library.heroes, true))
@@ -246,6 +307,16 @@ func _columns() -> Array[Dictionary]:
 	var stress_tip := "Stress relieved per round (negative), if every turn went to it." if _tab == Tab.HEROES \
 			else "Stress dealt per round, if every turn went to it."
 	var columns: Array[Dictionary] = [{title = "Name", width = 230}]
+	# What the last sweep found comes first, then the numbers on paper.
+	match _tab:
+		Tab.HEROES:
+			columns.append_array(BalanceResultColumns.hero_columns())
+		Tab.ENEMIES:
+			columns.append_array(BalanceResultColumns.enemy_columns())
+		Tab.ENCOUNTERS:
+			columns.append_array(BalanceResultColumns.encounter_columns())
+		Tab.TRINKETS:
+			columns.append_array(BalanceResultColumns.trinket_columns())
 	match _tab:
 		Tab.HEROES, Tab.ENEMIES:
 			columns.append_array([
@@ -330,12 +401,14 @@ func _versus(heroes: bool) -> BalanceStats.Versus:
 
 func _unit_row(unit: UnitDef, is_hero: bool, versus: BalanceStats.Versus) -> Dictionary:
 	var numbers := BalanceStats.unit(unit, is_hero, versus)
-	var cells: Array = [
-		_name_cell(unit), _num(unit.max_hp, 0), _num(unit.speed, 0), _num(unit.size, 0), null, null, null,
+	var cells: Array = [_name_cell(unit)]
+	cells.append_array(_found.hero_cells(unit) if is_hero else _found.enemy_cells(unit))
+	cells.append_array([
+		_num(unit.max_hp, 0), _num(unit.speed, 0), _num(unit.size, 0), null, null, null,
 		_num(numbers.turn), _num(numbers.damage_rd), null, _num(numbers.heal_rd), _num(numbers.stress_rd),
 		_pct(numbers.stun), _pct(numbers.move),
 		_text(BalanceStats.unit_ranks_text(BalanceStats.fighting_skills(unit, is_hero))),
-	]
+	])
 	for kind in BalanceStats.RESISTS:
 		cells.append(_pct(unit.base_resist(kind)))
 	return {resource = unit, cells = cells, children = []}
@@ -358,11 +431,13 @@ func _skill_row(skill: SkillDef, unit: UnitDef, versus: BalanceStats.Versus, sit
 			tip = UiStyle.plain(UiStyle.skill_bbcode(skill))}
 	if sits_out:
 		name.tip = "Not among the first %d skills, so left out of the hero's numbers.\n\n%s" % [Rules.SKILL_SLOTS, name.tip]
-	var cells: Array = [
-		name, null, null, null, damage, crit, cooldown,
+	var cells: Array = [name]
+	cells.append_array(_found.hero_skill_cells(skill) if _tab == Tab.HEROES else _found.enemy_skill_cells(skill))
+	cells.append_array([
+		null, null, null, damage, crit, cooldown,
 		_num_or_blank(n.damage), _num_or_blank(n.damage_rd), _num_or_blank(n.dot), _num_or_blank(n.heal_rd),
 		_num_or_blank(n.stress_rd), _pct_or_blank(n.stun), _pct_or_blank(n.move), _text(BalanceStats.ranks_text(skill)),
-	]
+	])
 	return {resource = skill, cells = cells, children = [], dim = sits_out}
 
 
@@ -387,21 +462,26 @@ func _encounter_rows() -> Array[Dictionary]:
 			totals.stun = maxf(totals.stun, n.stun)
 			totals.speed += enemy.speed
 			totals.ranks += enemy.size
-			children.append({resource = enemy, children = [], cells = [
-				{value = enemy.display_name, text = "    " + enemy.display_name}, null, null, _num(enemy.size, 0),
-				_num(enemy.max_hp, 0), _num(n.turn), _num(n.damage_rd), _num(n.stress_rd), _pct(n.stun),
-				_num(enemy.speed, 0),
-			]})
+			var enemy_cells: Array = [{value = enemy.display_name, text = "    " + enemy.display_name}]
+			enemy_cells.resize(1 + BalanceResultColumns.encounter_columns().size())
+			enemy_cells.append_array([
+				null, null, _num(enemy.size, 0), _num(enemy.max_hp, 0), _num(n.turn), _num(n.damage_rd),
+				_num(n.stress_rd), _pct(n.stun), _num(enemy.speed, 0),
+			])
+			children.append({resource = enemy, children = [], cells = enemy_cells})
 		var count := maxi(1, encounter.enemies.size())
 		var lineup := ", ".join(encounter.enemies.map(func(enemy: UnitDef) -> String: return enemy.display_name))
 		var role_text := ", ".join(roles) if not roles.is_empty() else "unused"
-		rows.append({resource = encounter, children = children, dim = roles.is_empty(), cells = [
-			_name_cell(encounter), _text(role_text), _text(lineup),
+		var cells: Array = [_name_cell(encounter)]
+		cells.append_array(_found.encounter_cells(encounter))
+		cells.append_array([
+			_text(role_text), _text(lineup),
 			{value = float(totals.ranks), text = "%d/%d" % [totals.ranks, Rules.RANKS],
 					tip = "Too many for the battlefield!" if totals.ranks > Rules.RANKS else ""},
 			_num(totals.hp, 0), _num(totals.turn), _num(totals.damage_rd), _num(totals.stress_rd), _pct(totals.stun),
 			_num(totals.speed / count),
-		]})
+		])
+		rows.append({resource = encounter, children = children, dim = roles.is_empty(), cells = cells})
 	return rows
 
 
@@ -412,13 +492,15 @@ func _trinket_rows() -> Array[Dictionary]:
 			continue
 		var effects := "; ".join(UiStyle.trinket_effects(trinket).map(func(line: Array) -> String: return line[0]))
 		var listed := trinket in library.campaign.trinkets
-		rows.append({resource = trinket, children = [], dim = not listed, cells = [
-			_name_cell(trinket),
+		var cells: Array = [_name_cell(trinket)]
+		cells.append_array(_found.trinket_cells(trinket))
+		cells.append_array([
 			{value = float(trinket.rarity), text = CampaignRules.RARITY_NAMES[trinket.rarity], left = true},
 			_text(trinket.hero.display_name if trinket.hero else "any"),
-			_num(trinket.price, 0), _text("yes" if trinket.boss_only else ""), _text("yes" if listed else "no"),
+			_num(trinket.price, 0), _centered("yes" if trinket.boss_only else ""), _centered("yes" if listed else "no"),
 			{value = effects, text = effects, tip = effects.replace("; ", "\n")},
-		]})
+		])
+		rows.append({resource = trinket, children = [], dim = not listed, cells = cells})
 	return rows
 
 
@@ -431,6 +513,10 @@ func _name_cell(resource: Resource) -> Dictionary:
 
 func _text(text: String) -> Dictionary:
 	return {value = text, text = text}
+
+
+func _centered(text: String) -> Dictionary:
+	return {value = text, text = text, center = true}
 
 
 func _num(value: float, decimals: int = 1) -> Dictionary:
@@ -461,7 +547,8 @@ func _show(resource: Resource) -> void:
 		resource = _owner_of(resource)
 	if resource == null:
 		return
-	_selected[_tab] = nested if nested else resource
+	if library.kind_of(resource) != BalanceLibrary.Kind.OTHER:
+		_selected[_tab] = nested if nested else resource
 	if resource != _current or _form == null:
 		_current = resource
 		if _form:
@@ -490,7 +577,7 @@ func _refresh_header() -> void:
 	if _current == null:
 		return
 	var kind := library.kind_of(_current)
-	_title.text = _current.get(&"display_name")
+	_title.text = _current.get(&"display_name") if &"display_name" in _current else "Presets and targets"
 	var lines: Array[String] = []
 	var file := _current.resource_path.trim_prefix("res://") if _current.resource_path != "" else "new, not saved yet"
 	lines.append("[color=#%s]%s · %s%s[/color]" % [UiStyle.TEXT_DIM.to_html(false), KIND_NAMES.get(kind, ""), file,
@@ -536,13 +623,74 @@ func _refresh_toolbar() -> void:
 	_save.disabled = count == 0
 	_undo.disabled = not library.history.has_undo()
 	_redo.disabled = not library.history.has_redo()
-	_status.text = (_status_note + "   " if _status_note != "" else "") + NOTES % BalanceStats.ROUNDS
+	_run.text = "■ Stop" if _sweep else "▶ Run"
+	_pin.disabled = _results == null or _sweep != null
+	var lines: Array[String] = []
+	if _status_note != "":
+		lines.append(_status_note)
+	if _results:
+		var run := "Results: %s at %s, %s fights in %d s." % [BalanceSweep.SIZE_NAMES[_results.size], _results.preset.name,
+				UiStyle.gold_text(_results.played), roundi(_results.seconds)]
+		if _found.stale:
+			run += " Greyed: edited since, so out of date; run again."
+		if _pinned:
+			run += " Compared with the pinned %s run at %s." % [BalanceSweep.SIZE_NAMES[_pinned.size], _pinned.preset.name]
+		lines.append(run)
+	elif not _sweep:
+		lines.append("Press ▶ Run to simulate fights and fill the result columns.")
+	lines.append(NOTES % BalanceStats.ROUNDS)
+	_status.text = "  ".join(lines)
+
+
+# --- Sweeps ---
+
+func _toggle_run() -> void:
+	if _sweep:
+		_sweep.cancel()
+		_sweep = null
+		_progress.text = ""
+		_status_note = "Run stopped."
+		_refresh()
+		return
+	get_viewport().gui_release_focus()
+	var preset := library.targets.preset_named(_preset_pick.get_item_text(_preset_pick.selected))
+	_sweep = BalanceSweep.of(library, preset, _size_pick.selected as BalanceSweep.Size)
+	_sweep.start()
+	_status_note = ""
+	_poll = 0.0
+	_refresh_toolbar()
+
+
+func _process(delta: float) -> void:
+	if _sweep == null:
+		return
+	_poll -= delta
+	if _poll > 0.0:
+		return
+	_poll = POLL_EVERY
+	if not _sweep.is_finished():
+		_progress.text = "%s / %s fights" % [UiStyle.gold_text(_sweep.done_count()), UiStyle.gold_text(_sweep.fight_count())]
+		return
+	_results = _sweep.results()
+	_sweep = null
+	_progress.text = ""
+	if _results.played < _results.fights:
+		_status_note = "Only %d of %d fights came back; a worker may have failed." % [_results.played, _results.fights]
+	_refresh()
+
+
+func _pin_results() -> void:
+	_pinned = _results
+	_status_note = "Pinned. Later runs show their change against it in the vs pin columns."
+	_refresh()
 
 
 # --- Changes ---
 
 func _on_edited(roots: Array[Resource], from_history: bool) -> void:
 	_refresh_timer.start()
+	if library.targets in roots:
+		_refresh_presets()
 	if not from_history:
 		return
 	if _current and _current not in library.roots():

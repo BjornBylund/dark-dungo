@@ -31,7 +31,7 @@ func _party(campaign: Campaign) -> Array[HeroRecord]:
 	return campaign.roster().slice(0, 4)
 
 
-## Enters the first room (always a fight) and plays it with the sensible player.
+## Enters the first room (always a fight) and plays it with the bot.
 func _win_first_fight(run: MissionRun) -> void:
 	run.enter(run.next_rooms()[0].id)
 	var battle := run.start_fight()
@@ -40,7 +40,7 @@ func _win_first_fight(run: MissionRun) -> void:
 			break
 		battle.advance()
 		if battle.state == Battle.State.AWAITING_INPUT:
-			var choice := AutoPlayer.sensible(battle)
+			var choice := AutoPlayer.best(battle)
 			battle.submit(choice[0], choice[1])
 	run.finish_fight()
 

@@ -76,7 +76,7 @@ func test_skills_used_on_allies_are_recorded_as_help() -> void:
 				break
 			battle.advance()
 			if battle.state == Battle.State.AWAITING_INPUT:
-				var choice := AutoPlayer.sensible(battle)
+				var choice := AutoPlayer.best(battle)
 				battle.submit(choice[0], choice[1])
 		for help in battle.helps:
 			assert_true(help[0].is_hero and help[1].is_hero, "heroes helping heroes")
