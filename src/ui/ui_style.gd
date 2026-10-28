@@ -151,9 +151,9 @@ static func card(tint: Color = Color.WHITE) -> StyleBoxTexture:
 
 ## A button's bronze-rimmed plate; `tint` lights it for hover and press.
 static func plate(tint: Color = Color.WHITE) -> StyleBoxTexture:
-	var style := _nine_slice(PLATE_TEXTURE, 12, 0.0)
-	style.content_margin_left = 14
-	style.content_margin_right = 14
+	var style := _nine_slice(PLATE_TEXTURE, 16, 0.0)
+	style.content_margin_left = 18
+	style.content_margin_right = 18
 	style.content_margin_top = 6
 	style.content_margin_bottom = 6
 	style.modulate_color = tint
@@ -522,6 +522,24 @@ static func draw_portrait(canvas: CanvasItem, rect: Rect2, def: UnitDef) -> void
 		canvas.draw_rect(rect.grow(-rect.size.x * 0.15), def.color)
 	canvas.draw_rect(rect, Color("060404"), false, 3.0)
 	canvas.draw_rect(rect.grow(-1.5), Color("8a6a3e"), false, 1.5)
+
+
+## A padlock for something closed: a bronze shackle over a dark iron body,
+## `height` tall around `center`.
+static func draw_lock(canvas: CanvasItem, center: Vector2, height: float) -> void:
+	var bronze := Color("8a6a3e")
+	var iron := Color("060404")
+	var width := height * 0.8
+	var body := Rect2(center.x - width / 2.0, center.y - height * 0.1, width, height * 0.6)
+	var shackle := Vector2(center.x, body.position.y + 2.0)
+	canvas.draw_arc(shackle, width * 0.3, PI, TAU, 20, iron, height * 0.16)
+	canvas.draw_arc(shackle, width * 0.3, PI, TAU, 20, bronze, height * 0.1)
+	canvas.draw_rect(body.grow(2.0), iron)
+	canvas.draw_rect(body, Color("2a1c14"))
+	canvas.draw_rect(body.grow(-2.0), bronze, false, 2.0)
+	var hole := body.get_center() - Vector2(0, height * 0.05)
+	canvas.draw_circle(hole, height * 0.06, iron)
+	canvas.draw_rect(Rect2(hole.x - height * 0.025, hole.y, height * 0.05, height * 0.15), iron)
 
 
 ## DD1's resolve-level badge: the level in a small dark disc on a bronze ring.

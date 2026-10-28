@@ -14,8 +14,9 @@ enum Highlight { NONE, ENEMY_TARGET, ALLY_TARGET }
 const FIT_SMALL := Vector2(220, 380)
 const FIT_LARGE := Vector2(480, 460)
 const STACK_HEIGHT := 100.0
-const HP_BAR_SMALL := 92.0
-const HP_BAR_LARGE := 200.0
+const HP_BAR_SMALL := 124.0
+const HP_BAR_LARGE := 240.0
+const HP_BAR_HEIGHT := 16.0
 const TOKEN_SIZE := 22.0
 const TOKEN_GAP := 6.0
 const DOT_SIZE := 18.0
@@ -285,9 +286,9 @@ func _draw_dots() -> void:
 func _draw_hp_bar() -> void:
 	var width := _bar_width()
 	var top := feet.y + 25.0
-	var height := 12.0
+	var height := HP_BAR_HEIGHT
 	var left := feet.x - width / 2.0
-	var slant := 5.0
+	var slant := 6.0
 	var frame := PackedVector2Array([Vector2(left, top), Vector2(left + width, top),
 			Vector2(left + width - slant, top + height), Vector2(left + slant, top + height)])
 	draw_colored_polygon(frame, UiStyle.HP_EMPTY)
@@ -312,9 +313,9 @@ func _draw_hp_bar() -> void:
 	# Buff and debuff summaries at the ends of the bar.
 	var font := UiStyle.BODY_FONT
 	if unit.buffs.any(func(buff: Dictionary) -> bool: return buff.amount > 0.0):
-		draw_string(font, Vector2(left - 22, top + 11), "^^", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, UiStyle.GOLD)
+		draw_string(font, Vector2(left - 24, top + 13), "^^", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, UiStyle.GOLD)
 	if unit.buffs.any(func(buff: Dictionary) -> bool: return buff.amount < 0.0):
-		draw_string(font, Vector2(left + width + 6, top + 11), "vv", HORIZONTAL_ALIGNMENT_LEFT, -1, 13,
+		draw_string(font, Vector2(left + width + 6, top + 13), "vv", HORIZONTAL_ALIGNMENT_LEFT, -1, 15,
 				UiStyle.BLUE.lightened(0.2))
 
 
@@ -322,12 +323,12 @@ func _draw_hp_bar() -> void:
 func _draw_stress() -> void:
 	var widths: Array[float] = []
 	for i in Rules.STRESS_MAX:
-		widths.append(5.0 if i < 3 else 8.0)
+		widths.append(7.0 if i < 3 else 10.0)
 	var total := 0.0
 	for width in widths:
 		total += width + 3.0
 	var x := feet.x - (total - 3.0) / 2.0
-	var middle := feet.y + 49.0
+	var middle := feet.y + 25.0 + HP_BAR_HEIGHT + 13.0
 	for i in widths.size():
 		var width: float = widths[i]
 		var color := UiStyle.STRESS_ON if i < stress_shown else UiStyle.STRESS_OFF
@@ -345,7 +346,7 @@ func _draw_tokens() -> void:
 		entries.append(token)
 	if entries.is_empty():
 		return
-	var top := feet.y + (62.0 if unit.is_hero else 46.0)
+	var top := feet.y + (67.0 if unit.is_hero else 50.0)
 	var x := feet.x - (entries.size() * (TOKEN_SIZE + TOKEN_GAP) - TOKEN_GAP) / 2.0
 	for id in entries:
 		var rect := Rect2(x, top, TOKEN_SIZE, TOKEN_SIZE)

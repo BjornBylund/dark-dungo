@@ -279,15 +279,16 @@ The combat screen follows DD2's, as measured in [research/darkest-dungeon-ui.md]
 - **No names on the battlefield.** Under each unit: DoT icons, an HP bar without numbers, stress pips (heroes), and token icons with small diamonds for extra stacks. Hover a unit for its full stat sheet.
 - **Death's Door:** empty HP bar with a pulsing red frame, red tint, skull in the token row. **Corpses:** dark placeholder mound with a brown-grey HP bar.
 - **Top:** ragged black band with the round counter and a turn-order queue of diamond portraits; the acting unit is rightmost.
-- **Bottom HUD** on black, shown on hero turns only:
-  - left: hero portrait and name, and the selected skill's details in DD2's order (numbers, Target, Self, conditional bonuses), then its limits (cooldown, uses per battle, an HP condition);
+- **Bottom HUD** in a framed bar below the units' tokens, shown on hero turns only:
+  - left: the hero's framed portrait in colour, name, HP and stress, and the selected skill's details in DD2's order (numbers, Target, Self, conditional bonuses), then its limits (cooldown, uses per battle, an HP condition);
   - centre: skill name, rank pips, the 4 equipped skill icons, then Swap, Recover and Pass diamonds; under them the HIT / DMG / CRIT preview against the focused target;
   - right: target panel with HP, speed and resistances, lighting up the ones the skill rolls against.
 - **Targeting:** blue brackets under valid enemy targets (green for allies), a translucent box on the focused one, gold squares on the tokens the attack would use up. The acting unit gets a gold bracket and amber glow.
 - **Attacks cut to a letterboxed close-up:** HUD hidden, scene tinted with dark ink edges, attacker and targets re-staged up to 1.5× size, skill name in gold. Self and party skills stay on the battlefield.
 - **Poses in the close-up:** the attacker shows that skill's **attack pose** and each target hit shows its **hurt pose**; a missing pose means the normal sprite. Poses go by convention in the unit's own art folder, named after its class, next to its `sprite.png`: `art/characters/<class>/<skill id>.png` and `art/characters/<class>/hurt.png`, so real art can replace them one file at a time. `tools/make_poses.gd` generates placeholders from the normal sprites (leaning into the blow with motion lines and the skill's icon, or recoiling and flushed red): an attack pose for every hero skill and a hurt pose for every unit. Enemy attack poses aren't generated yet.
 - **Pop-ups:** red damage (the unblocked number struck through when Block reduced it), orange "Critical!", grey Dodge, Miss and Resist, green heals, token and DoT icons with their names, stress in white.
-- Wave title before round 1. Fonts: Grenze Gotisch for display text, Gelasio for body text (both SIL Open Font License).
+- Wave title before round 1. Fonts: Grenze Gotisch for display text, Gelasio for body text (both SIL Open Font License). Gelasio renders as a multi-channel distance field, because rasterised at a scaled window size it clipped the bottoms of some lines.
+- **Atmosphere** on every screen, over the picture and under the UI (`src/ui/atmosphere.gd`): dark corners, slow drifting fog, film grain, a torch-like flicker in combat, and the hamlet's lit windows and lamps glowing and guttering.
 - Combat log showing every roll (L, a dev overlay hidden by default) and a 2× speed toggle (S).
 - Mouse first: click a skill, valid targets highlight, click a target. Keyboard: 1–8 pick a skill, Left/Right/Tab move the target, Enter/Space confirm, L log, S speed, R restart. Controller later.
 

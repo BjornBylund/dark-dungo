@@ -97,7 +97,7 @@ Other art, all replaceable:
 - **Token and status icons:** `art/tokens/<token>.svg`, e.g. `block.svg` or `bleed.svg`. Replace a file to change its icon.
 - **Battle backgrounds:** **Battle Background** in `content/campaign.tres` and **Background** in `content/sandbox.tres`, 1920×1080 with the ground line at y ≈ 680.
 - **Town:** **Town Background** in `content/campaign.tres` (`art/backgrounds/hamlet.svg`). The clickable building areas are the `BUILDINGS` rectangles at the top of `src/ui/town_screen.gd`; move them if the buildings move.
-- **Expedition map:** **Expedition Background** in `content/campaign.tres` (`art/backgrounds/expedition_map.svg`). Each region's quest markers sit at its **Map Position** in `content/regions/`; move them if the landmarks move.
+- **Expedition map:** **Expedition Background** in `content/campaign.tres` (`art/backgrounds/expedition_map.svg`). Each region's quest markers sit at its **Map Position** in `content/regions/`, and its **Landmark** rectangle is greyed out while the region is closed; move both if the landmarks move.
 - **Mission maps:** **Map Background** in `content/campaign.tres` (`art/backgrounds/trail.svg`); rooms are drawn over the band y 130–750. Room icons are `art/rooms/<fight|event|rest|elite|cache|finale>.svg`.
 - **Heirlooms:** `art/heirlooms/<bust|portrait|deed|crest>.svg`.
 

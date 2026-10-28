@@ -12,6 +12,7 @@ const SLOT_FIGURE := 150.0
 const PHONE_SLOT_FIGURE := 150.0
 ## Quest shields and region names grow by this much on phones, so they stay easy to tap.
 const PHONE_MARKER_SCALE := 1.8
+const SHADE_BEHIND: Shader = preload("res://src/ui/shade_behind.gdshader")
 
 var _stage: Control
 ## The phone layout's full-screen layer for the bar, quest panel and party sheet.
@@ -98,6 +99,14 @@ func _refresh_map() -> void:
 		if Device.phone:
 			# Keep the bigger shields clear of the top bar.
 			spot.y = maxf(spot.y, (EstateBar.HEIGHT + 8.0) / _stage.scale.y + marker_size.y / 2.0)
+		if not _campaign().region_open(region):
+			_map.add_child(_closed_landmark(region))
+			var lock := Control.new()
+			lock.size = Vector2(80, 80) * grow
+			lock.position = spot - lock.size / 2.0
+			lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			lock.draw.connect(func() -> void: UiStyle.draw_lock(lock, lock.size / 2.0, lock.size.y * 0.8))
+			_map.add_child(lock)
 		for i in quests.size():
 			var marker := QuestMarker.new()
 			marker.setup(quests[i])
@@ -136,6 +145,18 @@ func _refresh_map() -> void:
 		progress.position = below - Vector2(0, 2 * grow)
 		progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_map.add_child(progress)
+
+
+## Greys out a closed region's landmark in the map picture, glow and all.
+func _closed_landmark(region: RegionDef) -> Control:
+	var shade := ColorRect.new()
+	shade.position = region.landmark.position
+	shade.size = region.landmark.size
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var material := ShaderMaterial.new()
+	material.shader = SHADE_BEHIND
+	shade.material = material
+	return shade
 
 
 ## What opens a closed region, "Boss awaits", "Conquered", or "" while its boss
@@ -333,6 +354,7 @@ func _center_stage() -> void:
 
 func _build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(Atmosphere.new(0.1))
 	_stage = Control.new()
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -1,13 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="40" viewBox="0 0 64 40">
-  <!-- A DD1-style button plate, drawn as a 9-slice with 12 px corners: a
-       dark red-brown face, a bronze rim, and a faint highlight along the top. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="48" viewBox="0 0 96 48">
+  <!-- A DD1-style button plate, drawn as a 9-slice with 16 px corners: a dark
+       red-brown face lit from above, a bronze rim over an iron edge, a faint
+       highlight along the top and shadow along the bottom, and a bronze stud
+       at each end, so a wide button still reads as a plate. -->
   <defs>
     <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2e1c17"/>
-      <stop offset="1" stop-color="#150d0b"/>
+      <stop offset="0" stop-color="#3a241c"/>
+      <stop offset="0.5" stop-color="#22140f"/>
+      <stop offset="1" stop-color="#120a08"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b08a52"/>
+      <stop offset="1" stop-color="#5e4428"/>
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="62" height="38" rx="2" fill="url(#face)" stroke="#060404" stroke-width="2"/>
-  <rect x="3.5" y="3.5" width="57" height="33" rx="1" fill="none" stroke="#7a5c38" stroke-width="1.5"/>
-  <path d="M6 6.5 L58 6.5" stroke="#5a3e2a" stroke-width="1"/>
+  <rect x="1" y="1" width="94" height="46" rx="3" fill="#060404"/>
+  <rect x="3" y="3" width="90" height="42" rx="2" fill="url(#face)" stroke="url(#rim)" stroke-width="2"/>
+  <rect x="6.5" y="6.5" width="83" height="35" rx="1" fill="none" stroke="#3e2a1c" stroke-width="1"/>
+  <path d="M9 8.5 H87" stroke="#6a4a32" stroke-width="1"/>
+  <path d="M9 39.5 H87" stroke="#000000" stroke-width="1.5" stroke-opacity="0.5"/>
+  <g fill="#a8844c" stroke="#2a1c10" stroke-width="1">
+    <path d="M8 20 L12 24 L8 28 L4 24 Z"/>
+    <path d="M88 20 L92 24 L88 28 L84 24 Z"/>
+  </g>
 </svg>

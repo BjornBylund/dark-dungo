@@ -21,6 +21,11 @@ const SPOTS := {
 	&"wagon": Rect2(1080, 880, 300, 200),
 	&"board": Rect2(1330, 560, 240, 250),
 }
+## Lit windows and lamps on the hamlet picture that flicker: x, y and radius.
+const LAMPS: Array[Vector3] = [
+	Vector3(468, 660, 100), Vector3(1170, 540, 90), Vector3(786, 540, 55), Vector3(932, 540, 55),
+	Vector3(404, 984, 70), Vector3(636, 984, 70), Vector3(1090, 990, 55), Vector3(1320, 210, 35),
+]
 ## Height of a scrolling trinket list in a window, which doesn't scroll on desktop.
 const TRINKET_LIST_HEIGHT := 560.0
 ## What each level of an Abbey or Tavern activity's upgrade line brings.
@@ -30,6 +35,7 @@ const ACTIVITY_UPGRADES := ["More stress relief", "Prices -15%", "One more slot"
 const PHONE_PLATE_SCALE := 2.2
 
 var _stage: Control
+var _atmosphere: Atmosphere
 ## Where the bar, roster and windows live: the stage itself on desktop, a layer
 ## over the whole screen in the phone layout.
 var _ui: Control
@@ -845,11 +851,15 @@ func _center_stage() -> void:
 		_roster_panel.size.y = size.y - EstateBar.HEIGHT - 14
 		_window.position = Vector2(8, EstateBar.HEIGHT + 4)
 		_window.size = size - _window.position - Vector2(8, 8)
+	if _atmosphere and _stage:
+		_atmosphere.set_lights(LAMPS, _stage.position, _stage.scale.x)
 	queue_redraw()
 
 
 func _build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_atmosphere = Atmosphere.new(0.08)
+	add_child(_atmosphere)
 	_stage = Control.new()
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
