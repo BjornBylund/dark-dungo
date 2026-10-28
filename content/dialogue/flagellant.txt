@@ -1,0 +1,64 @@
+# The Flagellant: a penitent from a plague village, who bleeds so that others
+# need not. A recruit, so the story starts at the join and level 2. The
+# format is explained at the top of src/campaign/dialogue.gd.
+
+== join
+Ancestor: A pilgrim came up the road at dawn, leaving a trail of blood that no one asked about.
+Flagellant: I was told there is suffering here. More than one place can hold.
+Flagellant: Give me the front rank. Give me the worst of it. Whatever strikes me does not strike them.
+Ancestor: The lash and the hook. A penitent of the old kind. Let us see what sins you have saved up.
+
+== level 2
+Flagellant: I come from Morrow, in the marsh country. When the coughing sickness came, it took the children first.
+Flagellant: We prayed. The bells rang day and night. The sickness did not care for bells.
+Ancestor: Disease is the most devout thing in the world. It visits every house and judges none.
+
+== level 3
+Flagellant: Father Anselm said the sickness was our sin made flesh. He said it could be paid for in pain, and showed us how.
+Flagellant: I was the best student he ever had. I struck harder than any of them. I thought, if I bleed enough, it will pass us by.
+Ancestor: A simple arithmetic. Pain in, mercy out. If only anyone were keeping the ledger.
+
+== level 4
+Flagellant: The sickness took Morrow anyway. Every house. Every bell ringer. Everyone who knelt beside me.
+Flagellant: It left me. I have asked why every night since. The lash is the only answer that comes.
+Ancestor: You were spared, and you have punished yourself for it ever since. I understand the impulse better than you know.
+
+== level 5
+Ancestor: A rider from the marsh country passed through the hamlet today, with news.
+Flagellant: Father Anselm did not die in Morrow. He left in the night, with the alms box, before the end.
+Flagellant: Every stroke I paid for him, he spent somewhere warm. I have been bleeding into an empty purse.
+Ancestor: So the faith was false and the pain was real. Which will you keep?
+
+== level 6
+Flagellant: I still bleed. I will always bleed. But not for Anselm, and not for heaven.
+Flagellant: I bleed so that the ones beside me do not. That is a debt I chose. It is the only kind worth paying.
+Ancestor: Then take the front, penitent. Morrow could not be saved. These, perhaps, can.
+
+== reflect
+Flagellant: We live. The pain was well spent.
+?
+Flagellant: More wounds. Good. Every one I take is one they do not.
+? boss
+Flagellant: The great thing bled as we do. Everything bleeds in the end.
+? long
+Flagellant: The long road suited me. Given time, pain becomes a kind of prayer.
+? fallen
+Flagellant: The {fallen} fell, and I stood. Again I stood. Why is it always me who stands?
+? stressed
+Flagellant: The voices from Morrow are loud tonight. The lash does not quiet them.
+? calm
+Flagellant: Strange. The wounds ache, and my heart does not.
+? partner
+Flagellant: The {partner} tended my wounds without being asked. I did not know how to give thanks. I still do not.
+? with Vestal
+Vestal: Let me close those wounds.
+Flagellant: Close the others first, Sister. Mine will keep.
+? with Crusader
+Crusader: You throw yourself at them as if you want to die.
+Flagellant: Not die, knight. Pay. There is a difference, though some nights I forget it.
+? region burrows
+Flagellant: The burrows smelled of Morrow at the end. I did not think I would smell that again.
+? region chapel
+Flagellant: The priests down there taught the lash too. They taught it to others.
+? region graveyard
+Flagellant: So many graves. Morrow had no one left to dig them.

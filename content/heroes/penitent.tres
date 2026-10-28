@@ -245,3 +245,4 @@ swap_offsets = Array[int]([-2, -1, 1])
 overstress = &"toxic"
 deaths_door_weak = false
 sprite = ExtResource("9_viss2")
+dialogue = "res://content/dialogue/flagellant.txt"

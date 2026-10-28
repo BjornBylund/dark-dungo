@@ -116,3 +116,4 @@ battle_background = ExtResource("6_17eji")
 town_background = ExtResource("22_vuitf")
 expedition_background = ExtResource("11_map")
 map_background = ExtResource("23_trail")
+dialogue = "res://content/dialogue/ancestor.txt"

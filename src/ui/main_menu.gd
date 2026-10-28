@@ -30,6 +30,7 @@ func _ready() -> void:
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
+	add_child(Atmosphere.new())
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -46,8 +47,11 @@ func _ready() -> void:
 	title.add_theme_color_override("font_outline_color", Color.BLACK)
 	title.add_theme_constant_override("outline_size", 14)
 	column.add_child(title)
+	var rule := UiStyle.divider(460.0)
+	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	column.add_child(rule)
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 30)
+	spacer.custom_minimum_size = Vector2(0, 12)
 	column.add_child(spacer)
 	_continue = _menu_button("Continue", func() -> void:
 		if not Game.continue_campaign():
@@ -84,8 +88,9 @@ func _menu_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.theme_type_variation = &"ActionButton"
-	button.custom_minimum_size = Vector2(340, 56)
-	button.add_theme_font_size_override("font_size", 22)
+	button.custom_minimum_size = Vector2(380, 62)
+	button.add_theme_font_override("font", UiStyle.DISPLAY_FONT)
+	button.add_theme_font_size_override("font_size", 30)
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(action)
 	return button

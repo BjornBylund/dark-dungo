@@ -1,0 +1,62 @@
+# The Plague Doctor: a physician who stayed when the plague came, and learned
+# from it. The format is explained at the top of src/campaign/dialogue.gd.
+
+== level 1
+Ancestor: The doctor's first act on coming back is to write. Pages of it, by candlelight, in a hand no one else can read.
+Plague Doctor: When the pestilence came to the city of Lusk, the physicians fled. I stayed, because no one could stop me.
+Plague Doctor: Four thousand dead that summer. I learned more from them than from any master.
+
+== level 2
+Plague Doctor: The dying are very generous with their bodies. They have no further use for them.
+Plague Doctor: I tried things on them. Tinctures, bleedings, fumes. Some lived longer. Some did not. I wrote it all down.
+Ancestor: A ledger of suffering, kept in the name of the living. I kept one myself, once, for other reasons.
+
+== level 3
+Plague Doctor: My teacher, Master Orrell, caught the fever in the second year. I gave him my newest tincture.
+Plague Doctor: It worked, for nine hours. Then it did what the fever would have done, only faster. I wrote that down too.
+Ancestor: You wept, I think, after the ink was dry. Science does not forbid it. It merely does not record it.
+
+== level 4
+Plague Doctor: The academy expelled me. Unnatural practices, they said, and burned my notes in the yard.
+Plague Doctor: Two years later the plague reached the capital, and they sent for my methods. I had kept copies.
+Ancestor: The righteous always come back for the heretic's notes. They simply come at night.
+
+== level 5
+Ancestor: Tonight the doctor does not write. The pen lies beside the page, and the page stays blank.
+Plague Doctor: What lives down there is a disease that thinks. I cannot cut it out. I cannot even name it properly.
+Plague Doctor: For the first time I do not want to understand something. I only want it gone. That frightens me more than the thing itself.
+Ancestor: Welcome to my condition, doctor. Curiosity brought me here, too.
+
+== level 6
+Plague Doctor: Master Orrell used to say a physician's first duty is to do no harm. I have done a great deal of harm.
+Plague Doctor: So I keep these fools alive, one wound at a time, and call each one a payment. The debt is large. I am patient.
+Ancestor: Pay it down, then. Few of us ever get the chance.
+
+== reflect
+Plague Doctor: Everyone is breathing. Some of them more than they deserve.
+?
+Plague Doctor: A productive descent. I have samples.
+? boss
+Plague Doctor: I took a sample from the carcass. Do not ask where I am keeping it.
+? long
+Plague Doctor: Long exposure to the miasma down there. I will be checking everyone's eyes for a week.
+? fallen
+Plague Doctor: The {fallen} will recover, in my professional opinion. My professional opinion has been wrong before.
+? stressed
+Plague Doctor: My hands are shaking. Bad for surgery. Worse for thinking.
+? calm
+Plague Doctor: A clear head. Unusual. I should make a note of the cause.
+? partner
+Plague Doctor: The {partner} took a blow meant for me. Illogical. Appreciated.
+? with Vestal
+Vestal: You could pray with me, doctor. Just once.
+Plague Doctor: I will take your pulse while you pray, Sister. We shall see which of us learns more.
+? with Flagellant
+Plague Doctor: Your wounds should be fatal three times over, penitent. I would give a great deal to study them.
+Flagellant: Study them, then. They are not mine to keep.
+? region burrows
+Plague Doctor: The burrows are a fever with walls. Everything down there is infected, the air included.
+? region graveyard
+Plague Doctor: Walking cadavers. The physicians of Lusk would have sold their mothers for one. I am told some did.
+? region chapel
+Plague Doctor: Incense to hide rot. The oldest trick in medicine, and in religion.

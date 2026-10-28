@@ -1,0 +1,66 @@
+# The Grave Robber: a sexton's child who learned to empty graves as well as
+# fill them. The format is explained at the top of src/campaign/dialogue.gd.
+
+== level 1
+Grave Robber: You know what the dead have that the living don't? Patience. They'll wait while you work the lid.
+Grave Robber: My father dug graves for the parish. I learned to fill them from him. The other thing I learned on my own.
+Ancestor: An honest trade, spoiled by curiosity. I find I cannot judge you harshly, thief.
+
+== level 2
+Grave Robber: My first real job was a duke's crypt. Marble, gold leaf, a ring on every finger.
+Grave Robber: I sold one ring to a jeweller in the next town. He died within the week. I spent the coin anyway.
+Ancestor: Some treasures are buried for a reason. You were never one to ask what the reason was.
+
+== level 3
+Grave Robber: I had a partner once. Corwin. Quick hands, slow conscience. Same as me.
+Grave Robber: In the vault under Saint Ilse's he took the haul and shut the slab on me. Three days in the dark with the abbot's bones.
+Grave Robber: I got out. Corwin didn't expect that. He expected a good deal less of anything, after.
+Ancestor: Three days in a tomb, and you came out sharper. The dark is a fine tutor.
+
+== level 4
+Grave Robber: There's a collector in the capital who wants back what I took from the duke. He sends men. They don't go home.
+Grave Robber: Easier to hide out here, where everyone's half dead already. No offence.
+Ancestor: None taken. I am entirely dead, and I find the company agreeable.
+
+== level 5
+Ancestor: The thief came back from the dark tonight and went straight to the churchyard. To one grave in particular.
+Grave Robber: My father's. Someone opened it years ago and took the ring my mother buried with him.
+Grave Robber: I know the work. I know whose work. I taught them half of it.
+Ancestor: The trade takes from everyone, in the end. Even from those who practise it.
+
+== level 6
+Grave Robber: I used to think the only thing worth keeping was what you could carry out.
+Grave Robber: Now I keep this lot breathing and call it my cut. Don't tell the others. They'll want a share.
+Ancestor: A thief who found something worth stealing back at last: your own life.
+
+== reflect
+Grave Robber: In and out, mostly in one piece. I'll call that profit.
+?
+Grave Robber: Count the coin, count the fingers. Both came back the same. Good day's work.
+? boss
+Grave Robber: Biggest thing I've ever seen fall. Wonder what it was buried with.
+? long
+Grave Robber: That was a long dig. My knees are older than I am now.
+? fallen
+Grave Robber: The {fallen} went down and I kept moving. That's the job. Doesn't mean I liked it.
+? stressed
+Grave Robber: My hands won't stop. They want something to hold. A knife, a coin, a bottle. Anything.
+? calm
+Grave Robber: Quiet in my head for once. Must be the coin.
+? partner
+Grave Robber: The {partner} watched my back the whole way. Not many I'd let stand there.
+? with Vestal
+Vestal: Saint Ilse's. You were the one who broke into the abbot's vault.
+Grave Robber: Spent three days locked in with him, Sister. I'd say we're even.
+? with Jester
+Grave Robber: You played a tune at the bottom of a pit full of corpses, and I laughed. What's wrong with me?
+Jester: Nothing at all, my dear. That is precisely the trouble.
+? with Plague Doctor
+Plague Doctor: You pocketed a tooth from that cadaver.
+Grave Robber: Gold filling. If you want to study it, it's two silver.
+? region graveyard
+Grave Robber: Home ground. I knew half those graves before the dead climbed out of them.
+? region chapel
+Grave Robber: Reliquaries everywhere and not a moment to pry one open. Painful.
+? region burrows
+Grave Robber: Burrows aren't graves. Nobody digs them on purpose, and nobody buries anything worth having.

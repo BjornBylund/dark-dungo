@@ -18,3 +18,5 @@ extends Resource
 @export var events: Array[EventDef] = []
 ## Where the region's quest markers sit on the expedition map, in 1920x1080 stage pixels.
 @export var map_position: Vector2
+## The region's landmark in the expedition map's picture, greyed out while the region is closed.
+@export var landmark: Rect2

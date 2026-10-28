@@ -49,6 +49,11 @@ extends Resource
 ## Extra scale on top of the automatic fit, for art that should stand taller or shorter.
 @export_range(0.25, 2.0, 0.05) var sprite_scale: float = 1.0
 
+@export_group("Story")
+## A hero's dialogue script, content/dialogue/<class>.txt: their joining and
+## level-up scenes (see src/campaign/dialogue.gd).
+@export_file("*.txt") var dialogue: String
+
 
 func base_resist(kind: StringName) -> float:
 	return get("resist_%s" % kind)

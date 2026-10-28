@@ -40,6 +40,9 @@ var rng := RandomNumberGenerator.new()
 ## Bar's bonds), for the screen to show once. A mission's results take it over
 ## (see finish_mission). Not saved.
 var week_report: Array[String] = []
+## Dialogue scenes waiting for the town to play them, in order: the opening,
+## a recruit joining, heroes levelling up.
+var scenes: Array[DialogueScene] = []
 
 
 static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
@@ -54,6 +57,9 @@ static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
 		campaign.heroes.append(HeroRecord.new(unit))
 	campaign._refresh_board()
 	campaign._restock_wagon()
+	var opening := Dialogue.opening(campaign)
+	if opening:
+		campaign.scenes.append(opening)
 	return campaign
 
 
@@ -76,7 +82,7 @@ func recruit_choices() -> Array[HeroRecord]:
 	return _heroes_where(func(h: HeroRecord) -> bool: return not h.recruited)
 
 
-## A recruit earned by a boss joins, at level 1.
+## A recruit earned by a boss joins, at level 1, with their joining scene.
 func recruit(hero: HeroRecord) -> String:
 	if recruits_waiting <= 0:
 		return "Defeat a region's boss to recruit a hero."
@@ -85,6 +91,9 @@ func recruit(hero: HeroRecord) -> String:
 	hero.recruited = true
 	hero.xp = CampaignRules.LEVEL_XP[0]
 	recruits_waiting -= 1
+	var scene := Dialogue.join(self, hero)
+	if scene:
+		scenes.append(scene)
 	return ""
 
 
@@ -575,7 +584,8 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 ## Completing pays everything, including a trinket (an Ancestral one for a
 ## boss), and counts towards the region's boss; retreating keeps what was
 ## earned on the way. Every pair in the party bonds a little, more for
-## completing. Tavern perks for this mission end.
+## completing. Tavern perks for this mission end. Heroes who level up get
+## their scenes.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
@@ -598,6 +608,7 @@ func finish_mission() -> Dictionary:
 		summary.gold = run.gold_earned
 		summary.heirlooms = run.heirlooms_earned.duplicate()
 		summary.trinkets.append_array(run.trinkets_found)
+	var levels_before := {}
 	match run.outcome:
 		MissionRun.Outcome.COMPLETED:
 			var owned := owned_trinkets() + run.trinkets_found
@@ -615,6 +626,7 @@ func finish_mission() -> Dictionary:
 				hero.xp += summary.xp
 				if hero.level() > before:
 					summary.level_ups.append(hero)
+					levels_before[hero] = before
 			var open_before := open_regions().size()
 			if progress_for(mission) > 0.0:
 				summary.progress = mission.region
@@ -638,6 +650,7 @@ func finish_mission() -> Dictionary:
 		summary.wounded.append(hero)
 	summary.town = week_report.duplicate()
 	week_report.clear()
+	scenes.append_array(Dialogue.level_ups(self, mission, party, defeated, summary.opened, levels_before))
 	return summary
 
 
@@ -840,6 +853,7 @@ func to_dict() -> Dictionary:
 		bonds = bonds.to_dict(),
 		region_progress = region_progress, bosses_beaten = bosses_beaten, recruits_waiting = recruits_waiting,
 		trinkets = Trinkets.to_paths(trinkets), wagon = Trinkets.to_paths(wagon),
+		scenes = scenes.map(func(scene: DialogueScene) -> Dictionary: return scene.to_dict()),
 		run = null,
 	}
 	if run:
@@ -904,6 +918,10 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	else:
 		# Saves from before trinkets: stock the Wagon now.
 		campaign._restock_wagon()
+	for scene_data: Dictionary in data.get("scenes", []):
+		var scene := DialogueScene.from_dict(scene_data)
+		if scene:
+			campaign.scenes.append(scene)
 	# A mission under way with a dropped hero in the party can't carry on; it is
 	# abandoned without a week passing.
 	if data.run != null and data.run.party.all(func(index: Variant) -> bool: return kept.has(int(index))):

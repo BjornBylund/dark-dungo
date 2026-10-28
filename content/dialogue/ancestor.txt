@@ -1,0 +1,41 @@
+# The Ancestor: the scene that opens a campaign, and the lines that greet a
+# party home before its heroes' level-up scenes. The format is explained at
+# the top of src/campaign/dialogue.gd.
+
+== opening
+Ancestor: You came. I had begun to think the letter lost, or you too wise to heed it.
+Ancestor: Behold the hamlet. Once it prospered in the shadow of our house. Now the shadow is all that remains.
+Ancestor: I dug where no one should dig, and the ground gave back what it had kept. The dead walk my graveyard. Something gnaws beneath the fields.
+Ancestor: You will need blades, and those who can wield them. I spent the last of the estate's good name to summon them.
+Crusader: A knight of the Order answers. I have seen worse places than this. I cannot recall when.
+Grave Robber: You'll want someone who knows the way round a tomb. I'll take my share in coin, and I'll take it first.
+Plague Doctor: There is sickness in the soil here. I could smell it from the road. Fascinating.
+Vestal: The light goes where it is needed. It has been needed here a long while.
+Man-at-Arms: I've stood in worse lines with fewer men. Point me at the gate.
+Ancestor: Five. It will have to do. {region} lies nearest. {boss} holds it.
+Ancestor: Go. Bring back what you can, and bury what you must.
+
+== homecoming
+Ancestor: They return, bloodied and a little wiser. Wisdom is the only coin this place still pays in.
+?
+Ancestor: Another descent survived. Mark it well. Such marks grow rarer.
+? long
+Ancestor: A long road, and every step of it paid for. Those who walked it are not the ones who set out.
+? fallen
+Ancestor: Not all came back on their own feet. The {fallen} will mend, this time. The ground is patient.
+? boss
+Ancestor: {boss} is broken. The quiet that follows is not peace, only a held breath.
+? boss, opened
+Ancestor: {boss} has fallen, and the way to {opened} lies open. I remember that road. I wish I did not.
+? region graveyard
+Ancestor: My graveyard keeps its dead a little longer tonight. Only a little.
+? region burrows
+Ancestor: They climb out of the burrows reeking of the deep. Wash it off if you can. You cannot.
+? region chapel
+Ancestor: The chapel bell rang as they left. No hand was on the rope.
+? boss, region graveyard
+Ancestor: The Gravelord lies in pieces, and the dead lie still. For tonight, my graveyard sleeps.
+? boss, region burrows
+Ancestor: The Maw is slain, its hunger cut out of it at last. The fields will tremble for a week.
+? boss, region chapel
+Ancestor: The Hollow Saint is silenced. Whatever answered its prayers will be listening for new ones.

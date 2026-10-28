@@ -48,6 +48,10 @@ func _draw() -> void:
 	for i in Rules.STRESS_MAX:
 		draw_rect(Rect2(112 + i * 9, 37, 7, 9), UiStyle.STRESS_ON if i < hero.stress else UiStyle.STRESS_OFF)
 	if tag != "":
-		draw_string(body, Vector2(0, 24), tag, HORIZONTAL_ALIGNMENT_RIGHT, size.x - 10, 13, tag_color)
+		# Beside the name, or beside the stress pips when a long name leaves no room.
+		var name_end := 70.0 + display.get_string_size(hero.display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
+		var tag_start := size.x - 10.0 - body.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		draw_string(body, Vector2(0, 24 if name_end + 8.0 < tag_start else 46), tag, HORIZONTAL_ALIGNMENT_RIGHT,
+				size.x - 10, 13, tag_color)
 	if dimmed:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.45))

@@ -234,11 +234,45 @@ DD2's ([research/darkest-dungeon-2-trinkets.md](research/darkest-dungeon-2-trink
 - **Prices:** about 100 gold per DD2 Bauble: Vague 500, Distant 2,000–3,000, Indelible 5,000–6,500. The Wagon buys back for 25%; boss and Ancestral trinkets can't be sold.
 - **Nomad Wagon:** opens in week 2 and sells 4 trinkets a week, none already owned, at the best tier the roster can take on.
 
+### Dialogue scenes
+
+Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
+
+- **When:**
+  - a new campaign opens with one scene of the five starting heroes arriving;
+  - a recruit gets their own scene as they join;
+  - each level a hero gains brings a scene when the party is back in town.
+- **What they say:** a mix of each hero's backstory and what has just happened.
+  - Each hero's past comes a part at a time, levels 1 to 6. The recruits' join scene sets theirs up.
+  - Before the first part, the hero looks back on the mission just finished: the boss, the region, a long road, a comrade who fell, their own stress, a bonded partner, or a particular hero beside them, who may answer. The best-fitting line plays.
+  - The Ancestor greets the party home once, before the first of a mission's scenes.
+- **Writing:** original, not DD's script. The heroes go by their class names, and the backstories are new.
+- **Look:**
+  - The hamlet darkened behind, the cast standing tall, and the speaker lit from below while the others stand in shadow. Two heroes face each other.
+  - A framed text box with the speaker's name. Text types out.
+  - Click, tap, Enter or Space shows the line, then moves on. Skip or Esc ends the scene.
+- **Saving:** scenes waiting to play are saved, and a scene skipped part-way counts as seen. Quitting during one plays it again next time.
+- **Content:** plain-text scripts in `content/dialogue/`; the format is documented at the top of `src/campaign/dialogue.gd`.
+
 ### Town screen and saving
 
 - DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms, and **Embark**.
+- **Building windows** open on a banner: the building's corner of the hamlet picture, what it is for, and the Services and Upgrades tabs.
+  - Upgrades: each line is a card with its level, what it does now, the Upgrade button with its heirloom cost as icons (red where the estate is short), and its levels as a track of steps saying what each brings.
+  - Blacksmith: the hero picker and the chosen hero's weapon and armour as cards, their ranks as the same steps, those past what the smiths can make locked.
+  - Guild: the hero sheet's skill grid; choose a skill to learn it, train it or equip it.
+  - Abbey and Tavern: each activity as a card with its relief, price and a seat per slot holding the hero there (click to bring them back), and Send for the hero picked; at the Abbey, the wounded with Treat.
+  - Exchange: each trade as a card of heirloom icons with Trade.
+- **Hero sheet**, DD1's character sheet, opened from the roster:
+  - left: the hero standing in a card frame, their level with an XP bar to the next, stress pips, where they are this week, Tavern perks, and their bonds;
+  - middle: max HP, speed, weapon and armour, the resistance row as the combat target panel shows it, and the class's 11 skills as an icon grid: equipped ones lit in gold, learned ones dimmed, unlearned ones dark with a padlock, the rank as diamonds. Click one to equip or unequip it; hover it to see what it does in the panel under the grid;
+  - right: two trinket sockets (click one to take its trinket off) with what the worn trinkets do, and the estate's unworn trinkets the hero could wear;
+  - phones stack the three in the scrolling window, and a tap on a skill shows it with an Equip or Unequip button.
 - **Expedition screen**, DD1's quest map: Embark (or the noticeboard) opens a full-screen placeholder map of the land beyond the hamlet with one landmark per region. Each region's quests sit by its landmark as shields framed in the tier's colour (Apprentice green, Veteran orange, Champion red), with the mission level inside and one pip per length step. The chosen quest's region, title, level, goal and rewards show top left, the roster runs down the right, and the lineup and Embark button sit along the bottom. Embark goes straight to the mission map; DD1's provisioning shop is skipped because there are no supplies. Esc goes back to town.
-- **Mission map screen:** the map drawn over one shared placeholder backdrop (a dark trail), the region's name in the header, the party's marker, and the reachable rooms highlighted. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
+- **Mission map screen:** the map drawn over one shared placeholder backdrop (dark ground in dead woods), the region's name in the header, and the reachable rooms glowing.
+  - Corridors are worn earth paths, gently bowed: gold footsteps along the route taken, bright dashes on the ways on, the ones left behind faded. The first column's start at the party's campfire.
+  - Rooms show their icon once revealed and a "?" until then (events are a scroll). Rooms passed through carry a gold check, and rooms left behind fade.
+  - The party's token, the front hero's framed portrait on a pennant, stands over the current room (below it when the top band would hide it) and walks to each room chosen. A party panel shows HP and stress; the gold earned so far and Retreat sit beside it. Rest, cache and event rooms open as a panel over the map; fights go to the combat screen and come back.
 - **Lineup:** DD1's embark slots: four slots, rank 4 on the left to rank 1 on the right as in combat. Each slot shows the hero standing there and their skills, with gold pips for the ranks each skill can be used from. Skills that can't be used from that rank are dimmed, and a hero with no attack from their rank is flagged in red. Click heroes to fill the slots from the front, drag to reorder or swap in a hero from the roster, and click a hero in a slot to take them out.
 - One autosave slot, written after every town action and every fight on a mission (`user://`, which is browser storage on the web build).
 - A title screen offers Continue, New Campaign and the Combat Sandbox, and from the project folder the [balance tool](#balance-tool). Launch options skip it: `--continue`, `--new-campaign`, `--sandbox`, `--balance`. With `--autoplay` the town takes any recruit waiting, treats the wounded, and embarks on its own, and the fights play themselves.
@@ -259,15 +293,16 @@ The combat screen follows DD2's, as measured in [research/darkest-dungeon-ui.md]
 - **No names on the battlefield.** Under each unit: DoT icons, an HP bar without numbers, stress pips (heroes), and token icons with small diamonds for extra stacks. Hover a unit for its full stat sheet.
 - **Death's Door:** empty HP bar with a pulsing red frame, red tint, skull in the token row. **Corpses:** dark placeholder mound with a brown-grey HP bar.
 - **Top:** ragged black band with the round counter and a turn-order queue of diamond portraits; the acting unit is rightmost.
-- **Bottom HUD** on black, shown on hero turns only:
-  - left: hero portrait and name, and the selected skill's details in DD2's order (numbers, Target, Self, conditional bonuses), then its limits (cooldown, uses per battle, an HP condition);
+- **Bottom HUD** in a framed bar below the units' tokens, shown on hero turns only:
+  - left: the hero's framed portrait in colour, name, HP and stress, and the selected skill's details in DD2's order (numbers, Target, Self, conditional bonuses), then its limits (cooldown, uses per battle, an HP condition);
   - centre: skill name, rank pips, the 4 equipped skill icons, then Swap, Recover and Pass diamonds; under them the HIT / DMG / CRIT preview against the focused target;
   - right: target panel with HP, speed and resistances, lighting up the ones the skill rolls against.
 - **Targeting:** blue brackets under valid enemy targets (green for allies), a translucent box on the focused one, gold squares on the tokens the attack would use up. The acting unit gets a gold bracket and amber glow.
 - **Attacks cut to a letterboxed close-up:** HUD hidden, scene tinted with dark ink edges, attacker and targets re-staged up to 1.5× size, skill name in gold. Self and party skills stay on the battlefield.
 - **Poses in the close-up:** the attacker shows that skill's **attack pose** and each target hit shows its **hurt pose**; a missing pose means the normal sprite. Poses go by convention in the unit's own art folder, named after its class, next to its `sprite.png`: `art/characters/<class>/<skill id>.png` and `art/characters/<class>/hurt.png`, so real art can replace them one file at a time. `tools/make_poses.gd` generates placeholders from the normal sprites (leaning into the blow with motion lines and the skill's icon, or recoiling and flushed red): an attack pose for every hero skill and a hurt pose for every unit. Enemy attack poses aren't generated yet.
 - **Pop-ups:** red damage (the unblocked number struck through when Block reduced it), orange "Critical!", grey Dodge, Miss and Resist, green heals, token and DoT icons with their names, stress in white.
-- Wave title before round 1. Fonts: Grenze Gotisch for display text, Gelasio for body text (both SIL Open Font License).
+- Wave title before round 1. Fonts: Grenze Gotisch for display text, Gelasio for body text (both SIL Open Font License). Gelasio renders as a multi-channel distance field, because rasterised at a scaled window size it clipped the bottoms of some lines.
+- **Atmosphere** on every screen, over the picture and under the UI (`src/ui/atmosphere.gd`): dark corners, film grain, a torch-like flicker in combat, and the hamlet's lit windows and lamps glowing and guttering.
 - Combat log showing every roll (L, a dev overlay hidden by default) and a 2× speed toggle (S).
 - Mouse first: click a skill, valid targets highlight, click a target. Keyboard: 1–8 pick a skill, Left/Right/Tab move the target, Enter/Space confirm, L log, S speed, R restart. Controller later.
 

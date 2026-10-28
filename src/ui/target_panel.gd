@@ -50,23 +50,7 @@ func _draw() -> void:
 	if unit.is_corpse:
 		return
 
-	var columns := UiStyle.RESIST_COLUMNS
-	var left := right - columns.size() * COLUMN
-	for i in columns.size():
-		var column: Array = columns[i]
-		var id: StringName = column[0]
-		var x := left + i * COLUMN
-		if id in tested:
-			draw_rect(Rect2(x + 4, 110, COLUMN - 8, 76), Color(UiStyle.GOLD, 0.16))
-			draw_rect(Rect2(x + 4, 110, COLUMN - 8, 76), Color(UiStyle.GOLD, 0.6), false, 1.0)
-		draw_string(body, Vector2(x, 128), column[1], HORIZONTAL_ALIGNMENT_CENTER, COLUMN, 14, column[2])
-		var icon_id: StringName = &"stun" if id == &"stun" else (&"immobilize" if id == &"move" \
-				else (&"weak" if id == &"debuff" else id))
-		var icon := UiStyle.token_icon(icon_id)
-		if icon:
-			draw_texture_rect(icon, Rect2(x + COLUMN / 2.0 - 11.0, 136, 22, 22), false)
-		draw_string(body, Vector2(x, 180), UiStyle.percent(unit.resist(id)), HORIZONTAL_ALIGNMENT_CENTER, COLUMN, 17,
-				UiStyle.TEXT)
+	UiStyle.draw_resists(self, Vector2(right - UiStyle.RESIST_COLUMNS.size() * COLUMN, 110), unit, tested, COLUMN)
 	if unit.death_armor > 0 and not unit.is_hero:
 		draw_string(body, Vector2(0, 214), "Death Armor %d" % unit.death_armor, HORIZONTAL_ALIGNMENT_RIGHT, right,
 				16, UiStyle.TEXT_DIM)

@@ -235,3 +235,4 @@ resist_debuff = 0.3
 skills = Array[ExtResource("2_phsca")]([SubResource("Resource_sam3a"), SubResource("Resource_d34c1"), SubResource("Resource_lhmfi"), SubResource("Resource_nl0im"), SubResource("Resource_uti4w"), SubResource("Resource_xe5su"), SubResource("Resource_cwgky"), SubResource("Resource_5iqdp"), SubResource("Resource_rt7lb"), SubResource("Resource_4h8c0"), SubResource("Resource_k0wwn")])
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_sprite")
+dialogue = "res://content/dialogue/grave_robber.txt"

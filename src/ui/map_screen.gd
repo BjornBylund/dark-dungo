@@ -13,7 +13,15 @@ const STAGE_SIZE := Vector2(1920, 1080)
 ## Where the rooms are spread, first column to the final room.
 const MAP_AREA := Rect2(150, 130, 1620, 620)
 const PATH_DIM := Color(0.55, 0.5, 0.45, 0.35)
-const PATH_AHEAD := Color(0.85, 0.8, 0.7, 0.7)
+const PATH_AHEAD := Color(0.85, 0.8, 0.7, 0.75)
+## The worn earth of a corridor, and its darker edges.
+const EARTH := Color("2e2420")
+const EARTH_EDGE := Color("120d0e", 0.9)
+## Points along each corridor's curve.
+const COURSE_STEPS := 24
+## How a corridor is drawn: one the party may take next, one taken, one left
+## behind, or one further on.
+enum Way { FAINT, BEHIND, AHEAD, TAKEN }
 ## Room buttons grow by this much on phones, so they stay easy to tap.
 const PHONE_ROOM_SCALE := 1.6
 
@@ -28,6 +36,9 @@ var _bottom: PanelContainer
 var _paths: Control
 var _rooms: Control
 var _buttons: Dictionary[int, RoomButton] = {}
+var _token: PartyToken
+## The token is walking to a room the party chose.
+var _walking := false
 var _week: Label
 var _header: Label
 var _party: HBoxContainer
@@ -120,7 +131,24 @@ func _refresh() -> void:
 		_rooms.add_child(button)
 		_buttons[room.id] = button
 	_paths.queue_redraw()
+	var front := run.party.filter(func(hero: HeroRecord) -> bool: return hero not in run.defeated)
+	_token.hero = front[0].def if not front.is_empty() else null
+	_token.scale = Vector2(_room_scale(), _room_scale())
+	if not _walking:
+		_token.position = _token_position(run.current_room() if run.room_id >= 0 else null)
 	_refresh_party()
+
+
+## Where the party token stands to point at `room`, or at the camp before the
+## first: above it, or below it when the top band would hide the token.
+func _token_position(room: MapRoom) -> Vector2:
+	var s := _room_scale()
+	var center := _camp() if room == null else _room_center(room)
+	var reach := 26.0 * s if room == null else _room_radius(room) - 4.0
+	# The top band in stage units; on phones it sits on top at full size.
+	var band := _band.size.y / _stage.scale.y if Device.phone else _band.size.y
+	_token.below = center.y - reach - PartyToken.SIZE.y * s < band + 8.0
+	return center + Vector2(0, reach if _token.below else -reach) - _token.tip() * s
 
 
 ## Room buttons grow on phones, and shrink on long maps, so columns keep a gap
@@ -129,8 +157,8 @@ func _refresh() -> void:
 func _room_scale() -> float:
 	var spacing := MAP_AREA.size.x / float(_run().map.columns - 1)
 	if Device.phone:
-		return minf(PHONE_ROOM_SCALE, spacing * 0.8 / RoomButton.SIZE)
-	return minf(1.0, spacing * 0.65 / RoomButton.SIZE)
+		return minf(PHONE_ROOM_SCALE, spacing * 0.72 / RoomButton.SIZE)
+	return minf(1.0, spacing * 0.55 / RoomButton.SIZE)
 
 
 func _room_center(room: MapRoom) -> Vector2:
@@ -140,36 +168,118 @@ func _room_center(room: MapRoom) -> Vector2:
 	return Vector2(x, MAP_AREA.position.y + MAP_AREA.size.y * (room.row + 0.5) / CampaignRules.MAP_ROWS)
 
 
-## Paths between rooms: the route taken in gold, the ways on from the current
-## room bright, everything else faint.
+## Where the party camps before the first room, left of the first column.
+func _camp() -> Vector2:
+	var spacing := MAP_AREA.size.x / float(_run().map.columns - 1)
+	return Vector2(maxf(70.0, MAP_AREA.position.x - spacing * 0.6), MAP_AREA.get_center().y)
+
+
+## Corridors as worn earth paths, gently bowed: the route taken marked with
+## gold footsteps, the ways on from where the party stands with bright dashes,
+## those left behind faded, the rest faint. The first column's start at the camp.
 func _draw_paths() -> void:
 	var run := _run()
 	var reachable := run.next_rooms()
+	var furthest := -1
+	for id in run.visited:
+		furthest = maxi(furthest, run.map.room(id).column)
+	var camp_gap := 26.0 * _room_scale()
+	for room in run.map.in_column(0):
+		var way := Way.AHEAD if run.room_id < 0 else (Way.TAKEN if run.visited[0] == room.id else Way.BEHIND)
+		# Up or down from the camp first, then in from the left, clear of the column's other rooms.
+		var corner := Vector2(_camp().x, _room_center(room).y)
+		_draw_corridor(_curve(_camp(), corner, _room_center(room), camp_gap, _room_radius(room)), way)
 	for room in run.map.rooms:
 		for exit in room.exits:
 			var to := run.map.room(exit)
-			var color := PATH_DIM
-			var width := 3.0
+			var way := Way.FAINT
 			var taken := run.visited.find(room.id)
 			if taken >= 0 and taken + 1 < run.visited.size() and run.visited[taken + 1] == exit:
-				color = UiStyle.GOLD
-				width = 5.0
+				way = Way.TAKEN
 			elif room.id == run.room_id and to in reachable:
-				color = PATH_AHEAD
-				width = 4.0
-			_dashed(_room_center(room), _room_center(to), color, width)
+				way = Way.AHEAD
+			elif to.column <= furthest:
+				way = Way.BEHIND
+			# The same bow every time for the same corridor.
+			var bend := float((room.id * 37 + exit * 11) % 41 - 20) * _room_scale()
+			_draw_corridor(_course(_room_center(room), _room_center(to), bend, _room_radius(room), _room_radius(to)), way)
+	_draw_campfire(_camp())
 
 
-func _dashed(from: Vector2, to: Vector2, color: Color, width: float) -> void:
-	var step := 16.0
-	var length := from.distance_to(to)
-	var direction := (to - from) / length
-	var gap := 44.0 * _room_scale()
-	var start := gap
-	while start < length - gap:
-		_paths.draw_line(from + direction * start, from + direction * minf(start + step * 0.6, length - gap), color,
-				width, true)
-		start += step
+func _room_radius(room: MapRoom) -> float:
+	var side := RoomButton.FINALE_SIZE if room.type == MapRoom.Type.FINALE else RoomButton.SIZE
+	return side * _room_scale() / 2.0 + 6.0
+
+
+## A corridor's course: a curve from `from` to `to`, bowed sideways by `bend`.
+func _course(from: Vector2, to: Vector2, bend: float, gap_from: float, gap_to: float) -> PackedVector2Array:
+	return _curve(from, (from + to) / 2.0 + (to - from).orthogonal().normalized() * bend, to, gap_from, gap_to)
+
+
+## A curve from `from` to `to` drawn towards `control`, stopping `gap_from` and
+## `gap_to` short of its ends.
+func _curve(from: Vector2, control: Vector2, to: Vector2, gap_from: float, gap_to: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in COURSE_STEPS + 1:
+		var t := float(i) / COURSE_STEPS
+		var point := from.lerp(control, t).lerp(control.lerp(to, t), t)
+		if point.distance_to(from) >= gap_from and point.distance_to(to) >= gap_to:
+			points.append(point)
+	return points
+
+
+func _draw_corridor(points: PackedVector2Array, way: Way) -> void:
+	if points.size() < 2:
+		return
+	var s := _room_scale()
+	var fade := 0.45 if way == Way.BEHIND else 1.0
+	_paths.draw_polyline(points, Color(EARTH_EDGE, fade), 24.0 * s, true)
+	_paths.draw_polyline(points, Color(EARTH, fade), 15.0 * s, true)
+	match way:
+		Way.TAKEN:
+			# Footsteps, left and right.
+			var left := true
+			for step: Array in _along(points, 15.0 * s, 6.0 * s):
+				var at: Vector2 = step[0] + (step[1] as Vector2).orthogonal() * (3.5 * s if left else -3.5 * s)
+				_paths.draw_circle(at, 2.6 * s, UiStyle.GOLD)
+				left = not left
+		Way.AHEAD:
+			for step: Array in _along(points, 18.0 * s, 4.0 * s):
+				_paths.draw_line(step[0], step[0] + step[1] * 10.0 * s, PATH_AHEAD, 4.0 * s, true)
+		_:
+			for step: Array in _along(points, 18.0 * s, 4.0 * s):
+				_paths.draw_line(step[0], step[0] + step[1] * 8.0 * s, Color(PATH_DIM, PATH_DIM.a * fade), 3.0 * s, true)
+
+
+## Points every `spacing` along `points`, starting `offset` in, each with the
+## direction of travel there: [position, direction].
+func _along(points: PackedVector2Array, spacing: float, offset: float) -> Array[Array]:
+	var result: Array[Array] = []
+	var next := offset
+	var walked := 0.0
+	for i in points.size() - 1:
+		var length := points[i].distance_to(points[i + 1])
+		if length <= 0.0:
+			continue
+		var direction := (points[i + 1] - points[i]) / length
+		while next <= walked + length:
+			result.append([points[i] + direction * (next - walked), direction])
+			next += spacing
+		walked += length
+	return result
+
+
+## Two crossed logs and a small fire, where the party set out from.
+func _draw_campfire(at: Vector2) -> void:
+	var s := _room_scale()
+	_paths.draw_circle(at + Vector2(0, 6) * s, 22.0 * s, Color(1.0, 0.55, 0.2, 0.12))
+	for tilt: float in [-0.5, 0.5]:
+		var along := Vector2(cos(tilt), sin(tilt)) * 16.0 * s
+		_paths.draw_line(at + Vector2(0, 10) * s - along, at + Vector2(0, 10) * s + along, Color("3a2416"), 6.0 * s)
+	_paths.draw_colored_polygon(PackedVector2Array([at + Vector2(-9, 8) * s, at + Vector2(0, -16) * s,
+			at + Vector2(9, 8) * s]), Color("e07a3a"))
+	_paths.draw_colored_polygon(PackedVector2Array([at + Vector2(-4, 8) * s, at + Vector2(1, -5) * s,
+			at + Vector2(5, 8) * s]), Color("f0c050"))
 
 
 func _describe(room: MapRoom) -> String:
@@ -198,10 +308,20 @@ func _on_room_pressed(room: MapRoom) -> void:
 	])
 
 
+## The token walks to the room, then the party goes in.
 func _enter(room: MapRoom) -> void:
 	_overlay.hide()
+	if _walking:
+		return
+	_walking = true
+	var walk := create_tween()
+	walk.tween_property(_token, "position", _token_position(room), 0.45).set_trans(Tween.TRANS_SINE)\
+			.set_ease(Tween.EASE_IN_OUT)
+	await walk.finished
+	_walking = false
 	var run := _run()
 	if run.enter(room.id) != "":
+		_refresh()
 		return
 	_confirm_retreat = false
 	if run.has_pending_fight():
@@ -431,6 +551,7 @@ func _center_stage() -> void:
 
 func _build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(Atmosphere.new())
 	_stage = Control.new()
 	_stage.size = STAGE_SIZE
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -450,6 +571,8 @@ func _build() -> void:
 	_rooms.size = STAGE_SIZE
 	_rooms.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.add_child(_rooms)
+	_token = PartyToken.new()
+	_stage.add_child(_token)
 
 	# Top band: week, region and mission, and a way back to the menu.
 	_band = ColorRect.new()

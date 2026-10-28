@@ -262,3 +262,4 @@ resist_move = 0.2
 resist_debuff = 0.2
 skills = Array[ExtResource("2_gryt8")]([SubResource("Resource_0qw0v"), SubResource("Resource_5wh2p"), SubResource("Resource_ma84s"), SubResource("Resource_32hau"), SubResource("Resource_6ry14"), SubResource("Resource_80p6n"), SubResource("Resource_relso"), SubResource("Resource_80ifp"), SubResource("Resource_jwxeh"), SubResource("Resource_ebg1w"), SubResource("Resource_fayqc")])
 sprite = ExtResource("9_0vc0v")
+dialogue = "res://content/dialogue/plague_doctor.txt"

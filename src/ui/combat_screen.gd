@@ -19,6 +19,10 @@ const RANK_PITCH := 195.0
 const TOP_BAND := 64.0
 const FADE_TOP := 700.0
 const FADE_BOTTOM := 780.0
+## The bottom HUD's frame, just below the units' bars and tokens, and the
+## portrait of the hero whose turn it is.
+const HUD_RECT := Rect2(14, 776, 1892, 298)
+const HUD_PORTRAIT := Rect2(40, 800, 104, 104)
 ## Close-up staging: where each side stands, and participant scale by count per side.
 const CLOSEUP_HERO_X := 620.0
 const CLOSEUP_ENEMY_X := 1300.0
@@ -59,8 +63,11 @@ var _tint: ColorRect
 var _ink: Control
 var _top_band: Control
 var _hud: Control
-var _hero_portrait: TextureRect
+var _hud_frame := UiStyle.frame()
+## The hero whose turn it is, for the HUD's portrait.
+var _hero_def: UnitDef
 var _hero_name: Label
+var _hero_status: Label
 var _skill_text: RichTextLabel
 var _skill_name: Label
 var _pips: RankPips
@@ -345,7 +352,9 @@ func _begin_player_turn() -> void:
 	_set_active(_views.get(actor.uid))
 	_queue.show_units(_battle.turn_order())
 	_hero_name.text = actor.display_name
-	_hero_portrait.texture = _portrait_texture(actor)
+	_hero_status.text = "%d / %d HP     Stress %d / %d" % [actor.hp, actor.max_hp, actor.stress, Rules.STRESS_MAX]
+	_hero_def = actor.def
+	_hud.queue_redraw()
 	_clear_skill_row()
 	var preferred: SkillDef = null
 	var actions := _battle.actions_for(actor)
@@ -1018,19 +1027,6 @@ func _rank_center(rank: int, hero: bool) -> float:
 	return ENEMY_RANK_1_X + (rank - 1) * RANK_PITCH
 
 
-func _portrait_texture(unit: Combatant) -> Texture2D:
-	var sprite := unit.def.sprite
-	if sprite == null:
-		return null
-	var atlas := AtlasTexture.new()
-	atlas.atlas = sprite
-	var region := UiStyle.portrait_region(sprite)
-	# A wide crop of the head and shoulders for the 110x60 slot.
-	atlas.region = Rect2(region.position.x, region.position.y + region.size.y * 0.1, region.size.x,
-			region.size.x * 60.0 / 110.0)
-	return atlas
-
-
 func _name_of(uid: int) -> String:
 	return _units[uid].display_name if _units.has(uid) else "?"
 
@@ -1079,10 +1075,10 @@ func _layout_phone() -> void:
 	_end_panel.size = size
 	_touch_hud.size = size
 	var s := _stage.scale.x
-	var hud_top := _stage.position.y + 840.0 * s
 	var left := _stage.position.x
 	var right := _stage.position.x + STAGE_SIZE.x * s
-	_info_button.position = Vector2(left + 12, hud_top + 20)
+	# Under the hero's portrait, where the skill text sits on desktop.
+	_info_button.position = Vector2(left + HUD_PORTRAIT.position.x * s, _stage.position.y + (HUD_PORTRAIT.end.y + 12) * s)
 	_confirm_button.position = Vector2(right - _confirm_button.size.x - 12, size.y - _confirm_button.size.y - 10)
 	_target_info.position = Vector2(right - 222, _confirm_button.position.y - 52)
 	_target_info.size = Vector2(210, 48)
@@ -1097,6 +1093,8 @@ func _build() -> void:
 	_tint.color = Color(CLOSEUP_TINT, 0.0)
 	_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_field.add_child(_tint)
+	# Over the battlefield and its units, under the bands and the HUD; the light flickers like a torch.
+	_stage.add_child(Atmosphere.new(0.35))
 
 	_ink = _layer(_stage, STAGE_SIZE)
 	_ink.draw.connect(_draw_ink)
@@ -1128,66 +1126,64 @@ func _build() -> void:
 	_queue.size = _queue.custom_minimum_size
 	_stage.add_child(_queue)
 
-	# Bottom HUD on black: hero (left), skill bar and preview (centre), target (right).
+	# Bottom HUD, a framed bar below the units' bars and tokens: hero (left),
+	# skill bar and preview (centre), target (right).
 	_hud = _layer(_stage, STAGE_SIZE)
 	_hud.draw.connect(_draw_hud_decor)
-	_hero_portrait = TextureRect.new()
-	_hero_portrait.position = Vector2(40, 792)
-	_hero_portrait.size = Vector2(110, 60)
-	_hero_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_hero_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_hero_portrait.material = UiStyle.greyscale(0.9)
-	_hud.add_child(_hero_portrait)
 	_hero_name = _label(32, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
-	_hero_name.position = Vector2(164, 792)
-	_hero_name.size = Vector2(400, 60)
+	_hero_name.position = Vector2(HUD_PORTRAIT.end.x + 18, HUD_PORTRAIT.position.y - 4)
+	_hero_name.size = Vector2(400, 50)
 	_hero_name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hud.add_child(_hero_name)
+	_hero_status = _label(18, UiStyle.TEXT_DIM)
+	_hero_status.position = Vector2(HUD_PORTRAIT.end.x + 18, HUD_PORTRAIT.position.y + 50)
+	_hero_status.size = Vector2(400, 30)
+	_hud.add_child(_hero_status)
 	_skill_text = RichTextLabel.new()
 	_skill_text.bbcode_enabled = true
 	_skill_text.scroll_active = false
-	_skill_text.position = Vector2(40, 866)
-	_skill_text.size = Vector2(520, 200)
+	_skill_text.position = Vector2(HUD_PORTRAIT.position.x, HUD_PORTRAIT.end.y + 12)
+	_skill_text.size = Vector2(520, 150)
 	_skill_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_skill_text.add_theme_font_size_override("normal_font_size", 19)
 	_skill_text.add_theme_font_size_override("italics_font_size", 17)
 	_hud.add_child(_skill_text)
 	_skill_name = _label(28, UiStyle.TEXT, UiStyle.DISPLAY_FONT)
 	_skill_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_skill_name.position = Vector2(560, 772)
+	_skill_name.position = Vector2(560, 790)
 	_skill_name.size = Vector2(800, 40)
 	_hud.add_child(_skill_name)
 	_pips = RankPips.new()
-	_pips.position = Vector2(560, 820)
+	_pips.position = Vector2(560, 834)
 	_pips.size = Vector2(800, 22)
 	_hud.add_child(_pips)
 	_skill_row = HBoxContainer.new()
-	_skill_row.position = Vector2(560, 852)
+	_skill_row.position = Vector2(560, 864)
 	_skill_row.size = Vector2(800, 100)
 	_skill_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_skill_row.add_theme_constant_override("separation", 14)
 	_skill_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hud.add_child(_skill_row)
 	_preview = PreviewStrip.new()
-	_preview.position = Vector2(560, 968)
+	_preview.position = Vector2(560, 974)
 	_preview.size = Vector2(800, 80)
 	_hud.add_child(_preview)
 	_target_panel = TargetPanel.new()
-	_target_panel.position = Vector2(1344, 786)
-	_target_panel.size = Vector2(576, 260)
+	_target_panel.position = Vector2(1344, 794)
+	_target_panel.size = Vector2(556, 260)
 	_hud.add_child(_target_panel)
 	_hud.hide()
 	if Device.phone:
 		# Too small to read once the stage shrinks: the phone controls show these instead.
-		for node: Control in [top_left, _skill_text, _target_panel, _preview]:
+		for node: Control in [top_left, _skill_text, _target_panel, _preview, _hero_status]:
 			node.hide()
 		_skill_row.scale = Vector2(1.3, 1.3)
 		_skill_row.position.x = STAGE_SIZE.x / 2.0 - _skill_row.size.x * 1.3 / 2.0
-		_skill_row.position.y = 840
+		_skill_row.position.y = 850
 		_hero_name.add_theme_font_size_override("font_size", 48)
-		_hero_name.size.x = 600
+		_hero_name.size = Vector2(600, HUD_PORTRAIT.size.y)
 		_skill_name.add_theme_font_size_override("font_size", 40)
-		_skill_name.position.y = 760
+		_skill_name.position.y = 786
 		_skill_name.size.y = 54
 
 	_closeup_title = _label(44, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
@@ -1304,14 +1300,13 @@ func _phone_button(text: String, action: Callable, min_size: Vector2, font_size:
 	return button
 
 
-## Rules framing the hero name, and the thin diamond outline behind the skill name.
+## The HUD's frame, rules between its three parts, and the hero's portrait.
 func _draw_hud_decor() -> void:
-	for y: float in [786.0, 858.0]:
-		_rule(Vector2(30, y), Vector2(560, y))
-	_rule(Vector2(1360, 786), Vector2(1890, 786))
-	var apex := Vector2(960, 746)
-	var points := PackedVector2Array([apex + Vector2(-240, 120), apex, apex + Vector2(240, 120)])
-	_hud.draw_polyline(points, UiStyle.RULE, 1.5)
+	_hud_frame.draw(_hud.get_canvas_item(), HUD_RECT)
+	for x: float in [580.0, 1336.0]:
+		_rule(Vector2(x, HUD_RECT.position.y + 22), Vector2(x, HUD_RECT.end.y - 22))
+	if _hero_def:
+		UiStyle.draw_portrait(_hud, HUD_PORTRAIT, _hero_def)
 
 
 ## A thin grey rule that fades out at both ends.
