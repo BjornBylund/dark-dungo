@@ -156,19 +156,13 @@ func battle(seed_value: int) -> Battle:
 
 
 func _count(outcome: Dictionary) -> void:
-	_add(totals, {n = 1, wins = int(outcome.win), stalled = int(outcome.stalled), lost = outcome.lost,
+	BalanceSweep.tally(totals, {n = 1, wins = int(outcome.win), stalled = int(outcome.stalled), lost = outcome.lost,
 			stress = outcome.stress, deaths = outcome.deaths, rounds = outcome.rounds})
 	for hero: UnitDef in outcome.hero_lost:
-		_add(heroes.get_or_add(hero, {}), {n = 1, lost = outcome.hero_lost[hero], died = int(outcome.hero_died[hero])})
-	for skill: SkillDef in outcome.uses:
-		uses[skill] = uses.get(skill, 0) + outcome.uses[skill]
-	for hero: UnitDef in outcome.turns:
-		turns[hero] = turns.get(hero, 0) + outcome.turns[hero]
-
-
-static func _add(entry: Dictionary, values: Dictionary) -> void:
-	for name: String in values:
-		entry[name] = entry.get(name, 0) + values[name]
+		BalanceSweep.tally(heroes.get_or_add(hero, {}), {n = 1, lost = outcome.hero_lost[hero],
+				died = int(outcome.hero_died[hero])})
+	BalanceSweep.tally(uses, outcome.uses)
+	BalanceSweep.tally(turns, outcome.turns)
 
 
 # --- Results ---

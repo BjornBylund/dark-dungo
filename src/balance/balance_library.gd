@@ -29,8 +29,6 @@ var campaign: CampaignDef
 var sandbox: SandboxDef
 ## The tool's presets and targets.
 var targets: BalanceTargets
-## Counts every change, undo and redo, so results can tell they are out of date.
-var version := 0
 var heroes: Array[UnitDef] = []
 var enemies: Array[UnitDef] = []
 var encounters: Array[EncounterDef] = []
@@ -38,10 +36,13 @@ var trinkets: Array[TrinketDef] = []
 var history := UndoRedo.new()
 var _relay := Relay.new()
 
-## Per history entry, by its index: {serial, roots}. A root is unsaved while
-## the newest applied entry touching it isn't the one it was saved at.
+## Per history entry, by its index: {serial, roots}. Every change gets a new
+## serial, a merged one too. A root is unsaved while the newest applied entry
+## touching it isn't the one it was saved at.
 var _entries: Array[Dictionary] = []
 var _next_serial := 1
+## The state with no history applied: as loaded, or as discard() left it.
+var _base_serial := 0
 ## Root -> the serial of the entry it was saved at (0 for as loaded).
 var _saved_at: Dictionary[Resource, int] = {}
 ## Instance ids of resources that have a file: their ids are locked.
@@ -163,18 +164,26 @@ func _commit(action: String, touched: Array[Resource], steps: Callable, merge: b
 	history.commit_action()
 	var index := history.get_current_action()
 	if history.get_history_count() == count_before and index == current_before:
+		# Merged into the last entry: it's still a new state, saved or simulated by nothing yet.
+		_entries[index].serial = _next_serial
 		for root in touched:
 			if root not in _entries[index].roots:
 				_entries[index].roots.append(root)
-		return
-	_entries.resize(index)
-	_entries.append({serial = _next_serial, roots = touched.duplicate()})
+	else:
+		_entries.resize(index)
+		_entries.append({serial = _next_serial, roots = touched.duplicate()})
 	_next_serial += 1
 
 
 func _announce(touched: Array[Resource]) -> void:
-	version += 1
 	edited.emit(touched, not history.is_committing_action())
+
+
+## Names the content's current state: it changes with every edit, and undoing
+## back to a state gives its name back, so results can tell whether they fit.
+func state() -> int:
+	var index := history.get_current_action()
+	return _entries[index].serial if index >= 0 else _base_serial
 
 
 func undo() -> void:
@@ -332,15 +341,15 @@ func encounters_with(enemy: UnitDef) -> Array[EncounterDef]:
 
 # --- Saving ---
 
-## Writes every unsaved root to its file; new ones get a file named after
-## their id (or name) in their kind's folder, and are written first so files
-## listing them refer to it.
+## Writes every unsaved root to its file. New ones get a file named after their
+## id (or name) in their kind's folder before anything is written, so files
+## that refer to them, new ones included, link to that file.
 func save() -> Error:
 	var pending := unsaved()
-	pending.sort_custom(func(a: Resource, b: Resource) -> bool: return a.resource_path == "" and b.resource_path != "")
 	for root in pending:
 		if root.resource_path == "":
 			root.resource_path = _new_path(root)
+	for root in pending:
 		var error := ResourceSaver.save(root, root.resource_path)
 		if error != OK:
 			return error
@@ -373,4 +382,5 @@ func discard() -> void:
 	_entries.clear()
 	_saved_at.clear()
 	_last_field = ""
-	version += 1
+	_base_serial = _next_serial
+	_next_serial += 1

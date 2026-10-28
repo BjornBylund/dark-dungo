@@ -62,6 +62,51 @@ func test_quick_edits_of_one_field_undo_together() -> void:
 	_undo_all(library)
 
 
+func test_the_state_comes_back_with_undo() -> void:
+	var library := BalanceLibrary.new()
+	var enemy := library.enemies[0]
+	var start := library.state()
+	library.set_value(enemy, enemy, &"max_hp", enemy.max_hp + 1)
+	var edited := library.state()
+	assert_ne(edited, start)
+	library.set_value(enemy, enemy, &"max_hp", enemy.max_hp + 1)
+	assert_ne(library.state(), edited, "a merged edit is a new state too")
+	library.undo()
+	assert_eq(library.state(), start)
+	_undo_all(library)
+
+
+func test_a_quick_edit_after_saving_is_unsaved() -> void:
+	DirAccess.make_dir_recursive_absolute(TEMP_FOLDER)
+	var library := BalanceLibrary.new()
+	library.folders[BalanceLibrary.Kind.TRINKET] = TEMP_FOLDER
+	var copy: TrinketDef = library.duplicate_root(library.trinkets[0])
+	library.set_value(copy, copy, &"price", 100)
+	assert_eq(library.save(), OK)
+	library.set_value(copy, copy, &"price", 200)
+	assert_true(library.is_unsaved(copy), "merged into the saved step, but changed since")
+	DirAccess.remove_absolute(copy.resource_path)
+	DirAccess.remove_absolute(TEMP_FOLDER)
+	_undo_all(library)
+
+
+func test_new_files_link_to_each_other() -> void:
+	DirAccess.make_dir_recursive_absolute(TEMP_FOLDER)
+	var library := BalanceLibrary.new()
+	library.folders[BalanceLibrary.Kind.HERO] = TEMP_FOLDER
+	library.folders[BalanceLibrary.Kind.TRINKET] = TEMP_FOLDER
+	var hero: UnitDef = library.duplicate_root(library.heroes[0])
+	var trinket: TrinketDef = library.duplicate_root(library.trinkets[0])
+	library.set_value(trinket, trinket, &"hero", hero)
+	assert_eq(library.save(), OK)
+	var loaded: TrinketDef = ResourceLoader.load(trinket.resource_path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	assert_eq(loaded.hero, hero, "linked to the new hero's file, not a copy inside the trinket's")
+	DirAccess.remove_absolute(trinket.resource_path)
+	DirAccess.remove_absolute(hero.resource_path)
+	DirAccess.remove_absolute(TEMP_FOLDER)
+	_undo_all(library)
+
+
 func test_duplicates_are_independent_and_unsaved() -> void:
 	var library := BalanceLibrary.new()
 	var hero := library.heroes[0]

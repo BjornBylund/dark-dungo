@@ -18,6 +18,16 @@ func test_finishes_off_a_dangerous_enemy_over_chipping_a_healthy_one() -> void:
 	assert_eq(choice[1].display_name, "Assassin")
 
 
+func test_finishes_the_last_enemy_even_at_a_cost() -> void:
+	var lash := Fixtures.attack(4, 6)
+	lash.self_damage = 6
+	var hero := Fixtures.unit("Hero", 50, 50, [lash])
+	var battle := _waiting_for(hero, [Fixtures.unit("Spitter", 15, 0, [Fixtures.attack(1, 1)])])
+	battle.heroes[0].hp = 12
+	battle.enemies[0].hp = 2
+	assert_eq(AutoPlayer.best(battle)[0], lash, "attacks rather than passing")
+
+
 func test_heals_an_ally_on_deaths_door_over_a_small_hit() -> void:
 	var heal := SkillDef.new()
 	heal.id = &"heal"

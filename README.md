@@ -112,7 +112,7 @@ The **balance tool** edits heroes, enemies, encounters and trinkets with their n
   - **Paired fights:** every hero skill and trinket is measured with and without it.
   - **Result columns:** what the run found, beside the numbers on paper. Hover a cell for its margin of error.
   - **Flags:** amber marks an encounter that misses its target, or a hero, skill or trinket that stands out.
-  - **Out of date:** results grey out after an edit.
+  - **Out of date:** results grey out after an edit, and come back if you undo it.
   - **Pin:** keeps a run to compare later ones with, in the **vs pin** column.
   - **Targets:** opens the presets and targets (`content/balance_targets.tres`).
 - **Arena tab:** one fight of your choosing, played 200 times again after every change.

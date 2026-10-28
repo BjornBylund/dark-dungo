@@ -32,8 +32,12 @@ var _stress_label: Label
 var _slots_box: HBoxContainer
 var _summary: RichTextLabel
 var _more: Button
+var _watch: Button
+var _play: Button
 ## Per slot: {hero_label: Label, skills: {SkillDef: Button}}, to show results in place.
 var _slot_views: Array[Dictionary] = []
+## The content changed: names and kits on the picks may be out of date.
+var _stale := false
 
 
 func _init(content: BalanceLibrary) -> void:
@@ -44,7 +48,7 @@ func _init(content: BalanceLibrary) -> void:
 	add_theme_constant_override("separation", 10)
 	_build()
 	library.edited.connect(func(_roots: Array[Resource], _from_history: bool) -> void:
-		_rebuild.call_deferred()
+		_stale = true
 		_schedule_restart(RESTART_DELAY))
 	arena.restart()
 
@@ -55,7 +59,11 @@ func _process(delta: float) -> void:
 		if _restart_in < 0.0:
 			arena.restart()
 			_show_results()
-	if paused or not is_visible_in_tree() or arena.is_done():
+	if not is_visible_in_tree():
+		return
+	if _stale:
+		_rebuild()
+	if paused or arena.is_done():
 		return
 	arena.step(FRAME_BUDGET)
 	_show_in -= delta
@@ -118,12 +126,13 @@ func _build() -> void:
 	add_child(_slots_box)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
-	var watch_button := _small_button("▶ Watch", "Open the fight in the combat screen, played by the bot",
+	_watch = _small_button("▶ Watch", "Open the fight in the combat screen, played by the bot",
 			func() -> void: watch.emit(true))
-	watch_button.add_theme_color_override("font_color", UiStyle.GOLD)
-	actions.add_child(watch_button)
-	actions.add_child(_small_button("Play it", "Open the fight in the combat screen and play it yourself",
-			func() -> void: watch.emit(false)))
+	_watch.add_theme_color_override("font_color", UiStyle.GOLD)
+	actions.add_child(_watch)
+	_play = _small_button("Play it", "Open the fight in the combat screen and play it yourself",
+			func() -> void: watch.emit(false))
+	actions.add_child(_play)
 	_more = _small_button("More fights", "Play %d fights for narrower margins" % BalanceArena.MORE, func() -> void:
 		arena.restart(BalanceArena.MORE)
 		_restart_in = -1.0
@@ -139,8 +148,20 @@ func _build() -> void:
 	_rebuild()
 
 
-## Fills the picks and the four slots from the arena and the library.
+## Fills the picks and the four slots from the arena and the library, first
+## dropping what the content no longer has: a deleted encounter, skills gone
+## from a hero's kit, trinkets gone or no longer theirs to wear.
 func _rebuild() -> void:
+	_stale = false
+	if arena.encounter not in library.encounters:
+		arena.encounter = library.encounters[0] if not library.encounters.is_empty() else null
+	for slot in arena.slots:
+		var hero: UnitDef = slot.hero
+		if hero == null:
+			continue
+		slot.skills = slot.skills.filter(func(skill: SkillDef) -> bool: return skill in hero.skills)
+		slot.trinkets = slot.trinkets.filter(func(trinket: TrinketDef) -> bool:
+			return trinket in library.trinkets and (trinket.hero == null or trinket.hero == hero))
 	_encounter_pick.clear()
 	for encounter in library.encounters:
 		var roles := library.roles_of(encounter)
@@ -262,6 +283,8 @@ func _trinket_pick(index: int, place: int, hero: UnitDef) -> OptionButton:
 func _show_results() -> void:
 	if not is_instance_valid(_summary):
 		return
+	_watch.disabled = not arena.is_ready()
+	_play.disabled = not arena.is_ready()
 	if not arena.is_ready():
 		_summary.text = "Pick an encounter and at least one hero."
 		return
@@ -281,7 +304,8 @@ func _show_results() -> void:
 		if not arena.previous.is_empty():
 			progress += "   Before the last change: win %s, HP lost %s (now %s, %s)" % [
 					UiStyle.percent(arena.previous.win), UiStyle.percent(arena.previous.lost),
-					_signed(win - arena.previous.win), _signed(arena.rate("lost") - arena.previous.lost)]
+					BalanceResultColumns.signed(win - arena.previous.win),
+					BalanceResultColumns.signed(arena.rate("lost") - arena.previous.lost)]
 		lines.append("[color=#%s]%s[/color]" % [UiStyle.TEXT_DIM.to_html(false), progress])
 	_summary.text = "\n".join(lines)
 	for i in _slot_views.size():
@@ -295,10 +319,6 @@ func _show_results() -> void:
 			var button: Button = view.skills[skill]
 			var share := arena.usage(hero, skill)
 			button.text = skill.display_name + ("   %s" % UiStyle.percent(share) if button.button_pressed and n > 0 else "")
-
-
-static func _signed(share: float) -> String:
-	return "%+d%%" % roundi(share * 100.0)
 
 
 func _label(text: String) -> Label:

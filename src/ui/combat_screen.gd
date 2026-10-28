@@ -213,6 +213,14 @@ func _start_arena() -> void:
 		_pump()
 
 
+## Restart (R) outside the campaign: the Arena's fight again, or a new sandbox run.
+func _restart() -> void:
+	if arena:
+		_start_arena()
+	else:
+		_new_run()
+
+
 func _close_arena() -> void:
 	_generation += 1
 	closed.emit()
@@ -581,10 +589,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_S:
 			_toggle_speed()
 		KEY_R:
-			if arena:
-				_start_arena()
-			elif _mission_run == null:
-				_new_run()
+			if _mission_run == null:
+				_restart()
 		KEY_ESCAPE:
 			if arena:
 				_close_arena()
@@ -1111,7 +1117,7 @@ func _build() -> void:
 	for node: Control in [_wave_label, _log_button, _speed_button]:
 		top_left.add_child(node)
 	if _mission_run == null:
-		top_left.add_child(_button("Restart (R)", _new_run))
+		top_left.add_child(_button("Restart (R)", _restart))
 	_round_label = _label(28, UiStyle.GREY, UiStyle.DISPLAY_FONT)
 	_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_round_label.position = Vector2(1240, 14)
@@ -1263,7 +1269,7 @@ func _build_phone_controls() -> void:
 	_phone_speed = _phone_button("Speed %dx" % roundi(_speed), _toggle_speed, Vector2(116, 44), 18)
 	top.add_child(_phone_speed)
 	if _mission_run == null:
-		top.add_child(_phone_button("Restart", _new_run, Vector2(110, 44), 18))
+		top.add_child(_phone_button("Restart", _restart, Vector2(110, 44), 18))
 
 	_touch_hud = _layer(_ui, size)
 	_touch_hud.hide()

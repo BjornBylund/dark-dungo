@@ -3,8 +3,8 @@
 class_name AutoPlayer
 extends RefCounted
 
-## Past this round heroes value healing and support far less and fight, so a
-## heal that matches the enemy's hits can't drag a fight on forever.
+## Past this round heroes value everything but damage far less (healing,
+## Block, Guard, buffs...) and fight, so defending can't drag a fight on forever.
 const HEAL_UNTIL_ROUND := 20
 ## HP one point of stress is worth.
 const STRESS_HP := 1.5
@@ -15,6 +15,8 @@ const WEAR_ROUNDS := 3.0
 ## Share of an expected hit one Block or Dodge stack is worth: less than the
 ## half it stops, as the hit may never come or be ignored.
 const GUARD_SHARE := 0.4
+## What ending the fight is worth, in HP, on top of the last enemy's threat.
+const FIGHT_OVER := 20.0
 
 
 ## The usable skill and target worth the most, in HP: damage dealt and kills
@@ -70,6 +72,7 @@ class View:
 	var attacks := 0.0
 	## Whether anyone in the party can cash in a Combo.
 	var combo_users := false
+	## What everything but damage counts for: less once the fight has gone on long.
 	var support_weight := 1.0
 	var _living := 0
 	var _taunting: Array[Combatant] = []
@@ -139,14 +142,20 @@ class View:
 			SkillDef.Kind.SWAP:
 				return _swap_value(target)
 		if skill.targets_corpse:
-			return 1.0 + _corpse_value(skill, target) + _self_value(skill, 0.0)
-		var total := 0.0
+			return _weigh(0.0, 1.0 + _corpse_value(skill, target) + _self_value(skill, 0.0, target))
+		var damage := 0.0
+		var support := 0.0
 		var crit := 0.0
 		for unit in _affected(skill, target):
 			var part := _target_value(skill, unit)
-			total += part.value
+			damage += part.damage
+			support += part.support
 			crit = maxf(crit, part.crit)
-		return total + _self_value(skill, crit)
+		return _weigh(damage, support + _self_value(skill, crit, target))
+
+	## Damage at full worth, everything else (costs too) at support_weight.
+	func _weigh(damage: float, support: float) -> float:
+		return damage + support * support_weight
 
 	## The units a skill reaches with `primary` chosen: every living one in range for multi-target skills.
 	func _affected(skill: SkillDef, primary: Combatant) -> Array[Combatant]:
@@ -160,36 +169,48 @@ class View:
 				result.append(unit)
 		return result
 
-	## {value, crit}: what the skill does to one target.
+	## {damage, support, crit}: what the skill does to one target, split into the
+	## damage it deals (DoTs too) and everything else.
 	func _target_value(skill: SkillDef, target: Combatant) -> Dictionary:
 		var preview := battle.preview(actor, skill, target)
 		var hit: float = preview.hit_chance
 		var crit: float = preview.crit_chance
 		var foe := target.is_hero != actor.is_hero
-		var total := 0.0
+		var damage := 0.0
+		var support := 0.0
 		if skill.deals_damage() and foe:
-			total += _damage_value(skill, target, preview)
+			damage += _damage_value(skill, target, preview)
 			if skill.can_be_riposted and target.has_token(Tokens.RIPOSTE) and target.def.riposte_skill:
-				total -= hit_of(target) * 0.7
+				damage -= hit_of(target) * 0.7
 		if skill.heals() and not foe and (skill.heal_below >= 1.0 or target.hp_fraction() < skill.heal_below):
 			var healed: float = (preview.heal_min + preview.heal_max) / 2.0 * (1.0 + crit * (Rules.HEAL_CRIT_MULTIPLIER - 1.0))
-			total += _heal_value(target, healed)
+			support += _heal_value(target, healed)
 		if skill.stress != 0 and not foe:
-			total += _relief_value(target, -skill.stress)
+			support += _relief_value(target, -skill.stress)
+		var pierce := Rules.SKILL_RANK_PIERCE * (actor.skill_rank(skill) - 1)
+		for effect in skill.effects:
+			if not _allowed(effect, skill, target):
+				continue
+			var odds := effect.chance * (crit if effect.on_crit_only else 1.0) * (hit if foe else 1.0)
+			var worth := odds * _effect_value(effect, target, crit, pierce)
+			if foe and effect.kind in [EffectDef.Kind.DOT, EffectDef.Kind.DAMAGE]:
+				damage += worth
+			else:
+				support += worth
+		return {damage = damage, support = support, crit = crit}
+
+	## Whether an effect would apply, as Battle._effect_allowed decides: the
+	## token it needs on `target` and the user, and enough tier tokens.
+	## (Whether it needs a crit is weighed by the crit chance instead.)
+	func _allowed(effect: EffectDef, skill: SkillDef, target: Combatant) -> bool:
+		if effect.requires_target_token != &"" and not target.has_token(effect.requires_target_token):
+			return false
+		if effect.requires_user_token != &"" and actor.has_token(effect.requires_user_token) == effect.user_lacks:
+			return false
 		var tier := 0
 		for token in skill.tier_tokens:
 			tier += actor.token_count(token)
-		var pierce := Rules.SKILL_RANK_PIERCE * (actor.skill_rank(skill) - 1)
-		for effect in skill.effects:
-			if effect.requires_target_token != &"" and not target.has_token(effect.requires_target_token):
-				continue
-			if effect.requires_user_token != &"" and actor.has_token(effect.requires_user_token) == effect.user_lacks:
-				continue
-			if tier < effect.min_tier:
-				continue
-			var odds := effect.chance * (crit if effect.on_crit_only else 1.0) * (hit if foe else 1.0)
-			total += odds * _effect_value(effect, target, crit, pierce)
-		return {value = total, crit = crit}
+		return tier >= effect.min_tier
 
 	func _damage_value(skill: SkillDef, target: Combatant, preview: Dictionary) -> float:
 		var hit: float = preview.hit_chance
@@ -214,20 +235,25 @@ class View:
 		var dealt := minf(expected, target.hp)
 		# Every hit brings the kill closer: its share of the enemy's HP, of the turns it has left.
 		var wear := dealt / maxf(1.0, target.max_hp) * danger * WEAR_ROUNDS
-		return dealt + wear + kill * danger * lasting
+		# Killing the last enemy ends the fight, which is worth more than any cost of getting there.
+		var ending := FIGHT_OVER if threat.size() == 1 and target in threat else 0.0
+		return dealt + wear + kill * (danger + ending) * lasting
 
 	func _heal_value(target: Combatant, amount: float) -> float:
 		var missing := target.max_hp - target.hp
 		if missing <= 0:
 			return 0.0
 		var urgency := 2.0 if target.deaths_door else 1.3 if target.hp_fraction() < 0.35 else 1.0
-		return minf(amount, missing) * urgency * support_weight
+		return minf(amount, missing) * urgency
 
+	## Stress taken off a hero, or with a negative `amount`, put on them (a cost).
 	func _relief_value(target: Combatant, amount: float) -> float:
-		if amount <= 0.0 or target.stress <= 0:
+		if amount < 0.0:
+			return amount * STRESS_HP
+		if target.stress <= 0:
 			return 0.0
 		var urgency := 2.0 if target.stress >= 6 else 1.0
-		return minf(amount, target.stress) * STRESS_HP * urgency * support_weight
+		return minf(amount, target.stress) * STRESS_HP * urgency
 
 	## The chance an effect on an enemy gets past its resistance (allies never resist).
 	func _lands(target: Combatant, kind: StringName, crit: float, pierce: float, ignore: bool) -> float:
@@ -384,13 +410,15 @@ class View:
 					worth = amount * base * 0.2
 				else:
 					worth = amount * 0.5
-		return worth * side * rounds * support_weight
+		return worth * side * rounds
 
-	## The actor's own part: tokens and buffs on itself, its costs, and where a move leaves it.
-	func _self_value(skill: SkillDef, crit: float) -> float:
+	## The actor's own part: tokens and buffs on itself, its costs, and where a
+	## move leaves it. `target` stands in for what the targets held, for self
+	## effects that need a token on them.
+	func _self_value(skill: SkillDef, crit: float, target: Combatant) -> float:
 		var total := 0.0
 		for effect in skill.self_effects:
-			if effect.requires_user_token != &"" and actor.has_token(effect.requires_user_token) == effect.user_lacks:
+			if not _allowed(effect, skill, target):
 				continue
 			total += effect.chance * (crit if effect.on_crit_only else 1.0) * _effect_value(effect, actor, 0.0, 0.0)
 		if skill.self_heal_fraction > 0.0 and (skill.self_heal_below >= 1.0 or actor.hp_fraction() < skill.self_heal_below):
@@ -403,18 +431,27 @@ class View:
 		if skill.self_move != 0:
 			var rank := battle.rank_of(actor)
 			var after := clampi(rank - skill.self_move, 1, battle.side_of(actor).size())
-			total += (_reach(actor, after) - _reach(actor, rank)) * 0.5 * hit_of(actor)
+			total += (_useful_from(actor, after) - _useful_from(actor, rank)) * 0.5 * hit_of(actor)
 		return total
 
-	## How many of a unit's skills it could use from `rank`.
-	func _reach(unit: Combatant, rank: int) -> int:
-		return unit.skills.filter(func(s: SkillDef) -> bool: return rank in s.launch_ranks).size()
+	## How many of a unit's skills would have something to do from `rank`: ally
+	## and self skills, and attacks that reach a living enemy.
+	func _useful_from(unit: Combatant, rank: int) -> int:
+		var count := 0
+		for skill in unit.skills:
+			if rank not in skill.launch_ranks:
+				continue
+			if skill.side != SkillDef.TargetSide.ENEMY or battle.opponents_of(unit).any(func(foe: Combatant) -> bool:
+					return foe.is_active() and battle.covers_rank(foe, skill.target_ranks)):
+				count += 1
+		return count
 
-	## Swapping is worth what it gains the two heroes in usable skills.
+	## Swapping is worth the skills it brings into use for the two heroes, and costs a turn.
 	func _swap_value(other: Combatant) -> float:
 		var mine := battle.rank_of(actor)
 		var theirs := battle.rank_of(other)
-		var gain := _reach(actor, theirs) - _reach(actor, mine) + _reach(other, mine) - _reach(other, theirs)
+		var gain := _useful_from(actor, theirs) - _useful_from(actor, mine) \
+				+ _useful_from(other, mine) - _useful_from(other, theirs)
 		return gain * 0.5 * maxf(hit_of(actor), 1.0) - 1.0
 
 	## Clearing a corpse brings the enemies behind it forward, and its neighbours take the skill's effects.

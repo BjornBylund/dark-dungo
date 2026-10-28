@@ -76,7 +76,7 @@ After DD1's region progress and bosses:
 - **A boss mission** is a **long** map (20 columns) that ends at the region's boss instead of its finale. It pays a long mission's gold and XP and **double** heirlooms.
 - **The first win** against each region's boss lets a new hero join (see Recruiting), and opens the next region. A window in town offers the choice of hero.
 - **Coming back harder:** after a win the region's progress starts again from empty, and when it's full again its boss returns a tier harder: Apprentice, then Veteran, then Champion. Later wins pay but bring no recruit. After the Champion boss the region is **conquered**.
-- **The bosses**, each with escorts, built from mechanics the engine already has. They were tuned so fresh level-0 random parties won about 40–46% at Apprentice against the old bot. With the value-based bot, random loadouts and parties lined up by their skills' ranks, the balance tool's Quick sweep at Base now gives the Gravelord 95%, the Maw 64% and the Hollow Saint 46% (target 40–46%, in `content/balance_targets.tres`):
+- **The bosses**, each with escorts, built from mechanics the engine already has. They were tuned so fresh level-0 random parties won about 40–46% at Apprentice against the old bot. With the value-based bot, random loadouts and parties lined up by their skills' ranks, the balance tool's Quick sweep at Base now gives the Gravelord 92%, the Maw 65% and the Hollow Saint 48% (target 40–46%, in `content/balance_targets.tres`):
 
 | Region | Boss | Kit |
 |---|---|---|
@@ -153,7 +153,7 @@ One per region, fought in elite rooms with two regular enemies of the region, us
 | Burrows | **Broodmother** (2 ranks) | Blight sprays at the back ranks, a bleeding bite across the front two, a stress shriek |
 | Chapel | **High Priest** (ranks 2–4) | Party-wide stress, Vulnerable and Weaken curses, a sweeping scourge, heals its followers |
 
-Tuned so that a fresh level-0 party lost about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale, with the old bot. The value-based bot loses less at Base: about 50–54% to elites, 19–29% to normal fights and 30–39% to finales.
+Tuned so that a fresh level-0 party lost about 50–60% of its HP to an elite, against about 30% to a normal fight and 45% to a finale, with the old bot. The value-based bot loses less at Base: about 51–55% to elites, 19–29% to normal fights and 31–40% to finales.
 
 ### Hero growth
 
@@ -365,12 +365,16 @@ The kits brought these mechanics to the combat engine:
 - Block, Dodge, Stealth and Guard by the hits they are likely to stop (Guard only when the guard is the sturdier one)
 - Stun, Blind and Weak by the enemy turns they spoil; Vulnerable and Combo by the party's next hits
 - buffs, debuffs, DoTs after resistance, and costs like self-damage, stress, or moving out of range
+- moves and swaps by the attacks they open up against living enemies
+- ending the fight, which a kill of the last enemy is worth well above its costs
+
+Past round 20 everything but damage, costs included, counts for a third, so long fights end instead of turning into a stand-off of defending.
 
 It replaced a "sensible" bot that only healed allies under 50%, calmed stress of 5 or more, and otherwise hit hardest. That bot never used tokens, Guard, moves or Combo, so kits built on them looked weak.
 
 `tests/test_simulation.gd` plays full sandbox runs with the bot and a random player as a guard against stalemates. A human should land between the two.
 
-`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 70% of short missions, 57% of medium and 46% of long (heroes without trinkets). The old bot finished 46%, 28% and 20%. About 1 in 400 missions has a fight reach the 60-round cap. Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear.
+`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 71% of short missions, 63% of medium and 43% of long (heroes without trinkets). The old bot finished 46%, 28% and 20%. None of 720 missions had a fight reach the 60-round cap. The sweep's rare stalls are a lone hero left at rank 1 with no attack from there, against an enemy that heals faster than it's hurt. Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear.
 
 ## Balance tool
 
@@ -387,7 +391,7 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
   - **Trinkets:** rarity, class, price, whether listed, and their effects in words.
   - **Assumptions:** base heroes (level 0, rank-1 skills, the first 5 skills) against Apprentice enemies, over a 6-round fight. A unit uses its best ready skill each turn, so cooldowns and use limits count. Resisted effects are measured against the other side's average resistance. Effects that need a token or tier tokens (Stun vs Combo) don't count.
 - **Sweeps** (`BalanceSweep`, ▶ Run): simulated fights of the content on screen, saved or not, played by [the bot](#balance-snapshot) at one preset.
-  - **The sweep:** 100 fights per encounter (Quick). Each is a random party of four with five random skills each, lined up by the average rank their skills are used from. At presets with trinkets, each hero also wears two random trinkets they may wear, drawn with the tier's drop odds.
+  - **The sweep:** 100 fights per encounter (Quick). Each is a random party of four with five random skills each, at least one of them an attack when the hero has any, lined up by the average rank their skills are used from. At presets with trinkets, each hero also wears two random trinkets they may wear, drawn with the tier's drop odds.
   - **Paired fights** for every hero skill (20 pairs at Quick) and trinket (16 pairs), on random elites, finales and bosses. Each pair is the same party, seed and encounter, once with it and once without: the skill is swapped for another of the hero's, the trinket taken off. The difference in wins and in party HP lost is what it is worth. HP lost is the sharper of the two, since most fights are won.
   - **Fixed seeds:** each fight's seed comes from what it measures and its number, so runs of the same content share their dice, and differences come from the changes.
   - **Run size:** Quick is about 7,400 fights in about 15 s. Thorough plays 4 times as many, in about a minute.
@@ -398,7 +402,7 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
   - **Enemies:** win rate and HP lost in fights against them, and their skills' use.
   - **Encounters:** win, HP lost, stress, deaths, rounds and their target.
   - **Trinkets:** with against without.
-  - **Out of date:** results grey out once anything is edited.
+  - **Out of date:** results grey out once anything is edited, and come back when undo returns to the content they were run on. Each change gives the content a new state; undo gives the old one back.
   - **Pin:** keeps a run, and later runs show their change against it.
 - **Presets and targets** live in `content/balance_targets.tres`, edited from the Targets button and left out of exports.
   - **Presets:** Base (level 0, rank-1 gear and skills, no trinkets), Apprentice (level 1, trinkets), Veteran (level 3, rank 3, Veteran enemies), Champion (level 5, rank 5, Champion enemies).

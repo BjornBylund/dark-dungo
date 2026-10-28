@@ -199,12 +199,13 @@ func _add_resource_list(parent: Container, object: Resource, name: StringName, t
 			]
 			_sections[item] = _section(body, _item_title(item), _item_key(item), false, func(item_body: VBoxContainer) -> void:
 				_add_fields(item_body, item), buttons)
+		var kind := String(_typed_class(items)).trim_suffix("Def").capitalize().to_lower()
 		var add := Button.new()
-		add.text = "+ Add %s" % String(_typed_class(items)).trim_suffix("Def").capitalize().to_lower()
+		add.text = "+ Add %s" % kind
 		add.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		add.pressed.connect(func() -> void:
-			var grown := items.duplicate()
-			grown.append(item_script.new())
+			var grown: Array = object.get(name).duplicate()
+			grown.append(_new_item(item_script, kind, grown))
 			_change(object, name, grown))
 		body.add_child(add)
 	_section(parent, "%s (%d)" % [title, items.size()], _field_key(object, name), not items.is_empty(), build)
@@ -228,6 +229,23 @@ func _add_nested(parent: Container, object: Resource, name: StringName, title: S
 	var remove: Array[Control] = [_small_button("✕", "Remove", func() -> void: _change(object, name, null))]
 	_sections[value] = _section(parent, "%s: %s" % [title, _item_title(value)], _item_key(value), false,
 			func(body: VBoxContainer) -> void: _add_fields(body, value), remove)
+
+
+## A new entry for a list: with a name, and an id none of `siblings` has, where it takes them.
+static func _new_item(item_script: Script, kind: String, siblings: Array) -> Resource:
+	var item: Resource = item_script.new()
+	if &"display_name" in item:
+		item.set(&"display_name", "New " + kind)
+	if &"id" in item:
+		var taken := siblings.map(func(each: Resource) -> StringName: return each.get(&"id"))
+		var base := "new_" + kind.to_snake_case()
+		var id := base
+		var n := 2
+		while StringName(id) in taken:
+			id = "%s_%d" % [base, n]
+			n += 1
+		item.set(&"id", StringName(id))
+	return item
 
 
 func _small_button(text: String, tooltip: String, action: Callable, enabled: bool = true) -> Button:
@@ -425,7 +443,7 @@ func _link_list_editor(object: Resource, name: StringName, value: Array) -> Cont
 		option.select(choices.find(value[i]))
 		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		option.item_selected.connect(func(index: int) -> void:
-			var changed := value.duplicate()
+			var changed: Array = object.get(name).duplicate()
 			changed[i] = choices[index]
 			_change(object, name, changed))
 		row.add_child(option)
@@ -435,8 +453,8 @@ func _link_list_editor(object: Resource, name: StringName, value: Array) -> Cont
 		box.add_child(row)
 	var footer := HBoxContainer.new()
 	var add := _small_button("+ Add", "Add one", func() -> void:
-		var grown := value.duplicate()
-		grown.append(value.back() if not value.is_empty() else choices[0])
+		var grown: Array = object.get(name).duplicate()
+		grown.append(grown.back() if not grown.is_empty() else choices[0])
 		_change(object, name, grown), not choices.is_empty())
 	footer.add_child(add)
 	if class_title == &"UnitDef":
@@ -459,13 +477,13 @@ func _ranks_editor(object: Resource, name: StringName, value: Array) -> HBoxCont
 		check.text = str(rank)
 		check.button_pressed = rank in value
 		check.toggled.connect(func(on: bool) -> void:
-			var changed := value.duplicate()
+			var changed: Array = object.get(name).duplicate()
 			if on and rank not in changed:
 				changed.append(rank)
 			elif not on:
 				changed.erase(rank)
 			changed.sort()
-			_change(object, name, changed))
+			_apply(object, name, changed))
 		row.add_child(check)
 	return row
 
@@ -495,7 +513,8 @@ func _list_editor(object: Resource, name: StringName, value: Array) -> LineEdit:
 	return edit
 
 
-## Key-value rows, like a trinket's stats.
+## Key-value rows, like a trinket's stats. Each change starts from the field's
+## current dictionary, as rows change it without rebuilding the form.
 func _dictionary_editor(object: Resource, name: StringName, value: Dictionary) -> VBoxContainer:
 	var box := VBoxContainer.new()
 	var whole := value.get_typed_value_builtin() == TYPE_INT
@@ -505,15 +524,16 @@ func _dictionary_editor(object: Resource, name: StringName, value: Dictionary) -
 		key_edit.text = str(key)
 		key_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var rename := func() -> void:
+			var current: Dictionary = object.get(name)
 			var new_key: Variant = StringName(key_edit.text.strip_edges())
 			if value.get_typed_key_builtin() == TYPE_STRING:
 				new_key = String(new_key)
-			if new_key == key or value.has(new_key):
+			if new_key == key or current.has(new_key) or not current.has(key):
 				return
-			var changed := value.duplicate()
+			var changed := current.duplicate()
 			changed.clear()
-			for each: Variant in value:
-				changed[new_key if each == key else each] = value[each]
+			for each: Variant in current:
+				changed[new_key if each == key else each] = current[each]
 			_change(object, name, changed)
 		key_edit.text_submitted.connect(func(_text: String) -> void: rename.call())
 		key_edit.focus_exited.connect(rename)
@@ -529,17 +549,17 @@ func _dictionary_editor(object: Resource, name: StringName, value: Dictionary) -
 		spin.select_all_on_focus = true
 		spin.custom_minimum_size.x = 120
 		spin.value_changed.connect(func(amount: float) -> void:
-			var changed := value.duplicate()
+			var changed: Dictionary = object.get(name).duplicate()
 			changed[key] = roundi(amount) if whole else amount
 			_apply(object, name, changed))
 		row.add_child(spin)
 		row.add_child(_small_button("✕", "Remove", func() -> void:
-			var changed := value.duplicate()
+			var changed: Dictionary = object.get(name).duplicate()
 			changed.erase(key)
 			_change(object, name, changed)))
 		box.add_child(row)
 	box.add_child(_small_button("+ Add", "Add an entry", func() -> void:
-		var changed := value.duplicate()
+		var changed: Dictionary = object.get(name).duplicate()
 		var key: Variant = StringName("new")
 		if value.get_typed_key_builtin() == TYPE_STRING:
 			key = "new"

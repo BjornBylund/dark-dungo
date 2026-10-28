@@ -20,7 +20,7 @@ func _init(content: BalanceLibrary, now: BalanceSweep.Results, pin: BalanceSweep
 	library = content
 	results = now
 	pinned = pin
-	stale = now != null and now.version != content.version
+	stale = now != null and now.state != content.state()
 	if now:
 		var skills: Array = []
 		for hero in content.heroes:
@@ -53,7 +53,7 @@ func hero_cells(hero: UnitDef) -> Array:
 	var flagged := BalanceFlags.hero_flagged(results, hero, library.targets)
 	return [
 		_cell(win, UiStyle.percent(win), "%d fights, ±%s" % [entry.n, _points(BalanceSweep.Results.margin(win, entry.n))]),
-		_cell(lead, _signed(lead), "Cast average %s; flagged beyond ±%s" % [UiStyle.percent(results.hero_average),
+		_cell(lead, signed(lead), "Cast average %s; flagged beyond ±%s" % [UiStyle.percent(results.hero_average),
 				_points(library.targets.hero_spread)], flagged),
 		_cell(BalanceSweep.Results.rate(entry, "lost"), UiStyle.percent(BalanceSweep.Results.rate(entry, "lost"))),
 		_cell(BalanceSweep.Results.rate(entry, "died"), UiStyle.percent(BalanceSweep.Results.rate(entry, "died"))),
@@ -70,9 +70,9 @@ func hero_skill_cells(skill: SkillDef) -> Array:
 	var cells: Array = [null, null, null, null, _usage(skill), null]
 	if not pair.is_empty():
 		var flagged := BalanceFlags.stands_out(results, skill, _middle_skills, library.targets)
-		cells[1] = _cell(pair.win, _signed(pair.win), "±%s over %d pairs" % [_points(pair.win_margin), pair.n], flagged)
-		cells[2] = _cell(pair.lost, _signed(pair.lost, 1), "±%s; skills' middle %s" % [_points(pair.lost_margin, 1),
-				_signed(_middle_skills.lost, 1)], flagged)
+		cells[1] = _cell(pair.win, signed(pair.win), "±%s over %d pairs" % [_points(pair.win_margin), pair.n], flagged)
+		cells[2] = _cell(pair.lost, signed(pair.lost, 1), "±%s; skills' middle %s" % [_points(pair.lost_margin, 1),
+				signed(_middle_skills.lost, 1)], flagged)
 		cells[5] = _pin(pair.lost, func(old: BalanceSweep.Results) -> Variant:
 			return old.pairs[skill].lost if old.pairs.has(skill) else null, 1)
 	return cells
@@ -168,9 +168,9 @@ func trinket_cells(trinket: TrinketDef) -> Array:
 		return [null, null, null]
 	var flagged := BalanceFlags.stands_out(results, trinket, _middle_trinkets, library.targets)
 	return [
-		_cell(pair.win, _signed(pair.win), "±%s over %d pairs" % [_points(pair.win_margin), pair.n], flagged),
-		_cell(pair.lost, _signed(pair.lost, 1), "±%s; trinkets' middle %s" % [_points(pair.lost_margin, 1),
-				_signed(_middle_trinkets.lost, 1)], flagged),
+		_cell(pair.win, signed(pair.win), "±%s over %d pairs" % [_points(pair.win_margin), pair.n], flagged),
+		_cell(pair.lost, signed(pair.lost, 1), "±%s; trinkets' middle %s" % [_points(pair.lost_margin, 1),
+				signed(_middle_trinkets.lost, 1)], flagged),
 		_pin(pair.lost, func(old: BalanceSweep.Results) -> Variant:
 			return old.pairs[trinket].lost if old.pairs.has(trinket) else null, 1),
 	]
@@ -198,12 +198,12 @@ func _pin(now: float, then: Callable, decimals: int = 0) -> Variant:
 	if old == null:
 		return null
 	var change: float = now - old
-	return _cell(change, _signed(change, decimals), "Pinned: %s at %s" % [_signed(old, decimals) if decimals > 0
+	return _cell(change, signed(change, decimals), "Pinned: %s at %s" % [signed(old, decimals) if decimals > 0
 			else UiStyle.percent(old), pinned.preset.name])
 
 
 ## A share as signed points: "+3%", or with decimals "-1.5%".
-static func _signed(share: float, decimals: int = 0) -> String:
+static func signed(share: float, decimals: int = 0) -> String:
 	var points := share * 100.0
 	if absf(points) < pow(10.0, -decimals) / 2.0:
 		return "0%"

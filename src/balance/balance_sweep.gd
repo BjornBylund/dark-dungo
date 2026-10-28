@@ -34,8 +34,8 @@ const PROGRESS_EVERY := 20
 
 var preset: BalancePreset
 var size: Size
-## The library's version when the copy was taken.
-var version := 0
+## The library's state() when the copy was taken.
+var state := 0
 var _copy: Copy
 var _counts := {}
 var _plan: Array[Dictionary] = []
@@ -139,7 +139,7 @@ class Copy:
 ## A sweep of `library`'s content as it stands. `counts` overrides COUNTS (for tests).
 static func of(library: BalanceLibrary, at: BalancePreset, run_size: Size, counts: Dictionary = {}) -> BalanceSweep:
 	var sweep := BalanceSweep.new(Copy.of(library), at, run_size, counts)
-	sweep.version = library.version
+	sweep.state = library.state()
 	return sweep
 
 
@@ -217,12 +217,13 @@ func start(workers: int = default_workers()) -> void:
 				"--", "--run=" + _folder, "--share=%d/%d" % [share, workers]]))
 
 
-## Stops the workers; results() then holds what they finished.
+## Stops the workers and drops their run folder.
 func cancel() -> void:
 	for pid in _workers:
 		if OS.is_process_running(pid):
 			OS.kill(pid)
 	_workers.clear()
+	_remove_folder(_folder)
 
 
 func is_finished() -> bool:
@@ -266,7 +267,7 @@ static func _write(path: String, text: String) -> void:
 		file.close()
 
 
-## Reads back what the workers wrote, once.
+## Reads back what the workers wrote, once, and drops the run folder.
 func _collect() -> void:
 	if _collected:
 		return
@@ -280,16 +281,27 @@ func _collect() -> void:
 		if played is Array:
 			for entry: Array in played:
 				_outcomes[int(entry[0])] = _decode(entry[1])
+	_remove_folder(_folder)
 
 
+## Drops run folders left behind over an hour ago (by a crash, say). Newer
+## ones may belong to a sweep still running elsewhere, like the terminal's.
 static func _clear_old_runs() -> void:
 	if not DirAccess.dir_exists_absolute(RUNS_FOLDER):
 		return
+	var hour_ago := Time.get_unix_time_from_system() - 3600
 	for run in DirAccess.get_directories_at(RUNS_FOLDER):
 		var folder := RUNS_FOLDER.path_join(run)
-		for file in DirAccess.get_files_at(folder):
-			DirAccess.remove_absolute(folder.path_join(file))
-		DirAccess.remove_absolute(folder)
+		if FileAccess.get_modified_time(folder.path_join("manifest.json")) < hour_ago:
+			_remove_folder(folder)
+
+
+static func _remove_folder(folder: String) -> void:
+	if folder == "" or not DirAccess.dir_exists_absolute(folder):
+		return
+	for file in DirAccess.get_files_at(folder):
+		DirAccess.remove_absolute(folder.path_join(file))
+	DirAccess.remove_absolute(folder)
 
 
 ## A fight's outcome with its resources written as places in the copy, for JSON.
@@ -419,11 +431,15 @@ func _setup(job: Dictionary) -> Dictionary:
 		var loadout: Array[SkillDef] = []
 		loadout.assign(pool.slice(0, Rules.SKILL_SLOTS))
 		var spare: Array = pool.slice(Rules.SKILL_SLOTS)
+		var measured: SkillDef = null
 		if job.group == &"skill" and hero == job.hero:
-			if job.subject not in loadout:
+			measured = job.subject
+			if measured not in loadout:
 				spare.append(loadout.back())
-				loadout[-1] = job.subject
-			spare.erase(job.subject)
+				loadout[-1] = measured
+			spare.erase(measured)
+		_ensure_attack(loadout, spare, measured)
+		if measured:
 			stand_in = spare[rng.randi_range(0, spare.size() - 1)] if not spare.is_empty() else null
 		loadouts.append(loadout)
 		# Every hero draws two trinkets either way, so both fights of a pair draw alike.
@@ -450,6 +466,24 @@ func _setup(job: Dictionary) -> Dictionary:
 		var loadout: Array[SkillDef] = loadouts[party.find(job.hero)]
 		loadout[loadout.find(job.subject)] = stand_in
 	return {party = party, loadouts = loadouts, trinkets = trinkets, encounter = encounter}
+
+
+## Gives a loadout without an attack the first one from `spare`, in place of its
+## last skill other than `keep`, as any player would take one. A party without
+## any can only stall.
+static func _ensure_attack(loadout: Array[SkillDef], spare: Array, keep: SkillDef) -> void:
+	var attacks := func(skill: SkillDef) -> bool: return skill.is_attack() and skill.deals_damage()
+	if loadout.any(attacks):
+		return
+	var found := spare.filter(attacks)
+	if found.is_empty():
+		return
+	for i in range(loadout.size() - 1, -1, -1):
+		if loadout[i] != keep:
+			spare.erase(found[0])
+			spare.append(loadout[i])
+			loadout[i] = found[0]
+			return
 
 
 ## A trinket `hero` may wear, not in `taken`, of a rarity drawn with the preset tier's drop odds.
@@ -520,7 +554,8 @@ static func _shuffle(items: Array, rng: RandomNumberGenerator) -> void:
 class Results:
 	var preset: BalancePreset
 	var size: Size
-	var version := 0
+	## The library's state() the fights were played on.
+	var state := 0
 	## Fights planned, and played (fewer if a worker failed or the run was stopped).
 	var fights := 0
 	var played := 0
@@ -553,7 +588,7 @@ func results() -> Results:
 	var result := Results.new()
 	result.preset = preset
 	result.size = size
-	result.version = version
+	result.state = state
 	result.fights = _plan.size()
 	result.seconds = _seconds
 	var original := _copy.original
@@ -615,9 +650,13 @@ static func _enemy_turns(enemy: UnitDef, uses: Dictionary) -> int:
 
 
 static func _add(totals: Dictionary, key: Resource, values: Dictionary) -> void:
-	var entry: Dictionary = totals.get_or_add(key, {})
-	for name: String in values:
-		entry[name] = entry.get(name, 0) + values[name]
+	tally(totals.get_or_add(key, {}), values)
+
+
+## Adds `values` into the running sums of `entry`, key by key.
+static func tally(entry: Dictionary, values: Dictionary) -> void:
+	for key: Variant in values:
+		entry[key] = entry.get(key, 0) + values[key]
 
 
 ## {n, win, win_margin, lost, lost_margin}: the mean differences of [win, lost]

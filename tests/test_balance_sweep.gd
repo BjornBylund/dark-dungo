@@ -95,9 +95,10 @@ func test_unsaved_edits_are_what_gets_simulated() -> void:
 	library.set_value(enemy, enemy, &"max_hp", 999)
 	var sweep := BalanceSweep.of(library, library.targets.preset_named("Base"), BalanceSweep.Size.QUICK, TINY)
 	assert_eq(sweep._copy.enemies[0].max_hp, 999)
+	assert_eq(sweep.state, library.state())
 	library.undo()
 	assert_eq(sweep._copy.enemies[0].max_hp, 999, "the copy keeps what was there at the start")
-	assert_eq(sweep.version, library.version - 1)
+	assert_ne(sweep.state, library.state(), "the content moved on")
 
 
 func test_worker_processes_play_the_same_fights() -> void:
