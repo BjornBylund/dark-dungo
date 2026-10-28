@@ -20,11 +20,11 @@ func _cast() -> Array[UnitDef]:
 	return cast
 
 
-func test_cast_has_eight_heroes_with_seven_skills_and_art() -> void:
+func test_cast_has_seven_heroes_with_eleven_skills_and_art() -> void:
 	var cast := _cast()
-	assert_eq(cast.size(), 8)
+	assert_eq(cast.size(), 7)
 	for hero in cast:
-		assert_eq(hero.skills.size(), 7, hero.display_name)
+		assert_eq(hero.skills.size(), 11, hero.display_name)
 		assert_true(hero.sprite != null, hero.display_name + " sprite")
 		for skill in hero.skills:
 			assert_true(skill.icon != null, "%s/%s icon" % [hero.display_name, skill.id])

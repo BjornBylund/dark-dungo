@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_iuvws"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_ns6tr"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_2jj7g"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_qasj4"]
+
+[sub_resource type="Resource" id="Resource_0or08"]
+script = ExtResource("4_qasj4")
+token = &"speed"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_iuflx"]
+script = ExtResource("3_2jj7g")
+when = 4
+effects = Array[ExtResource("4_qasj4")]([SubResource("Resource_0or08")])
+
+[sub_resource type="Resource" id="Resource_ho8hx"]
+script = ExtResource("4_qasj4")
+token = &"daze"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_t0g6l"]
+script = ExtResource("3_2jj7g")
+when = 6
+effects = Array[ExtResource("4_qasj4")]([SubResource("Resource_ho8hx")])
+malus = true
+
+[resource]
+script = ExtResource("2_ns6tr")
+id = &"adrenalizing_ash"
+display_name = "Adrenalizing Ash"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_2jj7g")]([SubResource("Resource_iuflx"), SubResource("Resource_t0g6l")])

@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_xqlph"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_ayyjl"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_tylm4"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_u0sir"]
+
+[sub_resource type="Resource" id="Resource_sytaj"]
+script = ExtResource("4_u0sir")
+token = &"weak"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_nhdhk"]
+script = ExtResource("4_u0sir")
+token = &"vulnerable"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_u3e1d"]
+script = ExtResource("4_u0sir")
+token = &"stun"
+chance = 0.1
+
+[sub_resource type="Resource" id="Resource_14vhr"]
+script = ExtResource("3_tylm4")
+when = 8
+to = 1
+effects = Array[ExtResource("4_u0sir")]([SubResource("Resource_sytaj"), SubResource("Resource_nhdhk"), SubResource("Resource_u3e1d")])
+pick_one = true
+
+[sub_resource type="Resource" id="Resource_yhgbd"]
+script = ExtResource("4_u0sir")
+token = &"immobilize"
+chance = 0.66
+
+[sub_resource type="Resource" id="Resource_x1jw6"]
+script = ExtResource("3_tylm4")
+when = 1
+effects = Array[ExtResource("4_u0sir")]([SubResource("Resource_yhgbd")])
+malus = true
+if_speed_at_most = 2
+
+[resource]
+script = ExtResource("2_ayyjl")
+id = &"clenching_claws"
+display_name = "Clenching Claws"
+rarity = 2
+price = 6500
+triggers = Array[ExtResource("3_tylm4")]([SubResource("Resource_14vhr"), SubResource("Resource_x1jw6")])

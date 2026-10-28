@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vahjm"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_8tj3e"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ywcxh"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_ui0m7"]
+
+[sub_resource type="Resource" id="Resource_c7wd3"]
+script = ExtResource("1_vahjm")
+stat = &"crit"
+amount = 0.15
+if_target = &"blight"
+
+[sub_resource type="Resource" id="Resource_w1hc0"]
+script = ExtResource("4_ui0m7")
+kind = 15
+amount = 2
+
+[sub_resource type="Resource" id="Resource_jm4mb"]
+script = ExtResource("3_ywcxh")
+when = 7
+effects = Array[ExtResource("4_ui0m7")]([SubResource("Resource_w1hc0")])
+
+[sub_resource type="Resource" id="Resource_6bhs1"]
+script = ExtResource("4_ui0m7")
+kind = 10
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_2ygpl"]
+script = ExtResource("3_ywcxh")
+when = 14
+effects = Array[ExtResource("4_ui0m7")]([SubResource("Resource_6bhs1")])
+if_resist = &"blight"
+
+[resource]
+script = ExtResource("2_8tj3e")
+id = &"kitchen_knives"
+display_name = "Kitchen Knives"
+rarity = 2
+boss_only = true
+bonuses = Array[ExtResource("1_vahjm")]([SubResource("Resource_c7wd3")])
+triggers = Array[ExtResource("3_ywcxh")]([SubResource("Resource_jm4mb"), SubResource("Resource_2ygpl")])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_oidpx"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_v7k5f"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_yotfr"]
+
+[resource]
+script = ExtResource("2_v7k5f")
+id = &"greater_sacrificial_host"
+display_name = "Greater Sacrificial Host"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"resist_blight": 0.66
+})

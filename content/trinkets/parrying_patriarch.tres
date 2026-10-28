@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vvvg1"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_m7skf"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_8ah41"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_gb4pk"]
+
+[sub_resource type="Resource" id="Resource_jfy60"]
+script = ExtResource("4_gb4pk")
+kind = 17
+token = &"dodge"
+token_to = &"dodge_plus"
+
+[sub_resource type="Resource" id="Resource_tgd80"]
+script = ExtResource("3_8ah41")
+when = 4
+effects = Array[ExtResource("4_gb4pk")]([SubResource("Resource_jfy60")])
+
+[sub_resource type="Resource" id="Resource_msg0m"]
+script = ExtResource("4_gb4pk")
+token = &"weak"
+chance = 0.1
+
+[sub_resource type="Resource" id="Resource_kixfv"]
+script = ExtResource("3_8ah41")
+effects = Array[ExtResource("4_gb4pk")]([SubResource("Resource_msg0m")])
+malus = true
+if_speed_at_most = 2
+
+[resource]
+script = ExtResource("2_m7skf")
+id = &"parrying_patriarch"
+display_name = "Parrying Patriarch"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_8ah41")]([SubResource("Resource_tgd80"), SubResource("Resource_kixfv")])

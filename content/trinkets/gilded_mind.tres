@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_5heut"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_16l21"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ubp6y"]
+
+[resource]
+script = ExtResource("2_16l21")
+id = &"gilded_mind"
+display_name = "Gilded Mind"
+rarity = 1
+price = 2000
+stats = Dictionary[StringName, float]({
+&"resist_deathblow": 0.1,
+&"resist_debuff": -0.1,
+&"resist_stress": 0.2
+})

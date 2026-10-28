@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_sxv56"]
+[ext_resource type="Resource" path="res://content/heroes/penitent.tres" id="2_cpbhi"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_hg7oe"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_100ka"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_wrkn2"]
+
+[sub_resource type="Resource" id="Resource_c71il"]
+script = ExtResource("1_sxv56")
+stat = &"damage"
+amount = 0.25
+if_hp_below = 0.2
+
+[sub_resource type="Resource" id="Resource_epayd"]
+script = ExtResource("5_wrkn2")
+kind = 19
+token_pool = Array[StringName]([&"crit", &"dodge", &"dodge_plus", &"block", &"block_plus", &"strength", &"riposte", &"speed", &"stealth"])
+
+[sub_resource type="Resource" id="Resource_t0wq8"]
+script = ExtResource("4_100ka")
+when = 15
+to = 1
+effects = Array[ExtResource("5_wrkn2")]([SubResource("Resource_epayd")])
+if_skills = Array[StringName]([&"punish"])
+
+[resource]
+script = ExtResource("3_hg7oe")
+id = &"emancipation"
+display_name = "Emancipation"
+rarity = 2
+hero = ExtResource("2_cpbhi")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"resist_bleed": -0.2
+})
+bonuses = Array[ExtResource("1_sxv56")]([SubResource("Resource_c71il")])
+triggers = Array[ExtResource("4_100ka")]([SubResource("Resource_t0wq8")])

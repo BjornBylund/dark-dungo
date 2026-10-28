@@ -33,6 +33,15 @@ extends Resource
 ## Relative positions a hero may Swap with: negative is towards rank 1.
 @export var swap_offsets: Array[int] = [-1, 1]
 
+@export_group("Class rules")
+## Tokens gained at the start of each of the unit's turns (the Vestal's Conviction).
+@export var turn_start_tokens: Dictionary[StringName, int] = {}
+## What max stress brings: empty for DD2's Meltdown or Resolute, or &"toxic"
+## for the Flagellant's Toxic.
+@export var overstress: StringName
+## Whether Death's Door makes the unit Weak, as it does every DD2 hero but the Flagellant.
+@export var deaths_door_weak: bool = true
+
 @export_group("Art")
 ## Drawn facing right with the feet at the bottom edge; enemies are mirrored.
 ## Fitted into the unit's slot keeping its aspect ratio. Empty draws the coloured placeholder.

@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_eqohj"]
+[ext_resource type="Resource" path="res://content/heroes/mender.tres" id="2_dhcj5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_fvu3s"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_la563"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_bbhay"]
+
+[sub_resource type="Resource" id="Resource_clvd0"]
+script = ExtResource("5_bbhay")
+kind = 1
+dot = &"burn"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_ptyx3"]
+script = ExtResource("4_la563")
+when = 15
+to = 1
+effects = Array[ExtResource("5_bbhay")]([SubResource("Resource_clvd0")])
+if_skills = Array[StringName]([&"judgement", &"illumination"])
+
+[sub_resource type="Resource" id="Resource_4p16h"]
+script = ExtResource("5_bbhay")
+kind = 1
+dot = &"burn"
+amount = 1
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_d1otu"]
+script = ExtResource("4_la563")
+when = 8
+effects = Array[ExtResource("5_bbhay")]([SubResource("Resource_4p16h")])
+malus = true
+
+[resource]
+script = ExtResource("3_fvu3s")
+id = &"smoldering_firewood"
+display_name = "Smoldering Firewood"
+rarity = 2
+hero = ExtResource("2_dhcj5")
+price = 6500
+triggers = Array[ExtResource("4_la563")]([SubResource("Resource_ptyx3"), SubResource("Resource_d1otu")])

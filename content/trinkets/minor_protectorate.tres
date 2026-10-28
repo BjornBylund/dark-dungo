@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_5a4eb"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_312nk"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_yk6su"]
+
+[resource]
+script = ExtResource("2_312nk")
+id = &"minor_protectorate"
+display_name = "Minor Protectorate"
+price = 500
+stats = Dictionary[StringName, float]({
+&"damage": -0.1,
+&"heal_power": 0.1
+})

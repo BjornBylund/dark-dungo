@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_m4ru8"]
+[ext_resource type="Resource" path="res://content/heroes/warden.tres" id="2_gns22"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_ijq28"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_fgn4l"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_e4byi"]
+
+[sub_resource type="Resource" id="Resource_smnhu"]
+script = ExtResource("5_e4byi")
+token = &"crit"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_m44uk"]
+script = ExtResource("4_fgn4l")
+when = 15
+to = 1
+effects = Array[ExtResource("5_e4byi")]([SubResource("Resource_smnhu")])
+if_ally_target = true
+
+[sub_resource type="Resource" id="Resource_x6wku"]
+script = ExtResource("5_e4byi")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_kdrd1"]
+script = ExtResource("5_e4byi")
+token = &"taunt"
+
+[sub_resource type="Resource" id="Resource_05hna"]
+script = ExtResource("4_fgn4l")
+when = 15
+to = 1
+effects = Array[ExtResource("5_e4byi")]([SubResource("Resource_x6wku"), SubResource("Resource_kdrd1")])
+if_skills = Array[StringName]([&"command"])
+
+[sub_resource type="Resource" id="Resource_it1tg"]
+script = ExtResource("5_e4byi")
+kind = 13
+amount = 1
+
+[sub_resource type="Resource" id="Resource_lw4ok"]
+script = ExtResource("4_fgn4l")
+when = 6
+to = 3
+effects = Array[ExtResource("5_e4byi")]([SubResource("Resource_it1tg")])
+malus = true
+
+[resource]
+script = ExtResource("3_ijq28")
+id = &"undeserved_commendation"
+display_name = "Undeserved Commendation"
+rarity = 2
+hero = ExtResource("2_gns22")
+price = 6500
+triggers = Array[ExtResource("4_fgn4l")]([SubResource("Resource_m44uk"), SubResource("Resource_05hna"), SubResource("Resource_lw4ok")])

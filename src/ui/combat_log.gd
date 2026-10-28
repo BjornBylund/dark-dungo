@@ -95,6 +95,18 @@ static func describe(event: Dictionary, name_of: Callable) -> String:
 			return "  [color=#c9b8ff]%s MELTS DOWN![/color] HP %d, stress %d" % [who, event.hp, event.stress]
 		&"resolute":
 			return "  [color=#d9b45a]%s becomes RESOLUTE![/color]" % who
+		&"toxic":
+			return "  [color=#8fc23a]%s turns TOXIC![/color] HP %d, stress %d" % [who, event.hp, event.stress]
+		&"token_removed":
+			return "  %s loses %s." % [who, UiStyle.token_name(event.token)]
+		&"buffed":
+			return "  %s: %s for %d rounds" % [who, UiStyle.buff_text(event.stat, event.amount), event.rounds]
+		&"regen_applied":
+			return "  %s: Regen %d for %d turns" % [who, event.amount, event.turns]
+		&"extra_turn":
+			return "  %s gets an extra turn." % who
+		&"consecrated":
+			return "  Rank %d is consecrated (%s, %d rounds)." % [event.rank, String(event.name).capitalize(), event.rounds]
 		&"battle_end":
 			return "[color=#d9b45a]Victory.[/color]" if event.victory else "[color=#e0533f]Defeat.[/color]"
 	return "  (%s)" % event.type

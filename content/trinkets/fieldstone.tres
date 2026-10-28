@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_oj787"]
+[ext_resource type="Resource" path="res://content/heroes/vanguard.tres" id="2_q52km"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_yctq1"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_10k10"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_o3pgj"]
+
+[sub_resource type="Resource" id="Resource_3lr34"]
+script = ExtResource("5_o3pgj")
+kind = 1
+dot = &"burn"
+amount = 1
+chance = 0.66
+
+[sub_resource type="Resource" id="Resource_ccl0b"]
+script = ExtResource("4_10k10")
+when = 8
+to = 1
+effects = Array[ExtResource("5_o3pgj")]([SubResource("Resource_3lr34")])
+
+[sub_resource type="Resource" id="Resource_pi184"]
+script = ExtResource("5_o3pgj")
+kind = 7
+duration = 4
+stat = &"dot_dealt_burn"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_iii6h"]
+script = ExtResource("4_10k10")
+when = 15
+effects = Array[ExtResource("5_o3pgj")]([SubResource("Resource_pi184")])
+if_skills = Array[StringName]([&"radiance"])
+
+[sub_resource type="Resource" id="Resource_sghj3"]
+script = ExtResource("5_o3pgj")
+kind = 13
+amount = 1
+
+[sub_resource type="Resource" id="Resource_6h113"]
+script = ExtResource("4_10k10")
+when = 4
+effects = Array[ExtResource("5_o3pgj")]([SubResource("Resource_sghj3")])
+malus = true
+if_token = &"combo"
+
+[resource]
+script = ExtResource("3_yctq1")
+id = &"fieldstone"
+display_name = "Fieldstone"
+rarity = 2
+hero = ExtResource("2_q52km")
+price = 6500
+triggers = Array[ExtResource("4_10k10")]([SubResource("Resource_ccl0b"), SubResource("Resource_iii6h"), SubResource("Resource_6h113")])

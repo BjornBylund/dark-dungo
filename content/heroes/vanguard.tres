@@ -7,12 +7,16 @@
 [ext_resource type="Texture2D" path="res://art/skills/zealous_accusation.svg" id="5_po4ow"]
 [ext_resource type="Texture2D" path="res://art/skills/stunning_blow.svg" id="6_4egp0"]
 [ext_resource type="Texture2D" path="res://art/skills/battle_heal.svg" id="7_r06bm"]
+[ext_resource type="Texture2D" path="res://art/skills/rallying_cry.svg" id="8_ek3ud"]
 [ext_resource type="Texture2D" path="res://art/skills/bulwark_of_faith.svg" id="8_xvc06"]
+[ext_resource type="Texture2D" path="res://art/skills/reap.svg" id="9_clhwt"]
 [ext_resource type="Texture2D" path="res://art/skills/holy_lance.svg" id="9_ek3ud"]
 [ext_resource type="Texture2D" path="res://art/units/vanguard.png" id="9_sprite"]
 [ext_resource type="Texture2D" path="res://art/skills/inspiring_cry.svg" id="10_clhwt"]
+[ext_resource type="Texture2D" path="res://art/skills/radiance.svg" id="13_t2j34"]
+[ext_resource type="Texture2D" path="res://art/skills/tenacity.svg" id="14_7vaou"]
 
-[sub_resource type="Resource" id="Resource_vmjb0"]
+[sub_resource type="Resource" id="Resource_ap6p3"]
 script = ExtResource("2_rnt5r")
 id = &"smite"
 display_name = "Smite"
@@ -20,26 +24,16 @@ icon = ExtResource("4_vmjb0")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2])
 damage_min = 5
-damage_max = 9
+damage_max = 7
 crit_chance = 0.05
+combo_damage_bonus = 0.5
 
-[sub_resource type="Resource" id="Resource_po4ow"]
-script = ExtResource("2_rnt5r")
-id = &"zealous_accusation"
-display_name = "Zealous Accusation"
-icon = ExtResource("5_po4ow")
-launch_ranks = Array[int]([1, 2])
-target_ranks = Array[int]([1, 2])
-multi_target = true
-damage_min = 3
-damage_max = 5
-crit_chance = 0.01
-
-[sub_resource type="Resource" id="Resource_4egp0"]
+[sub_resource type="Resource" id="Resource_lpgut"]
 script = ExtResource("3_8wp1l")
 token = &"stun"
+requires_target_token = &"combo"
 
-[sub_resource type="Resource" id="Resource_r06bm"]
+[sub_resource type="Resource" id="Resource_0blai"]
 script = ExtResource("2_rnt5r")
 id = &"stunning_blow"
 display_name = "Stunning Blow"
@@ -49,58 +43,175 @@ target_ranks = Array[int]([1, 2])
 damage_min = 3
 damage_max = 5
 crit_chance = 0.05
-effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_4egp0")])
+ends_combo = true
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_lpgut")])
 
-[sub_resource type="Resource" id="Resource_xvc06"]
+[sub_resource type="Resource" id="Resource_ghdw7"]
+script = ExtResource("3_8wp1l")
+kind = 1
+dot = &"burn"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_kf6nv"]
+script = ExtResource("3_8wp1l")
+token = &"combo"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_xts1a"]
 script = ExtResource("2_rnt5r")
-id = &"holy_lance"
-display_name = "Holy Lance"
-icon = ExtResource("9_ek3ud")
-launch_ranks = Array[int]([3, 4])
-target_ranks = Array[int]([2, 3, 4])
-damage_min = 5
-damage_max = 9
-crit_chance = 0.12
-self_move = 1
+id = &"zealous_accusation"
+display_name = "Zealous Accusation"
+icon = ExtResource("5_po4ow")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 1
+damage_max = 2
+crit_chance = 0.05
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_ghdw7"), SubResource("Resource_kf6nv")])
 
-[sub_resource type="Resource" id="Resource_ek3ud"]
+[sub_resource type="Resource" id="Resource_mh0n7"]
+script = ExtResource("2_rnt5r")
+id = &"inspiring_cry"
+display_name = "Inspiring Cry"
+icon = ExtResource("10_clhwt")
+side = 1
+stress = -2
+cooldown = 1
+condition = 8
+condition_value = 5.0
+
+[sub_resource type="Resource" id="Resource_ifkte"]
+script = ExtResource("3_8wp1l")
+kind = 6
+token_pool = Array[StringName]([&"blind", &"weak", &"vulnerable"])
+
+[sub_resource type="Resource" id="Resource_274wl"]
+script = ExtResource("2_rnt5r")
+id = &"rallying_cry"
+display_name = "Rallying Cry"
+icon = ExtResource("8_ek3ud")
+side = 1
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_ifkte")])
+cooldown = 1
+condition = 7
+condition_tokens = Array[StringName]([&"blind", &"weak", &"vulnerable"])
+
+[sub_resource type="Resource" id="Resource_uk1n1"]
+script = ExtResource("3_8wp1l")
+kind = 7
+stat = &"heal_received"
+stat_amount = -0.2
+
+[sub_resource type="Resource" id="Resource_460ad"]
+script = ExtResource("2_rnt5r")
+id = &"reap"
+display_name = "Reap"
+icon = ExtResource("9_clhwt")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+multi_target = true
+damage_min = 4
+damage_max = 5
+crit_chance = 0.05
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_uk1n1")])
+
+[sub_resource type="Resource" id="Resource_shn1e"]
 script = ExtResource("2_rnt5r")
 id = &"battle_heal"
 display_name = "Battle Heal"
 icon = ExtResource("7_r06bm")
+launch_ranks = Array[int]([1, 2])
 side = 1
-heal_min = 3
-heal_max = 4
+heal_fraction = 0.2
+cooldown = 2
+uses_per_battle = 3
+condition = 4
+condition_value = 0.5
 
-[sub_resource type="Resource" id="Resource_clhwt"]
+[sub_resource type="Resource" id="Resource_j23ab"]
 script = ExtResource("3_8wp1l")
 token = &"block"
 stacks = 2
 
-[sub_resource type="Resource" id="Resource_t2j34"]
+[sub_resource type="Resource" id="Resource_rreud"]
 script = ExtResource("3_8wp1l")
 token = &"taunt"
 stacks = 2
 
-[sub_resource type="Resource" id="Resource_7vaou"]
+[sub_resource type="Resource" id="Resource_b27jm"]
+script = ExtResource("3_8wp1l")
+kind = 8
+amount = 2
+
+[sub_resource type="Resource" id="Resource_v3upy"]
 script = ExtResource("2_rnt5r")
 id = &"bulwark_of_faith"
 display_name = "Bulwark of Faith"
 icon = ExtResource("8_xvc06")
 launch_ranks = Array[int]([1, 2])
 side = 2
-effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_clhwt"), SubResource("Resource_t2j34")])
-uses_per_battle = 1
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_j23ab"), SubResource("Resource_rreud"), SubResource("Resource_b27jm")])
+cooldown = 2
 
-[sub_resource type="Resource" id="Resource_ap6p3"]
+[sub_resource type="Resource" id="Resource_8o2nr"]
+script = ExtResource("3_8wp1l")
+kind = 1
+dot = &"burn"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_0dv46"]
 script = ExtResource("2_rnt5r")
-id = &"inspiring_cry"
-display_name = "Inspiring Cry"
-icon = ExtResource("10_clhwt")
+id = &"holy_lance"
+display_name = "Holy Lance"
+icon = ExtResource("9_ek3ud")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+damage_min = 4
+damage_max = 7
+crit_chance = 0.1
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_8o2nr")])
+self_move = 1
+
+[sub_resource type="Resource" id="Resource_iaxom"]
+script = ExtResource("3_8wp1l")
+kind = 8
+amount = 2
+
+[sub_resource type="Resource" id="Resource_wbe06"]
+script = ExtResource("3_8wp1l")
+kind = 7
+stat = &"pierce_burn"
+stat_amount = 0.2
+
+[sub_resource type="Resource" id="Resource_sr85y"]
+script = ExtResource("3_8wp1l")
+kind = 7
+stat = &"speed"
+stat_amount = 2.0
+
+[sub_resource type="Resource" id="Resource_fqrib"]
+script = ExtResource("2_rnt5r")
+id = &"radiance"
+display_name = "Radiance"
+icon = ExtResource("13_t2j34")
+side = 2
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_iaxom"), SubResource("Resource_wbe06"), SubResource("Resource_sr85y")])
+cooldown = 4
+
+[sub_resource type="Resource" id="Resource_nww6s"]
+script = ExtResource("3_8wp1l")
+token = &"block"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_tyssd"]
+script = ExtResource("2_rnt5r")
+id = &"tenacity"
+display_name = "Tenacity"
+icon = ExtResource("14_7vaou")
 side = 1
-heal_min = 1
-heal_max = 1
-stress = -1
+effects = Array[ExtResource("3_8wp1l")]([SubResource("Resource_nww6s")])
+cooldown = 2
 
 [resource]
 script = ExtResource("1_h4n3i")
@@ -108,13 +219,13 @@ id = &"vanguard"
 display_name = "Crusader"
 color = Color(0.5411765, 0.56078434, 0.6, 1)
 max_hp = 40
-speed = 1
+speed = 2
 corpse_hp = 22
-resist_stun = 0.4
+resist_stun = 0.3
 resist_bleed = 0.3
-resist_blight = 0.3
+resist_blight = 0.1
 resist_burn = 0.3
-resist_move = 0.4
-resist_debuff = 0.3
-skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_vmjb0"), SubResource("Resource_po4ow"), SubResource("Resource_r06bm"), SubResource("Resource_xvc06"), SubResource("Resource_ek3ud"), SubResource("Resource_7vaou"), SubResource("Resource_ap6p3")])
+resist_move = 0.3
+resist_debuff = 0.2
+skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_ap6p3"), SubResource("Resource_0blai"), SubResource("Resource_xts1a"), SubResource("Resource_mh0n7"), SubResource("Resource_274wl"), SubResource("Resource_460ad"), SubResource("Resource_shn1e"), SubResource("Resource_v3upy"), SubResource("Resource_0dv46"), SubResource("Resource_fqrib"), SubResource("Resource_tyssd")])
 sprite = ExtResource("9_sprite")

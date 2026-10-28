@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_1um01"]
+[ext_resource type="Resource" path="res://content/heroes/plaguebearer.tres" id="2_ag7fd"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_qqf2q"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_8r6in"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_b52jw"]
+
+[sub_resource type="Resource" id="Resource_r0thh"]
+script = ExtResource("5_b52jw")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_xxkxn"]
+script = ExtResource("4_8r6in")
+when = 15
+to = 1
+effects = Array[ExtResource("5_b52jw")]([SubResource("Resource_r0thh")])
+if_skills = Array[StringName]([&"ounce_of_prevention"])
+
+[sub_resource type="Resource" id="Resource_s4rb2"]
+script = ExtResource("5_b52jw")
+kind = 8
+amount = 2
+
+[sub_resource type="Resource" id="Resource_jr7yy"]
+script = ExtResource("4_8r6in")
+when = 15
+to = 1
+effects = Array[ExtResource("5_b52jw")]([SubResource("Resource_s4rb2")])
+if_skills = Array[StringName]([&"emboldening_vapours"])
+
+[sub_resource type="Resource" id="Resource_r1jeb"]
+script = ExtResource("5_b52jw")
+kind = 7
+stat = &"speed"
+stat_amount = -1.0
+
+[sub_resource type="Resource" id="Resource_r2a7n"]
+script = ExtResource("4_8r6in")
+when = 6
+effects = Array[ExtResource("5_b52jw")]([SubResource("Resource_r1jeb")])
+malus = true
+
+[resource]
+script = ExtResource("3_qqf2q")
+id = &"storage_room_key"
+display_name = "Storage Room Key"
+rarity = 2
+hero = ExtResource("2_ag7fd")
+price = 6500
+triggers = Array[ExtResource("4_8r6in")]([SubResource("Resource_xxkxn"), SubResource("Resource_jr7yy"), SubResource("Resource_r2a7n")])

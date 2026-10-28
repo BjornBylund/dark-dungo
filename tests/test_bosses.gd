@@ -6,7 +6,7 @@ extends TestCase
 
 func _def() -> CampaignDef:
 	var def := CampaignDef.new()
-	for id: String in ["vanguard", "cutthroat", "marksman", "mender"]:
+	for id: String in ["vanguard", "cutthroat", "plaguebearer", "mender"]:
 		def.starting_heroes.append(load("res://content/heroes/%s.tres" % id))
 	for id: String in ["minstrel", "penitent"]:
 		def.recruits.append(load("res://content/heroes/%s.tres" % id))

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_a4poi"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_u7db0"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_3m27n"]
+
+[resource]
+script = ExtResource("2_u7db0")
+id = &"minor_sharpness_charm"
+display_name = "Minor Sharpness Charm"
+price = 500
+stats = Dictionary[StringName, float]({
+&"damage": 0.1,
+&"speed": -2.0
+})

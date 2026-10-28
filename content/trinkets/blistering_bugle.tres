@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_obome"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_h7odx"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_cd5p8"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_g1kik"]
+
+[sub_resource type="Resource" id="Resource_xdupr"]
+script = ExtResource("4_g1kik")
+token = &"taunt"
+chance = 0.5
+
+[sub_resource type="Resource" id="Resource_q8ehn"]
+script = ExtResource("3_cd5p8")
+effects = Array[ExtResource("4_g1kik")]([SubResource("Resource_xdupr")])
+
+[sub_resource type="Resource" id="Resource_py6iq"]
+script = ExtResource("4_g1kik")
+token = &"vulnerable"
+chance = 0.33
+
+[sub_resource type="Resource" id="Resource_cm4d7"]
+script = ExtResource("3_cd5p8")
+effects = Array[ExtResource("4_g1kik")]([SubResource("Resource_py6iq")])
+malus = true
+if_first = true
+
+[resource]
+script = ExtResource("2_h7odx")
+id = &"blistering_bugle"
+display_name = "Blistering Bugle"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_cd5p8")]([SubResource("Resource_q8ehn"), SubResource("Resource_cm4d7")])

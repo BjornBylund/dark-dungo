@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_74fr3"]
+[ext_resource type="Resource" path="res://content/heroes/mender.tres" id="2_2d7o3"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_1thx7"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_k8itu"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_aeq0j"]
+
+[sub_resource type="Resource" id="Resource_2fcon"]
+script = ExtResource("5_aeq0j")
+kind = 5
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_bn0dd"]
+script = ExtResource("4_k8itu")
+when = 15
+to = 4
+effects = Array[ExtResource("5_aeq0j")]([SubResource("Resource_2fcon")])
+if_skills = Array[StringName]([&"hand_of_light"])
+
+[sub_resource type="Resource" id="Resource_n75c4"]
+script = ExtResource("5_aeq0j")
+kind = 13
+amount = 1
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_bu24a"]
+script = ExtResource("4_k8itu")
+when = 6
+effects = Array[ExtResource("5_aeq0j")]([SubResource("Resource_n75c4")])
+malus = true
+
+[resource]
+script = ExtResource("3_1thx7")
+id = &"profane_scroll"
+display_name = "Profane Scroll"
+rarity = 2
+hero = ExtResource("2_2d7o3")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"damage_flat": 1.0
+})
+triggers = Array[ExtResource("4_k8itu")]([SubResource("Resource_bn0dd"), SubResource("Resource_bu24a")])

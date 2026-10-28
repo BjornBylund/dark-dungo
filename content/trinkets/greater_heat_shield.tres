@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vo0tg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_3jq45"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_6s6n2"]
+
+[resource]
+script = ExtResource("2_3jq45")
+id = &"greater_heat_shield"
+display_name = "Greater Heat Shield"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"resist_burn": 0.66
+})

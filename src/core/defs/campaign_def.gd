@@ -11,6 +11,8 @@ extends Resource
 @export var regions: Array[RegionDef] = []
 ## Events that can happen in any region.
 @export var events: Array[EventDef] = []
+## Every trinket that can drop in a dungeon or be sold at the Nomad Wagon.
+@export var trinkets: Array[TrinketDef] = []
 ## Scene behind the fights.
 @export var battle_background: Texture2D
 ## The hamlet panorama for the town screen.

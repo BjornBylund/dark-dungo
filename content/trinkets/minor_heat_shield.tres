@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_mg3sx"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_doty3"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ushoi"]
+
+[resource]
+script = ExtResource("2_doty3")
+id = &"minor_heat_shield"
+display_name = "Minor Heat Shield"
+price = 500
+stats = Dictionary[StringName, float]({
+&"resist_blight": -0.1,
+&"resist_burn": 0.2
+})

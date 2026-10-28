@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_xhxsq"]
+[ext_resource type="Resource" path="res://content/heroes/minstrel.tres" id="2_yk5xe"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_yn8e0"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_tjce2"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_7faee"]
+
+[sub_resource type="Resource" id="Resource_4uf3g"]
+script = ExtResource("5_7faee")
+token = &"crit"
+chance = 0.1
+
+[sub_resource type="Resource" id="Resource_cbxic"]
+script = ExtResource("4_tjce2")
+when = 12
+effects = Array[ExtResource("5_7faee")]([SubResource("Resource_4uf3g")])
+
+[sub_resource type="Resource" id="Resource_33vst"]
+script = ExtResource("5_7faee")
+token_pool = Array[StringName]([&"crit", &"dodge", &"strength", &"block", &"speed"])
+
+[sub_resource type="Resource" id="Resource_1xe85"]
+script = ExtResource("4_tjce2")
+when = 7
+to = 3
+effects = Array[ExtResource("5_7faee")]([SubResource("Resource_33vst")])
+
+[sub_resource type="Resource" id="Resource_q0ij7"]
+script = ExtResource("5_7faee")
+kind = 2
+amount = 1
+
+[sub_resource type="Resource" id="Resource_tqq1n"]
+script = ExtResource("4_tjce2")
+when = 8
+effects = Array[ExtResource("5_7faee")]([SubResource("Resource_q0ij7")])
+malus = true
+
+[resource]
+script = ExtResource("3_yn8e0")
+id = &"royal_summons"
+display_name = "Royal Summons"
+rarity = 2
+hero = ExtResource("2_yk5xe")
+price = 6500
+triggers = Array[ExtResource("4_tjce2")]([SubResource("Resource_cbxic"), SubResource("Resource_1xe85"), SubResource("Resource_tqq1n")])

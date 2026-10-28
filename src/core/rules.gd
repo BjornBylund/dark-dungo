@@ -49,6 +49,15 @@ const RESOLUTE_DEATHBLOW := 0.15
 const RESOLUTE_DEBUFF_RESIST := 0.5
 const OVERSTRESS_STRESS_RESIST := 0.4
 const OVERSTRESS_BUFF_ROUNDS := 3
+# The Flagellant's Toxic instead: stress drops to 1, HP is set to 30%, his
+# cooldowns reset and he gains a Toxic token. Each Toxic token Blights anyone
+# who hits him by 2 more per turn.
+const TOXIC_STRESS := 1
+const TOXIC_HP_FRACTION := 0.3
+const TOXIC_DEATHBLOW := -0.1
+const TOXIC_BLIGHT_PER_TOKEN := 2
+## The Flagellant heals this share of max HP per Pain token at his turn end.
+const PAIN_HEAL := 0.1
 
 # Stress triggers: amount and chance.
 const STRESS_CRIT_RECEIVED := 1
@@ -72,8 +81,8 @@ const RECOVER_COOLDOWN := 3
 # After a won battle heroes are healed up to at least this fraction of max HP.
 const BATTLE_END_MIN_HP := 0.2
 
-## Skills a hero takes into a fight, as in DD1. Without a chosen loadout, the first ones.
-const SKILL_SLOTS := 4
+## Skills a hero takes into a fight, as in DD2. Without a chosen loadout, the first ones.
+const SKILL_SLOTS := 5
 
 # Skill ranks 2-5 (Guild upgrades): each rank above 1 adds these.
 const SKILL_RANK_POWER := 0.1   # damage or healing

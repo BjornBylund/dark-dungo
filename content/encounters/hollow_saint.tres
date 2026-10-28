@@ -9,4 +9,4 @@
 [resource]
 script = ExtResource("5_llg60")
 display_name = "The Hollow Saint"
-enemies = Array[ExtResource("1_2rabs")]([ExtResource("2_tsw4p"), ExtResource("4_6nc4x"), ExtResource("3_yujd3")])
+enemies = Array[ExtResource("1_2rabs")]([ExtResource("2_tsw4p"), ExtResource("3_yujd3"), ExtResource("4_6nc4x")])

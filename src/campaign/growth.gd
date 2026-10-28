@@ -1,13 +1,22 @@
 ## Turns campaign state into battle-ready combatants: a hero's level, gear,
-## skill ranks and Tavern perks, or an enemy's difficulty tier.
+## trinkets, skill ranks and Tavern perks, or an enemy's difficulty tier.
 class_name Growth
 extends RefCounted
 
 
 static func hero_combatant(record: HeroRecord) -> Combatant:
 	var unit := Combatant.new(record.def, true)
-	unit.set_bonus_max_hp(armor_hp_bonus(record.def, record.armor_rank)
-			+ roundi(record.def.max_hp * record.next_mission.get(&"max_hp", 0.0)))
+	var max_hp_share: float = record.next_mission.get(&"max_hp", 0.0)
+	for trinket in record.trinkets:
+		for stat: StringName in trinket.stats:
+			if stat == &"max_hp":
+				max_hp_share += trinket.stats[stat]
+			else:
+				unit.add_buff(stat, trinket.stats[stat], Combatant.BuffExpiry.TRINKET)
+		for bonus in trinket.bonuses:
+			unit.add_buff(bonus.stat, bonus.amount, Combatant.BuffExpiry.TRINKET, 0, bonus.condition())
+		unit.triggers.append_array(trinket.triggers)
+	unit.set_bonus_max_hp(armor_hp_bonus(record.def, record.armor_rank) + roundi(record.def.max_hp * max_hp_share))
 	var weapon_steps := record.weapon_rank - 1
 	unit.damage_bonus = CampaignRules.WEAPON_DAMAGE_PER_RANK * weapon_steps
 	unit.crit_bonus = CampaignRules.WEAPON_CRIT_PER_RANK * weapon_steps

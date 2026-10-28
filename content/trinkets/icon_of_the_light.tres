@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_64hvt"]
+[ext_resource type="Resource" path="res://content/heroes/mender.tres" id="2_jtuqk"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_trw7p"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_757tm"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_fwjxv"]
+
+[sub_resource type="Resource" id="Resource_t0kfb"]
+script = ExtResource("5_fwjxv")
+kind = 13
+amount = -1
+
+[sub_resource type="Resource" id="Resource_uf3b8"]
+script = ExtResource("4_757tm")
+when = 15
+to = 1
+effects = Array[ExtResource("5_fwjxv")]([SubResource("Resource_t0kfb")])
+if_skills = Array[StringName]([&"consecration_of_fortitude", &"consecration_of_light"])
+
+[resource]
+script = ExtResource("3_trw7p")
+id = &"icon_of_the_light"
+display_name = "Icon of the Light"
+rarity = 2
+hero = ExtResource("2_jtuqk")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"regen_dealt": 1.0
+})
+triggers = Array[ExtResource("4_757tm")]([SubResource("Resource_uf3b8")])

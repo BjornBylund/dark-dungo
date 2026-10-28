@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_p8fb5"]
+[ext_resource type="Resource" path="res://content/heroes/minstrel.tres" id="2_vakeq"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_udgo6"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_osumi"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_gfypr"]
+
+[sub_resource type="Resource" id="Resource_y5ly3"]
+script = ExtResource("5_gfypr")
+token = &"dodge"
+chance = 0.33
+
+[sub_resource type="Resource" id="Resource_tfhaq"]
+script = ExtResource("4_osumi")
+when = 15
+to = 1
+effects = Array[ExtResource("5_gfypr")]([SubResource("Resource_y5ly3")])
+if_ally_target = true
+
+[sub_resource type="Resource" id="Resource_45fpk"]
+script = ExtResource("5_gfypr")
+kind = 18
+token_pool = Array[StringName]([&"stun", &"daze", &"blind", &"weak", &"vulnerable", &"taunt", &"immobilize"])
+
+[sub_resource type="Resource" id="Resource_6ov1q"]
+script = ExtResource("4_osumi")
+when = 15
+to = 1
+effects = Array[ExtResource("5_gfypr")]([SubResource("Resource_45fpk")])
+if_skills = Array[StringName]([&"play_out"])
+
+[sub_resource type="Resource" id="Resource_7m0ic"]
+script = ExtResource("5_gfypr")
+kind = 7
+duration = 1
+stat = &"pull_each_turn"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_2feaj"]
+script = ExtResource("4_osumi")
+when = 15
+to = 1
+effects = Array[ExtResource("5_gfypr")]([SubResource("Resource_7m0ic")])
+if_skills = Array[StringName]([&"battle_ballad"])
+
+[sub_resource type="Resource" id="Resource_wgo6y"]
+script = ExtResource("5_gfypr")
+kind = 13
+amount = 1
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_tyxm8"]
+script = ExtResource("4_osumi")
+when = 4
+effects = Array[ExtResource("5_gfypr")]([SubResource("Resource_wgo6y")])
+malus = true
+
+[resource]
+script = ExtResource("3_udgo6")
+id = &"buskers_haul"
+display_name = "Busker's Haul"
+rarity = 2
+hero = ExtResource("2_vakeq")
+price = 6500
+triggers = Array[ExtResource("4_osumi")]([SubResource("Resource_tfhaq"), SubResource("Resource_6ov1q"), SubResource("Resource_2feaj"), SubResource("Resource_tyxm8")])

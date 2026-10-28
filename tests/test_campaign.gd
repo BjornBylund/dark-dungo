@@ -1,6 +1,6 @@
 extends TestCase
 
-const HEROES := ["vanguard", "cutthroat", "marksman", "mender"]
+const HEROES := ["vanguard", "cutthroat", "plaguebearer", "mender"]
 
 
 func _def(recruits: Array = []) -> CampaignDef:
@@ -379,6 +379,24 @@ func test_saves_from_before_regions_get_a_fresh_board() -> void:
 	assert_eq(loaded.board.size(), campaign.board.size())
 	for mission in loaded.board:
 		assert_true(mission.region != null)
+
+
+## Old saves may hold a hero whose class has since left the cast (the Arbalest).
+func test_heroes_whose_class_left_the_cast_are_dropped_on_load() -> void:
+	var campaign := Campaign.create(load("res://content/campaign.tres"), 7)
+	campaign.embark(campaign.board[0], campaign.roster().slice(0, 2))
+	var data: Dictionary = JSON.parse_string(JSON.stringify(campaign.to_dict()))
+	var gone: Dictionary = data.heroes[0].duplicate()
+	gone.def = "res://content/heroes/arbalest_that_left.tres"
+	data.heroes.insert(0, gone)
+	data.run.party = data.run.party.map(func(index: float) -> int: return int(index) + 1)
+	var loaded := Campaign.from_dict(data, campaign.def)
+	assert_eq(loaded.heroes.size(), campaign.heroes.size())
+	assert_true(loaded.run != null, "a mission without them carries on")
+	assert_eq(loaded.run.party[0].def, campaign.run.party[0].def)
+	data.run.party.append(0)
+	data.run.states.append(data.run.states[0])
+	assert_eq(Campaign.from_dict(data, campaign.def).run, null, "a mission with them is abandoned")
 
 
 func test_hero_growth_reaches_the_combatant() -> void:

@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_ep3tt"]
+[ext_resource type="Resource" path="res://content/heroes/plaguebearer.tres" id="2_adkjg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_coo7r"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_2rmxc"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_d8wkt"]
+
+[sub_resource type="Resource" id="Resource_4x8uf"]
+script = ExtResource("5_d8wkt")
+kind = 18
+token_pool = Array[StringName]([&"crit", &"dodge", &"dodge_plus", &"block", &"block_plus", &"strength", &"riposte", &"speed", &"stealth"])
+
+[sub_resource type="Resource" id="Resource_0mf4b"]
+script = ExtResource("5_d8wkt")
+kind = 18
+token_pool = Array[StringName]([&"crit", &"dodge", &"dodge_plus", &"block", &"block_plus", &"strength", &"riposte", &"speed", &"stealth"])
+
+[sub_resource type="Resource" id="Resource_81j71"]
+script = ExtResource("4_2rmxc")
+when = 7
+to = 1
+effects = Array[ExtResource("5_d8wkt")]([SubResource("Resource_4x8uf"), SubResource("Resource_0mf4b")])
+
+[sub_resource type="Resource" id="Resource_4ccxd"]
+script = ExtResource("5_d8wkt")
+kind = 1
+dot = &"bleed"
+amount = 1
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_3fqr1"]
+script = ExtResource("5_d8wkt")
+kind = 1
+dot = &"blight"
+amount = 1
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_3ba22"]
+script = ExtResource("5_d8wkt")
+kind = 1
+dot = &"burn"
+amount = 1
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_0kj0w"]
+script = ExtResource("4_2rmxc")
+when = 13
+effects = Array[ExtResource("5_d8wkt")]([SubResource("Resource_4ccxd"), SubResource("Resource_3fqr1"), SubResource("Resource_3ba22")])
+pick_one = true
+malus = true
+
+[resource]
+script = ExtResource("3_coo7r")
+id = &"early_experiment"
+display_name = "Early Experiment"
+rarity = 2
+hero = ExtResource("2_adkjg")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"dot_dealt_blight": 1.0
+})
+triggers = Array[ExtResource("4_2rmxc")]([SubResource("Resource_81j71"), SubResource("Resource_0kj0w")])

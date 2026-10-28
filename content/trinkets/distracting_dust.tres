@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vlpe3"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_l3kgg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_eu0m6"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_gjc0n"]
+
+[sub_resource type="Resource" id="Resource_g35u7"]
+script = ExtResource("4_gjc0n")
+token = &"blind"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_2avjs"]
+script = ExtResource("3_eu0m6")
+when = 5
+to = 1
+effects = Array[ExtResource("4_gjc0n")]([SubResource("Resource_g35u7")])
+
+[sub_resource type="Resource" id="Resource_r35ri"]
+script = ExtResource("4_gjc0n")
+token = &"crit"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_25qws"]
+script = ExtResource("3_eu0m6")
+when = 6
+to = 1
+effects = Array[ExtResource("4_gjc0n")]([SubResource("Resource_r35ri")])
+malus = true
+
+[resource]
+script = ExtResource("2_l3kgg")
+id = &"distracting_dust"
+display_name = "Distracting Dust"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_eu0m6")]([SubResource("Resource_2avjs"), SubResource("Resource_25qws")])

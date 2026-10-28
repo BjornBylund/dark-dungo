@@ -4,75 +4,67 @@
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_xxr2p"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_tl1q2"]
 [ext_resource type="Texture2D" path="res://art/skills/punish.svg" id="4_tl1q2"]
-[ext_resource type="Texture2D" path="res://art/skills/rain_of_sorrows.svg" id="5_r8f4l"]
-[ext_resource type="Texture2D" path="res://art/skills/reclaim.svg" id="6_tdvdo"]
+[ext_resource type="Texture2D" path="res://art/skills/fester.svg" id="5_oceq1"]
+[ext_resource type="Texture2D" path="res://art/skills/deathless.svg" id="6_cq7a8"]
 [ext_resource type="Texture2D" path="res://art/skills/endure.svg" id="7_g085q"]
-[ext_resource type="Texture2D" path="res://art/skills/exsanguinate.svg" id="8_oceq1"]
-[ext_resource type="Texture2D" path="res://art/skills/redeem.svg" id="9_cq7a8"]
+[ext_resource type="Texture2D" path="res://art/skills/lashs_gift.svg" id="8_viss2"]
+[ext_resource type="Texture2D" path="res://art/skills/acid_rain.svg" id="9_njr22"]
 [ext_resource type="Texture2D" path="res://art/units/penitent.png" id="9_viss2"]
+[ext_resource type="Texture2D" path="res://art/skills/more_more.svg" id="10_puin2"]
 [ext_resource type="Texture2D" path="res://art/skills/suffer.svg" id="10_viss2"]
+[ext_resource type="Texture2D" path="res://art/skills/sepsis.svg" id="12_ickcr"]
+[ext_resource type="Texture2D" path="res://art/skills/undying.svg" id="13_gxqia"]
+[ext_resource type="Texture2D" path="res://art/skills/necrosis.svg" id="14_2y36l"]
 
-[sub_resource type="Resource" id="Resource_tl1q2"]
+[sub_resource type="Resource" id="Resource_lcmu0"]
 script = ExtResource("3_tl1q2")
 kind = 1
-dot = &"bleed"
+dot = &"blight"
 amount = 3
 
-[sub_resource type="Resource" id="Resource_r8f4l"]
+[sub_resource type="Resource" id="Resource_545eo"]
 script = ExtResource("2_xxr2p")
 id = &"punish"
 display_name = "Punish"
 icon = ExtResource("4_tl1q2")
-launch_ranks = Array[int]([1, 2])
+launch_ranks = Array[int]([1, 2, 3])
 target_ranks = Array[int]([1, 2])
-damage_min = 4
-damage_max = 7
-crit_chance = 0.09
-low_hp_bonus = 0.2
-effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_tl1q2")])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.05
+self_damage_fraction = 0.1
+ends_combo = true
+combo_pierce = 0.3
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_lcmu0")])
 
-[sub_resource type="Resource" id="Resource_tdvdo"]
+[sub_resource type="Resource" id="Resource_lkckv"]
 script = ExtResource("3_tl1q2")
 kind = 1
-dot = &"bleed"
-amount = 2
+dot = &"blight"
+amount = 3
 
-[sub_resource type="Resource" id="Resource_g085q"]
+[sub_resource type="Resource" id="Resource_4own1"]
 script = ExtResource("2_xxr2p")
-id = &"rain_of_sorrows"
-display_name = "Rain of Sorrows"
-icon = ExtResource("5_r8f4l")
-launch_ranks = Array[int]([1, 2])
-target_ranks = Array[int]([3, 4])
-multi_target = true
-damage_min = 1
-damage_max = 2
-crit_chance = 0.06
-low_hp_bonus = 0.2
-effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_tdvdo")])
+id = &"fester"
+display_name = "Fester"
+icon = ExtResource("5_oceq1")
+targets_corpse = true
+neighbor_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_lkckv")])
 
-[sub_resource type="Resource" id="Resource_oceq1"]
-script = ExtResource("3_tl1q2")
-kind = 1
-dot = &"bleed"
-amount = 1
-
-[sub_resource type="Resource" id="Resource_cq7a8"]
+[sub_resource type="Resource" id="Resource_8ounn"]
 script = ExtResource("2_xxr2p")
-id = &"reclaim"
-display_name = "Reclaim"
-icon = ExtResource("6_tdvdo")
+id = &"deathless"
+display_name = "Deathless"
+icon = ExtResource("6_cq7a8")
 side = 1
 can_target_self = false
-heal_min = 3
-heal_max = 4
-self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_oceq1")])
+self_damage_fraction = 0.2
+heal_fraction = 0.25
+cooldown = 1
+condition = 4
+condition_value = 1.0
 
-[sub_resource type="Resource" id="Resource_viss2"]
-script = ExtResource("3_tl1q2")
-token = &"speed"
-
-[sub_resource type="Resource" id="Resource_njr22"]
+[sub_resource type="Resource" id="Resource_yhbbd"]
 script = ExtResource("2_xxr2p")
 id = &"endure"
 display_name = "Endure"
@@ -80,93 +72,176 @@ icon = ExtResource("7_g085q")
 side = 1
 can_target_self = false
 stress = -2
-self_stress = 1
-self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_viss2")])
+self_stress = 2
+condition = 8
+condition_value = 1.0
 
-[sub_resource type="Resource" id="Resource_puin2"]
+[sub_resource type="Resource" id="Resource_3ytys"]
 script = ExtResource("3_tl1q2")
-kind = 1
-dot = &"bleed"
-amount = 3
+token = &"strength"
 
-[sub_resource type="Resource" id="Resource_ickcr"]
-script = ExtResource("3_tl1q2")
-token = &"daze"
-
-[sub_resource type="Resource" id="Resource_gxqia"]
-script = ExtResource("2_xxr2p")
-id = &"exsanguinate"
-display_name = "Exsanguinate"
-icon = ExtResource("8_oceq1")
-launch_ranks = Array[int]([1, 2])
-target_ranks = Array[int]([1, 2])
-damage_min = 4
-damage_max = 7
-crit_chance = 0.07
-low_hp_bonus = 0.2
-self_heal_fraction = 0.35
-effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_puin2")])
-self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_ickcr")])
-uses_per_battle = 3
-condition = 1
-condition_value = 0.4
-
-[sub_resource type="Resource" id="Resource_2y36l"]
-script = ExtResource("3_tl1q2")
-token = &"daze"
-
-[sub_resource type="Resource" id="Resource_lcmu0"]
-script = ExtResource("2_xxr2p")
-id = &"redeem"
-display_name = "Redeem"
-icon = ExtResource("9_cq7a8")
-side = 1
-can_target_self = false
-heal_fraction = 0.33
-self_heal_fraction = 0.35
-self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_2y36l")])
-uses_per_battle = 2
-condition = 1
-condition_value = 0.4
-
-[sub_resource type="Resource" id="Resource_545eo"]
-script = ExtResource("3_tl1q2")
-kind = 3
-
-[sub_resource type="Resource" id="Resource_lkckv"]
-script = ExtResource("3_tl1q2")
-token = &"taunt"
-
-[sub_resource type="Resource" id="Resource_4own1"]
+[sub_resource type="Resource" id="Resource_hlp1e"]
 script = ExtResource("3_tl1q2")
 token = &"block"
 
-[sub_resource type="Resource" id="Resource_8ounn"]
+[sub_resource type="Resource" id="Resource_4c067"]
+script = ExtResource("3_tl1q2")
+kind = 13
+amount = 1
+
+[sub_resource type="Resource" id="Resource_1kk4a"]
+script = ExtResource("2_xxr2p")
+id = &"lashs_gift"
+display_name = "Lash's Gift"
+icon = ExtResource("8_viss2")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+can_target_self = false
+self_heal_fraction = 0.25
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_3ytys"), SubResource("Resource_hlp1e"), SubResource("Resource_4c067")])
+cooldown = 2
+condition = 1
+condition_value = 0.5
+
+[sub_resource type="Resource" id="Resource_7bvgn"]
+script = ExtResource("3_tl1q2")
+kind = 1
+dot = &"blight"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_hlxio"]
+script = ExtResource("2_xxr2p")
+id = &"acid_rain"
+display_name = "Acid Rain"
+icon = ExtResource("9_njr22")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 2
+damage_max = 3
+crit_chance = 0.05
+self_damage_fraction = 0.1
+ends_combo = true
+combo_pierce = 0.3
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_7bvgn")])
+
+[sub_resource type="Resource" id="Resource_m4ydn"]
+script = ExtResource("3_tl1q2")
+token = &"taunt"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_u5xxx"]
+script = ExtResource("3_tl1q2")
+kind = 7
+duration = 2
+stat = &"pain_on_damage"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_k67ug"]
+script = ExtResource("2_xxr2p")
+id = &"more_more"
+display_name = "More! MORE!"
+icon = ExtResource("10_puin2")
+launch_ranks = Array[int]([1, 2])
+side = 2
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_m4ydn"), SubResource("Resource_u5xxx")])
+cooldown = 2
+
+[sub_resource type="Resource" id="Resource_lmpe6"]
+script = ExtResource("3_tl1q2")
+kind = 11
+
+[sub_resource type="Resource" id="Resource_l7ce5"]
+script = ExtResource("3_tl1q2")
+kind = 7
+stat = &"resist_deathblow"
+stat_amount = 0.1
+
+[sub_resource type="Resource" id="Resource_ftu7v"]
 script = ExtResource("2_xxr2p")
 id = &"suffer"
 display_name = "Suffer"
 icon = ExtResource("10_viss2")
 side = 1
 can_target_self = false
-effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_545eo")])
-self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_lkckv"), SubResource("Resource_4own1")])
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_lmpe6")])
+self_effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_l7ce5")])
 cooldown = 1
+condition = 7
+condition_tokens = Array[StringName]([&"bleed", &"blight", &"burn"])
+
+[sub_resource type="Resource" id="Resource_frj7c"]
+script = ExtResource("3_tl1q2")
+kind = 1
+dot = &"blight"
+amount = 4
+
+[sub_resource type="Resource" id="Resource_iq5lp"]
+script = ExtResource("2_xxr2p")
+id = &"sepsis"
+display_name = "Sepsis"
+icon = ExtResource("12_ickcr")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 4
+damage_max = 8
+crit_chance = 0.05
+ends_combo = true
+combo_pierce = 0.3
+self_heal_fraction = 0.35
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_frj7c")])
+cooldown = 2
+uses_per_battle = 3
+condition = 1
+condition_value = 0.5
+
+[sub_resource type="Resource" id="Resource_ijvgn"]
+script = ExtResource("3_tl1q2")
+kind = 8
+amount = 3
+
+[sub_resource type="Resource" id="Resource_iep26"]
+script = ExtResource("2_xxr2p")
+id = &"undying"
+display_name = "Undying"
+icon = ExtResource("13_gxqia")
+side = 1
+can_target_self = false
+self_damage_fraction = 0.1
+effects = Array[ExtResource("3_tl1q2")]([SubResource("Resource_ijvgn")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_whm50"]
+script = ExtResource("2_xxr2p")
+id = &"necrosis"
+display_name = "Necrosis"
+icon = ExtResource("14_2y36l")
+launch_ranks = Array[int]([2, 3])
+multi_target = true
+damage_min = 3
+damage_max = 6
+crit_chance = 0.05
+self_heal_per_hit = 0.05
+cooldown = 1
+condition = 7
+condition_tokens = Array[StringName]([&"blight"])
 
 [resource]
 script = ExtResource("1_wwxfv")
 id = &"penitent"
 display_name = "Flagellant"
 color = Color(0.45490196, 0.20392157, 0.30980393, 1)
-max_hp = 32
-speed = 6
+max_hp = 50
 corpse_hp = 18
-resist_stun = 0.5
-resist_bleed = 0.65
-resist_blight = 0.3
-resist_burn = 0.3
-resist_move = 0.5
-resist_debuff = 0.3
-resist_deathblow = 0.66
-skills = Array[ExtResource("2_xxr2p")]([SubResource("Resource_r8f4l"), SubResource("Resource_g085q"), SubResource("Resource_cq7a8"), SubResource("Resource_njr22"), SubResource("Resource_gxqia"), SubResource("Resource_lcmu0"), SubResource("Resource_8ounn")])
-swap_offsets = Array[int]([-3, -2, -1, 1])
+resist_stun = 0.3
+resist_bleed = 0.2
+resist_blight = 0.5
+resist_burn = 0.1
+resist_move = 0.3
+resist_debuff = 0.2
+resist_deathblow = 0.75
+skills = Array[ExtResource("2_xxr2p")]([SubResource("Resource_545eo"), SubResource("Resource_4own1"), SubResource("Resource_8ounn"), SubResource("Resource_yhbbd"), SubResource("Resource_1kk4a"), SubResource("Resource_hlxio"), SubResource("Resource_k67ug"), SubResource("Resource_ftu7v"), SubResource("Resource_iq5lp"), SubResource("Resource_iep26"), SubResource("Resource_whm50")])
+swap_offsets = Array[int]([-2, -1, 1])
+overstress = &"toxic"
+deaths_door_weak = false
 sprite = ExtResource("9_viss2")

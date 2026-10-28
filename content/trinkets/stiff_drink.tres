@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_ca35l"]
+[ext_resource type="Resource" path="res://content/heroes/cutthroat.tres" id="2_xnjhi"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_ahkim"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_ywyb6"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_he38r"]
+
+[sub_resource type="Resource" id="Resource_5rfkj"]
+script = ExtResource("1_ca35l")
+stat = &"dot_dealt_blight"
+amount = 1.0
+if_token = &"stealth"
+
+[sub_resource type="Resource" id="Resource_ctdvq"]
+script = ExtResource("5_he38r")
+kind = 1
+dot = &"blight"
+amount = 1
+
+[sub_resource type="Resource" id="Resource_l5weu"]
+script = ExtResource("4_ywyb6")
+when = 7
+to = 1
+effects = Array[ExtResource("5_he38r")]([SubResource("Resource_ctdvq")])
+
+[sub_resource type="Resource" id="Resource_hugtk"]
+script = ExtResource("5_he38r")
+kind = 1
+dot = &"blight"
+amount = 1
+
+[sub_resource type="Resource" id="Resource_8rrny"]
+script = ExtResource("4_ywyb6")
+when = 15
+effects = Array[ExtResource("5_he38r")]([SubResource("Resource_hugtk")])
+malus = true
+if_skills = Array[StringName]([&"absinthe"])
+
+[resource]
+script = ExtResource("3_ahkim")
+id = &"stiff_drink"
+display_name = "Stiff Drink"
+rarity = 2
+hero = ExtResource("2_xnjhi")
+price = 6500
+bonuses = Array[ExtResource("1_ca35l")]([SubResource("Resource_5rfkj")])
+triggers = Array[ExtResource("4_ywyb6")]([SubResource("Resource_l5weu"), SubResource("Resource_8rrny")])

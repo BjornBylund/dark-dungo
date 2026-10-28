@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_3nihg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_0dqvf"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_qa1kk"]
+
+[resource]
+script = ExtResource("2_0dqvf")
+id = &"greater_cleansing_censer"
+display_name = "Greater Cleansing Censer"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"resist_debuff": 0.2
+})

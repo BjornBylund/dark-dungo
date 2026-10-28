@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_tkthw"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_3hrhy"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_88s3p"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_tkwv4"]
+
+[sub_resource type="Resource" id="Resource_vd44g"]
+script = ExtResource("4_tkwv4")
+token = &"crit"
+
+[sub_resource type="Resource" id="Resource_0n0wk"]
+script = ExtResource("4_tkwv4")
+token = &"dodge_plus"
+
+[sub_resource type="Resource" id="Resource_82ghe"]
+script = ExtResource("4_tkwv4")
+kind = 13
+amount = -2
+
+[sub_resource type="Resource" id="Resource_fjj5c"]
+script = ExtResource("3_88s3p")
+when = 10
+effects = Array[ExtResource("4_tkwv4")]([SubResource("Resource_vd44g"), SubResource("Resource_0n0wk"), SubResource("Resource_82ghe")])
+
+[sub_resource type="Resource" id="Resource_gfmq4"]
+script = ExtResource("4_tkwv4")
+token = &"crit"
+
+[sub_resource type="Resource" id="Resource_dqu8n"]
+script = ExtResource("4_tkwv4")
+token = &"dodge_plus"
+
+[sub_resource type="Resource" id="Resource_y2uex"]
+script = ExtResource("4_tkwv4")
+kind = 13
+amount = -2
+
+[sub_resource type="Resource" id="Resource_7foui"]
+script = ExtResource("3_88s3p")
+when = 11
+effects = Array[ExtResource("4_tkwv4")]([SubResource("Resource_gfmq4"), SubResource("Resource_dqu8n"), SubResource("Resource_y2uex")])
+
+[resource]
+script = ExtResource("2_3hrhy")
+id = &"mortal_ward"
+display_name = "Mortal Ward"
+rarity = 2
+price = 6500
+triggers = Array[ExtResource("3_88s3p")]([SubResource("Resource_fjj5c"), SubResource("Resource_7foui")])

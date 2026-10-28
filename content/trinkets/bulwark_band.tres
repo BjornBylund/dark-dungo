@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_xb8du"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_6plst"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_lx0ol"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_lvysy"]
+
+[sub_resource type="Resource" id="Resource_lmrhu"]
+script = ExtResource("4_lvysy")
+token = &"dodge"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_a0ud5"]
+script = ExtResource("3_lx0ol")
+effects = Array[ExtResource("4_lvysy")]([SubResource("Resource_lmrhu")])
+
+[sub_resource type="Resource" id="Resource_j6j6p"]
+script = ExtResource("4_lvysy")
+token = &"blind"
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_wwmwr"]
+script = ExtResource("3_lx0ol")
+when = 6
+effects = Array[ExtResource("4_lvysy")]([SubResource("Resource_j6j6p")])
+malus = true
+
+[resource]
+script = ExtResource("2_6plst")
+id = &"bulwark_band"
+display_name = "Bulwark Band"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_lx0ol")]([SubResource("Resource_a0ud5"), SubResource("Resource_wwmwr")])

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_v1esg"]
+[ext_resource type="Resource" path="res://content/heroes/vanguard.tres" id="2_0lg5v"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_pgtae"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_1760l"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_ybbxt"]
+
+[sub_resource type="Resource" id="Resource_kjhyf"]
+script = ExtResource("5_ybbxt")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_eq4nr"]
+script = ExtResource("4_1760l")
+when = 12
+to = 4
+effects = Array[ExtResource("5_ybbxt")]([SubResource("Resource_kjhyf")])
+
+[sub_resource type="Resource" id="Resource_qnfjb"]
+script = ExtResource("5_ybbxt")
+kind = 7
+stat = &"resist_debuff"
+stat_amount = 0.2
+
+[sub_resource type="Resource" id="Resource_76u5o"]
+script = ExtResource("4_1760l")
+when = 15
+to = 1
+effects = Array[ExtResource("5_ybbxt")]([SubResource("Resource_qnfjb")])
+if_skills = Array[StringName]([&"rallying_cry"])
+
+[sub_resource type="Resource" id="Resource_omwhh"]
+script = ExtResource("5_ybbxt")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_v51da"]
+script = ExtResource("4_1760l")
+when = 4
+effects = Array[ExtResource("5_ybbxt")]([SubResource("Resource_omwhh")])
+malus = true
+if_rank = 4
+
+[resource]
+script = ExtResource("3_pgtae")
+id = &"signed_indenture"
+display_name = "Signed Indenture"
+rarity = 2
+hero = ExtResource("2_0lg5v")
+price = 6500
+triggers = Array[ExtResource("4_1760l")]([SubResource("Resource_eq4nr"), SubResource("Resource_76u5o"), SubResource("Resource_v51da")])

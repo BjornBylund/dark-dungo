@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_f1ftm"]
+[ext_resource type="Resource" path="res://content/heroes/warden.tres" id="2_xuquc"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_481nh"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_k6n8k"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_v6ax3"]
+
+[sub_resource type="Resource" id="Resource_hnpmr"]
+script = ExtResource("5_v6ax3")
+token = &"block_plus"
+
+[sub_resource type="Resource" id="Resource_vg8r1"]
+script = ExtResource("4_k6n8k")
+when = 0
+to = 2
+effects = Array[ExtResource("5_v6ax3")]([SubResource("Resource_hnpmr")])
+
+[sub_resource type="Resource" id="Resource_u8c16"]
+script = ExtResource("5_v6ax3")
+kind = 18
+token_pool = Array[StringName]([&"crit", &"dodge", &"dodge_plus", &"block", &"block_plus", &"strength", &"riposte", &"speed", &"stealth"])
+
+[sub_resource type="Resource" id="Resource_dj6rf"]
+script = ExtResource("4_k6n8k")
+when = 8
+to = 1
+effects = Array[ExtResource("5_v6ax3")]([SubResource("Resource_u8c16")])
+
+[sub_resource type="Resource" id="Resource_t8o47"]
+script = ExtResource("5_v6ax3")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_4iogq"]
+script = ExtResource("4_k6n8k")
+when = 7
+effects = Array[ExtResource("5_v6ax3")]([SubResource("Resource_t8o47")])
+malus = true
+
+[resource]
+script = ExtResource("3_481nh")
+id = &"standard_of_the_ninth"
+display_name = "Standard of the Ninth"
+rarity = 2
+hero = ExtResource("2_xuquc")
+price = 6500
+triggers = Array[ExtResource("4_k6n8k")]([SubResource("Resource_vg8r1"), SubResource("Resource_dj6rf"), SubResource("Resource_4iogq")])

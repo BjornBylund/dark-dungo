@@ -8,56 +8,49 @@
 [ext_resource type="Texture2D" path="res://art/skills/blinding_gas.svg" id="6_bwwx6"]
 [ext_resource type="Texture2D" path="res://art/skills/battlefield_medicine.svg" id="7_jovxs"]
 [ext_resource type="Texture2D" path="res://art/skills/incision.svg" id="8_16wwu"]
+[ext_resource type="Texture2D" path="res://art/skills/ounce_of_prevention.svg" id="8_manem"]
 [ext_resource type="Texture2D" path="res://art/units/plaguebearer.png" id="9_0vc0v"]
 [ext_resource type="Texture2D" path="res://art/skills/emboldening_vapours.svg" id="9_manem"]
 [ext_resource type="Texture2D" path="res://art/skills/disorienting_blast.svg" id="10_0vc0v"]
+[ext_resource type="Texture2D" path="res://art/skills/indiscriminate_science.svg" id="11_0vc0v"]
+[ext_resource type="Texture2D" path="res://art/skills/cause_of_death.svg" id="12_ge6by"]
+[ext_resource type="Texture2D" path="res://art/skills/magnesium_rain.svg" id="14_7g73p"]
 
-[sub_resource type="Resource" id="Resource_y0m3y"]
+[sub_resource type="Resource" id="Resource_vpa55"]
 script = ExtResource("3_y0m3y")
 kind = 1
 dot = &"blight"
-amount = 3
+amount = 4
 
-[sub_resource type="Resource" id="Resource_kyob1"]
-script = ExtResource("3_y0m3y")
-token = &"blind"
-
-[sub_resource type="Resource" id="Resource_bwwx6"]
+[sub_resource type="Resource" id="Resource_0qw0v"]
 script = ExtResource("2_gryt8")
 id = &"noxious_blast"
 display_name = "Noxious Blast"
 icon = ExtResource("4_y0m3y")
 launch_ranks = Array[int]([2, 3, 4])
 target_ranks = Array[int]([1, 2])
-damage_min = 1
-damage_max = 1
-crit_chance = 0.09
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_y0m3y"), SubResource("Resource_kyob1")])
+damage_min = 2
+damage_max = 3
+crit_chance = 0.05
+ends_combo = true
+combo_pierce = 0.3
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_vpa55")])
 
-[sub_resource type="Resource" id="Resource_jovxs"]
+[sub_resource type="Resource" id="Resource_qxpys"]
 script = ExtResource("3_y0m3y")
-kind = 1
-dot = &"blight"
-amount = 3
+token = &"blind"
 
-[sub_resource type="Resource" id="Resource_16wwu"]
-script = ExtResource("2_gryt8")
-id = &"plague_grenade"
-display_name = "Plague Grenade"
-icon = ExtResource("5_kyob1")
-launch_ranks = Array[int]([3, 4])
-target_ranks = Array[int]([3, 4])
-multi_target = true
-damage_min = 1
-damage_max = 1
-crit_chance = 0.04
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_jovxs")])
-
-[sub_resource type="Resource" id="Resource_manem"]
+[sub_resource type="Resource" id="Resource_xctei"]
 script = ExtResource("3_y0m3y")
-token = &"stun"
+token = &"combo"
+chance = 0.25
 
-[sub_resource type="Resource" id="Resource_0vc0v"]
+[sub_resource type="Resource" id="Resource_gff7a"]
+script = ExtResource("3_y0m3y")
+token = &"combo"
+on_crit_only = true
+
+[sub_resource type="Resource" id="Resource_5wh2p"]
 script = ExtResource("2_gryt8")
 id = &"blinding_gas"
 display_name = "Blinding Gas"
@@ -65,17 +58,17 @@ icon = ExtResource("6_bwwx6")
 launch_ranks = Array[int]([3, 4])
 target_ranks = Array[int]([3, 4])
 multi_target = true
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_manem")])
+crit_chance = 0.05
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_qxpys"), SubResource("Resource_xctei"), SubResource("Resource_gff7a")])
 cooldown = 1
-uses_per_battle = 3
 
-[sub_resource type="Resource" id="Resource_ge6by"]
+[sub_resource type="Resource" id="Resource_yuwjr"]
 script = ExtResource("3_y0m3y")
 kind = 1
 dot = &"bleed"
-amount = 2
+amount = 3
 
-[sub_resource type="Resource" id="Resource_7g73p"]
+[sub_resource type="Resource" id="Resource_ma84s"]
 script = ExtResource("2_gryt8")
 id = &"incision"
 display_name = "Incision"
@@ -84,78 +77,188 @@ launch_ranks = Array[int]([1, 2, 3])
 target_ranks = Array[int]([1, 2])
 damage_min = 3
 damage_max = 6
-crit_chance = 0.09
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_ge6by")])
+crit_chance = 0.1
+ends_combo = true
+combo_pierce = 0.3
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_yuwjr")])
 
-[sub_resource type="Resource" id="Resource_vpa55"]
+[sub_resource type="Resource" id="Resource_5f55h"]
 script = ExtResource("3_y0m3y")
 kind = 3
 
-[sub_resource type="Resource" id="Resource_0qw0v"]
-script = ExtResource("3_y0m3y")
-kind = 3
-
-[sub_resource type="Resource" id="Resource_qxpys"]
+[sub_resource type="Resource" id="Resource_32hau"]
 script = ExtResource("2_gryt8")
 id = &"battlefield_medicine"
 display_name = "Battlefield Medicine"
 icon = ExtResource("7_jovxs")
 launch_ranks = Array[int]([3, 4])
 side = 1
-heal_min = 1
-heal_max = 1
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_vpa55")])
-self_effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_0qw0v")])
+heal_fraction = 0.2
+heal_below = 0.5
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_5f55h")])
+uses_per_battle = 3
+condition = 7
+condition_value = 0.5
+condition_tokens = Array[StringName]([&"bleed", &"blight", &"burn"])
 
-[sub_resource type="Resource" id="Resource_xctei"]
+[sub_resource type="Resource" id="Resource_a6fua"]
+script = ExtResource("3_y0m3y")
+kind = 7
+stat = &"resist_bleed"
+stat_amount = 0.2
+
+[sub_resource type="Resource" id="Resource_giu2i"]
+script = ExtResource("3_y0m3y")
+kind = 7
+stat = &"resist_blight"
+stat_amount = 0.2
+
+[sub_resource type="Resource" id="Resource_ktf00"]
+script = ExtResource("3_y0m3y")
+kind = 7
+stat = &"resist_burn"
+stat_amount = 0.2
+
+[sub_resource type="Resource" id="Resource_6ry14"]
+script = ExtResource("2_gryt8")
+id = &"ounce_of_prevention"
+display_name = "Ounce of Prevention"
+icon = ExtResource("8_manem")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+multi_target = true
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_a6fua"), SubResource("Resource_giu2i"), SubResource("Resource_ktf00")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_scrl2"]
+script = ExtResource("3_y0m3y")
+kind = 6
+token_pool = Array[StringName]([&"daze"])
+
+[sub_resource type="Resource" id="Resource_rrapi"]
 script = ExtResource("3_y0m3y")
 token = &"strength"
+stacks = 2
 
-[sub_resource type="Resource" id="Resource_gff7a"]
-script = ExtResource("3_y0m3y")
-token = &"speed"
-
-[sub_resource type="Resource" id="Resource_5wh2p"]
+[sub_resource type="Resource" id="Resource_80p6n"]
 script = ExtResource("2_gryt8")
 id = &"emboldening_vapours"
 display_name = "Emboldening Vapours"
 icon = ExtResource("9_manem")
 side = 1
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_xctei"), SubResource("Resource_gff7a")])
-uses_per_battle = 2
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_scrl2"), SubResource("Resource_rrapi")])
+cooldown = 1
 
-[sub_resource type="Resource" id="Resource_yuwjr"]
+[sub_resource type="Resource" id="Resource_ecwnx"]
 script = ExtResource("3_y0m3y")
-token = &"stun"
+kind = 1
+dot = &"blight"
+amount = 3
 
-[sub_resource type="Resource" id="Resource_ma84s"]
+[sub_resource type="Resource" id="Resource_relso"]
+script = ExtResource("2_gryt8")
+id = &"plague_grenade"
+display_name = "Plague Grenade"
+icon = ExtResource("5_kyob1")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([3, 4])
+multi_target = true
+damage_min = 1
+damage_max = 2
+crit_chance = 0.05
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_ecwnx")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_7aqd0"]
 script = ExtResource("3_y0m3y")
-kind = 2
-amount = -1
+kind = 12
 
-[sub_resource type="Resource" id="Resource_5f55h"]
+[sub_resource type="Resource" id="Resource_80ifp"]
+script = ExtResource("2_gryt8")
+id = &"indiscriminate_science"
+display_name = "Indiscriminate Science"
+icon = ExtResource("11_0vc0v")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+heal_fraction = 0.1
+heal_per_buff_token = 0.1
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_7aqd0")])
+cooldown = 2
+condition = 4
+condition_value = 0.5
+
+[sub_resource type="Resource" id="Resource_j5o6p"]
+script = ExtResource("3_y0m3y")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_jwxeh"]
+script = ExtResource("2_gryt8")
+id = &"cause_of_death"
+display_name = "Cause of Death"
+icon = ExtResource("12_ge6by")
+launch_ranks = Array[int]([1, 2, 3])
+target_ranks = Array[int]([1, 2, 3])
+damage_from_dots = 1.0
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_j5o6p")])
+cooldown = 2
+condition = 7
+condition_tokens = Array[StringName]([&"bleed", &"blight", &"burn"])
+
+[sub_resource type="Resource" id="Resource_ltpse"]
+script = ExtResource("3_y0m3y")
+kind = 9
+
+[sub_resource type="Resource" id="Resource_w88m2"]
+script = ExtResource("3_y0m3y")
+token = &"daze"
+
+[sub_resource type="Resource" id="Resource_m0gk2"]
+script = ExtResource("3_y0m3y")
+kind = 6
+token_pool = Array[StringName]([&"guard"])
+
+[sub_resource type="Resource" id="Resource_ebg1w"]
 script = ExtResource("2_gryt8")
 id = &"disorienting_blast"
 display_name = "Disorienting Blast"
 icon = ExtResource("10_0vc0v")
 launch_ranks = Array[int]([2, 3, 4])
 target_ranks = Array[int]([2, 3, 4])
-effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_yuwjr"), SubResource("Resource_ma84s")])
+crit_chance = 0.05
+ignore_tokens = Array[StringName]([&"guard"])
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_ltpse"), SubResource("Resource_w88m2"), SubResource("Resource_m0gk2")])
+
+[sub_resource type="Resource" id="Resource_ijweu"]
+script = ExtResource("3_y0m3y")
+kind = 1
+dot = &"burn"
+amount = 3
+
+[sub_resource type="Resource" id="Resource_fayqc"]
+script = ExtResource("2_gryt8")
+id = &"magnesium_rain"
+display_name = "Magnesium Rain"
+icon = ExtResource("14_7g73p")
+launch_ranks = Array[int]([2, 3, 4])
+multi_target = true
+crit_chance = 0.05
+effects = Array[ExtResource("3_y0m3y")]([SubResource("Resource_ijweu")])
 cooldown = 2
+clears_corpses = true
 
 [resource]
 script = ExtResource("1_5hqwy")
 id = &"plaguebearer"
 display_name = "Plague Doctor"
 color = Color(0.43137255, 0.47843137, 0.1882353, 1)
-max_hp = 26
-speed = 7
+max_hp = 30
+speed = 4
 corpse_hp = 14
-resist_stun = 0.2
-resist_bleed = 0.2
-resist_blight = 0.6
-resist_burn = 0.2
+resist_stun = 0.1
+resist_bleed = 0.3
+resist_blight = 0.4
+resist_burn = 0.3
 resist_move = 0.2
-resist_debuff = 0.5
-skills = Array[ExtResource("2_gryt8")]([SubResource("Resource_bwwx6"), SubResource("Resource_16wwu"), SubResource("Resource_0vc0v"), SubResource("Resource_7g73p"), SubResource("Resource_qxpys"), SubResource("Resource_5wh2p"), SubResource("Resource_5f55h")])
+resist_debuff = 0.2
+skills = Array[ExtResource("2_gryt8")]([SubResource("Resource_0qw0v"), SubResource("Resource_5wh2p"), SubResource("Resource_ma84s"), SubResource("Resource_32hau"), SubResource("Resource_6ry14"), SubResource("Resource_80p6n"), SubResource("Resource_relso"), SubResource("Resource_80ifp"), SubResource("Resource_jwxeh"), SubResource("Resource_ebg1w"), SubResource("Resource_fayqc")])
 sprite = ExtResource("9_0vc0v")

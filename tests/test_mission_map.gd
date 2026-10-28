@@ -25,7 +25,7 @@ func _maps(seeds: int) -> Array[MissionMap]:
 
 
 ## A run on `map`, or on a generated map of the mission's length.
-func _run(map: MissionMap = null, heroes: Array = ["vanguard", "cutthroat", "marksman", "mender"],
+func _run(map: MissionMap = null, heroes: Array = ["vanguard", "cutthroat", "plaguebearer", "mender"],
 		tier: int = CampaignRules.Tier.APPRENTICE, length: int = CampaignRules.Length.SHORT) -> MissionRun:
 	var mission := Mission.new()
 	mission.region = _region()
@@ -280,7 +280,7 @@ func test_rooms_reveal_as_they_become_next_choices() -> void:
 
 
 func test_fights_pay_the_fight_share_and_elites_double_plus_heirlooms() -> void:
-	var run := _run(_map_of([MapRoom.Type.FIGHT, MapRoom.Type.ELITE]), ["vanguard", "cutthroat", "marksman", "mender"],
+	var run := _run(_map_of([MapRoom.Type.FIGHT, MapRoom.Type.ELITE]), ["vanguard", "cutthroat", "plaguebearer", "mender"],
 			CampaignRules.Tier.VETERAN)
 	run.enter(0)
 	_win(run)
@@ -364,7 +364,7 @@ func test_certain_choices_apply_their_outcomes() -> void:
 
 
 func test_a_choice_can_need_a_class_in_the_party() -> void:
-	var without := _run(_map_of([MapRoom.Type.EVENT]), ["vanguard", "cutthroat", "marksman"])
+	var without := _run(_map_of([MapRoom.Type.EVENT]), ["vanguard", "cutthroat", "plaguebearer"])
 	without.enter(0)
 	var bless := without.event().choices[2]
 	assert_eq(without.choice_blocked(bless), "Needs the Vestal.")

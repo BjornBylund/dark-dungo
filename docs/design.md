@@ -11,7 +11,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 
 - **v1: the campaign.** A DD1-style town loop around the combat: recruit a fixed cast, pick a party of 4, run missions of a few fights, and spend gold and heirlooms on the heroes and buildings. Details under [Campaign](#campaign).
 - **The combat sandbox** (a fixed party against 3 waves) stays as a test mode, started with `-- --sandbox`.
-- Out of scope for v1: dungeon map, quirks, diseases, trinkets, supplies, relationships, skill loadouts, Paths. See [Open / deferred](#open--deferred).
+- Out of scope for v1: dungeon map, quirks, diseases, supplies, Paths. See [Open / deferred](#open--deferred).
 
 ## Architecture
 
@@ -25,7 +25,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 - **Mirror Darkest Dungeon 2.** Where DD2 has a rule, copy it number for number. Reference: [research/darkest-dungeon-combat.md](research/darkest-dungeon-combat.md). All DD2 numbers live in `src/core/rules.gd` and `src/core/tokens.gd`.
 - **Stress** 0–10 with Meltdown (80%) or Resolute (20%) at 10. In a fight it happens on the spot; on a mission map, as soon as an event pushes a hero to 10 or when a hero sets out at 10 (the map opens with a "Setting out" panel). Round-based buffs from one outside a fight count down in the next fight.
 - **Death's Door**: heroes at 0 HP are on Death's Door; further damage rolls deathblow resistance (60% base, −10% per survived check, clamped 33–90%). A failed roll **defeats** the hero rather than killing them (see [Campaign](#campaign)). Enemies die at 0 HP unless they have Death Armor.
-- **Hero kit**: each class has DD1's 7 skills and a hero takes 4 into a fight (see [Skill loadouts](#hero-growth)), plus Swap and Pass. Recover (DD2's `pass_heal`) appears below 25% HP. Cooldowns and per-battle limits apply.
+- **Hero kit**: each class has its DD2 kit of 11 skills and a hero takes 5 into a fight (see [Skill loadouts](#hero-growth)), plus Swap and Pass. Recover (DD2's `pass_heal`) appears below 25% HP. Cooldowns and per-battle limits apply.
 - **Enemy AI**: a forced skill if one is usable, otherwise a pick among usable skills by `ai_weight` (all 1 by default, which is DD2's uniform pick), then a target that respects Taunt and Stealth and avoids corpses when possible.
 
 ### Where DD2 is unknown, we chose
@@ -52,8 +52,8 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 
 ### Roster: a fixed cast, no permadeath
 
-- **One unique hero per class.** The cast is 8 of DD1's classes (see [Heroes](#heroes)); you start with 5 at level 0: the Crusader, Grave Robber, Arbalest, Vestal and Man-at-Arms.
-- **Recruiting through bosses:** there is no Stagecoach. Beating a region's boss for the first time lets one hero join: you choose from those who haven't, and they join at level 1. Three regions, three heroes left (Plague Doctor, Jester, Flagellant). See [Region bosses](#region-bosses).
+- **One unique hero per class.** The cast is 7 of DD2's heroes (see [Heroes](#heroes)); you start with 5 at level 0: the Crusader, Grave Robber, Vestal, Man-at-Arms and Plague Doctor.
+- **Recruiting through bosses:** there is no Stagecoach. Beating a region's boss for the first time lets one hero join: you choose from those who haven't, and they join at level 1. Two heroes are left to join (Jester, Flagellant), so the third region's boss has no one left to bring. See [Region bosses](#region-bosses).
 - **No permadeath.** A failed deathblow **defeats** the hero: they leave the fight and take no further part in the mission. Back in town they are **Wounded** and sit out the next week, unless you pay to treat them at once. They keep their levels, gear and skills.
 - **Between missions** heroes return at full HP. Stress carries over until relieved at the Abbey. Idle heroes lose 1 stress per week.
 
@@ -82,7 +82,7 @@ After DD1's region progress and bosses:
 |---|---|---|
 | Graveyard | **The Gravelord** (2 ranks), with a Bone Spearman and a Cultist | Bone Storm on every rank, Grasp of the Grave (heavy, Weak), Raise the Dead (Strength for all), Death Knell (stress to all) |
 | Burrows | **The Maw** (2 ranks), with two Spitters | Gorge (heavy, Bleed), Swallow (Stun), Retch (Blight on the back ranks), Ravenous Howl (stress to all) |
-| Chapel | **The Hollow Saint** (rank 3, acts twice), between the Brute and a Cultist | Sermon of Despair (+2 stress to all), Smite (heavy, Vulnerable), Wailing Choir (every rank), Hallowed Ward (Block for all), Saint's Mercy (heals) |
+| Chapel | **The Hollow Saint** (rank 4, acts twice), behind the Brute and a Cultist | Sermon of Despair (+2 stress to all), Smite (heavy, Vulnerable), Wailing Choir (every rank), Hallowed Ward (Block for all), Saint's Mercy (heals) |
 - **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +50% HP and damage and +5% crit.
 
 ### Rewards
@@ -162,7 +162,7 @@ Tuned with `tools/balance_probe.gd` so that a fresh level-0 party loses about 50
   - Each weapon rank above 1: +10% damage, +1% crit, and +1 speed at ranks 3 and 5.
   - Each armour rank above 1: +20% of base HP.
 - **Guild:** skill ranks 2–5 for 250 / 750 / 1,250 / 2,500 gold, same level gates, needing the matching Guild upgrade. Each rank above 1: +10% damage or healing, +1% crit, +10% resistance pierce on its effects.
-- **Skill loadouts**, DD1's: each class has more skills than a hero takes into a fight. A hero takes **4**, chosen from the skills they've learned. Every hero knows their class's first 4 skills from the start, and learns the others at the Guild for 500 gold each (×1.4 at levels 3–4, ×1.8 at 5–6); a new skill is equipped straight away while a slot is free. Only learned skills can be trained. The 4 are chosen in town (the hero's sheet or the Guild) or on the mission map between rooms (the Skills button), and apply from the next fight.
+- **Skill loadouts**: each class has more skills than a hero takes into a fight. A hero takes **5**, DD2's number, chosen from the skills they've learned. Every hero knows their class's 5 DD2 starting skills from the start, and learns the other 6 at the Guild for 500 gold each (×1.4 at levels 3–4, ×1.8 at 5–6); a new skill is equipped straight away while a slot is free. Only learned skills can be trained. The 5 are chosen in town (the hero's sheet or the Guild) or on the mission map between rooms (the Skills button), and apply from the next fight.
 
 ### Bonds
 
@@ -191,6 +191,7 @@ Each building has DD1's separate **upgrade lines**, bought with heirlooms in its
 | **Abbey** | week 1 | Safe stress relief: Meditation, Prayer, Flagellation. Wound treatment | One line per activity (below), Busts + Crests |
 | **Tavern** | week 3 | Risky stress relief: Bar, Gambling Hall, Bathhouse | One line per activity (below), Portraits + Crests |
 | **Heirloom Exchange** | week 5 | Trades heirlooms at a loss | none |
+| **Nomad Wagon** | week 2 | Sells trinkets, buys back unworn ones (see [Trinkets](#trinkets)) | Stock: one more trinket a week, 3 levels (3 Portraits + 6 Crests, 6 + 12, 10 + 20). Haggling: −10% prices per level, 5 levels (2 + 4 up to 12 + 24). Both ladders are ours |
 
 - **Stress relief activities:** the hero pays now, misses this week's mission, and the stress comes off when the week ends. Prices ×1.4 for heroes of level 3–4 and ×1.8 for level 5–6.
 
@@ -213,7 +214,25 @@ Each building has DD1's separate **upgrade lines**, bought with heirlooms in its
 - **Heirloom Exchange**, DD1's rates: 3 Crests → 1 Bust or Deed; 6 Crests → 1 Portrait; 2 Busts or 2 Deeds → 3 Crests; 1 Portrait → 3 Crests; 3 Busts ↔ 2 Deeds; 3 Busts or 3 Deeds → 1 Portrait; 2 Portraits → 3 Busts or 3 Deeds. Any number of trades a week.
 - **Wound treatment:** 750 gold (same ×1.4 / ×1.8) at the Abbey to heal a Wounded hero for this week's mission.
 - **On the hamlet** a plate over each building shows its name and upgrades bought (gold when one is affordable), or the week it opens. What happened in town at week's end (Abbey and Tavern visits, side effects, the Bar's bonds) shows with the mission results, or in a "The week in town" window after waiting out a week.
-- **Not yet:** the Sanitarium (needs quirks and diseases) and the Nomad Wagon (needs trinkets).
+- **Not yet:** the Sanitarium (needs quirks and diseases).
+
+### Trinkets
+
+DD2's ([research/darkest-dungeon-2-trinkets.md](research/darkest-dungeon-2-trinkets.md), current wiki values).
+
+- **Wearing:** each hero wears 2, put on and taken off on their sheet in town. Hero trinkets are for one class. Nobody owns two of the same trinket, as in DD2.
+- **Rarities:** DD2's Vague, Distant and Indelible, plus Ancestral. Drops weigh them by mission tier: Apprentice 10 : 6 : 2 (DD2's road-battle ladder), Veteran 3 : 6 : 3, Champion 0 : 6 : 4, so Vague ones fade out of harder dungeons and Indelible ones grow common.
+- **Where they come from:**
+  - caches and won elite fights, 50% each;
+  - every completed mission, one;
+  - region bosses, a boss trinket not owned yet (Footman's Grog, Reverberating Redoubt, Kitchen Knives, Carved Bodkin) or Ancestor's Coat;
+  - the Nomad Wagon.
+
+  Trinkets found on the way are lost if the party falls; a retreat keeps them.
+- **What they do:** passive stats (damage, crit, speed, max HP, resistances, healing, damage taken, DoT dealt and received), stats with a condition (`If Stealth: +20% damage`, `If Target has Bleed`, `If HP < 20%`, one skill only), and triggers on combat events (`Apply on Hit`, `Gain When Hit`, `Apply to Attacker When Hit`, `Gain on Miss`, `Turn Start: If First in Turn Order`, `Each Hero on Combat Start`, `Target: <skill>`, `When Moving`, `On Entering Death's Door`, on a resist). Each line keeps DD2's chance, and `X or Y` lines give at most one.
+- **The 81:** 20 hero trinkets (the Crusader's Pilfered Wealth needs Relics), the 12 stat trinkets in all three tiers (Minor, plain, Greater), 11 token-trigger trinkets, 5 region trinkets (any dungeon here), 4 rare Indelibles, 4 boss trinkets and Ancestor's Coat. Lines tied to systems we don't have (Flame, Relics, item tags, Disease, Horror) are left out, and `Invert` lines remove instead.
+- **Prices:** about 100 gold per DD2 Bauble: Vague 500, Distant 2,000–3,000, Indelible 5,000–6,500. The Wagon buys back for 25%; boss and Ancestral trinkets can't be sold.
+- **Nomad Wagon:** opens in week 2 and sells 4 trinkets a week, none already owned, at the best tier the roster can take on.
 
 ### Town screen and saving
 
@@ -229,7 +248,8 @@ Each building has DD1's separate **upgrade lines**, bought with heirlooms in its
 - `ai_weight` on skills is our extension. DD2 picks uniformly; leaving every weight at 1 does the same.
 - **No permadeath.** A failed deathblow defeats and wounds a hero instead of killing them. Both DD games have permadeath.
 - "Until next Inn" effects (Meltdown/Resolute deathblow changes) last until the end of the mission.
-- Not implemented yet: relationships and affinity, quirks, diseases, combat items, Flame, battle modifiers, stalling penalties, retreating in the middle of a fight (you can only retreat between fights). Burn and the Immobilize token work in the engine but no content uses them.
+- Not implemented yet: relationships and affinity, quirks, diseases, combat items, Flame, Paths and skill mastery, battle modifiers, stalling penalties, retreating in the middle of a fight (you can only retreat between fights).
+- The hero kits leave out Horror, Radiance's +2 DMG against Burn, and the Grave Robber keeping Combo while she holds a Crit token. Consecrations work as DD2's rank tokens.
 
 ## Presentation & input
 
@@ -279,54 +299,41 @@ Names are placeholders; the theme/setting is undecided. Rank notation: "From 1�
 
 ### Heroes
 
-The cast is Darkest Dungeon 1's: the class names and each class's 7 combat skills at rank 1, translated from [research/darkest-dungeon-1-heroes.md](research/darkest-dungeon-1-heroes.md). The files keep the old placeholder ids (`content/heroes/vanguard.tres` is the Crusader). A hero starts with the first 4 skills in its file. They always include the skill DD1 gives every new hero of the class, and they let the class act from every rank. Exact numbers are in the `.tres` files and each skill's tooltip.
+The cast is seven of Darkest Dungeon 2's heroes with their DD2 kits: base stats and all 11 combat skills each, Wanderer path, unmastered, at current values (including the Steadfast Stewards Pt. 2 patch), from [research/darkest-dungeon-2-heroes.md](research/darkest-dungeon-2-heroes.md). The DD1 Arbalest has no DD2 version and is gone. The files keep the old placeholder ids (`content/heroes/vanguard.tres` is the Crusader). Each file lists DD2's 5 starting skills first, then the 6 that DD2 unlocks at the Shrine of Reflection, learned here at the Guild. Exact numbers are in the `.tres` files and each skill's tooltip.
 
-| Class (file) | Ranks | HP | Speed | Swap | Starting skills | Learned at the Guild |
-|---|---|---|---|---|---|---|
-| **Crusader** (vanguard) | 1–2 | 40 | 1 | ±1 | Smite, Zealous Accusation, Stunning Blow, Holy Lance | Battle Heal, Bulwark of Faith, Inspiring Cry |
-| **Grave Robber** (cutthroat) | 1–4 | 28 | 8 | ±1 or ±2 | Lunge, Shadow Fade, Thrown Dagger, Pick to the Face | Flashing Daggers, Poison Dart, Toxin Trickery |
-| **Arbalest** (marksman) | 3–4 | 32 | 3 | back 1–2 | Sniper Shot, Sniper's Mark, Battlefield Bandage, Blindfire | Bola, Suppressing Fire, Rallying Flare |
-| **Vestal** (mender) | 2–4 | 29 | 4 | ±1 | Divine Grace, Divine Comfort, Dazzling Light, Mace Bash | Judgement, Illumination, Hand of Light |
-| **Man-at-Arms** (warden) | 1–3 | 37 | 3 | ±1 or ±2 | Crush, Rampart, Defender, Retribution | Bellow, Command, Bolster |
-| **Plague Doctor** (plaguebearer) | 2–4 | 26 | 7 | ±1 | Noxious Blast, Plague Grenade, Blinding Gas, Incision | Battlefield Medicine, Emboldening Vapours, Disorienting Blast |
-| **Jester** (minstrel) | 1–4 | 25 | 7 | ±1 to ±3 | Dirk Stab, Harvest, Slice Off, Inspiring Tune | Finale, Solo, Battle Ballad |
-| **Flagellant** (penitent) | 1–2 | 32 | 6 | forward 1–3, back 1 | Punish, Rain of Sorrows, Reclaim, Endure | Exsanguinate, Redeem, Suffer |
+| Class (file) | HP | Speed | Swap | Starting skills | Learned at the Guild |
+|---|---|---|---|---|---|
+| **Crusader** (vanguard) | 40 | 2 | ±1 | Smite, Stunning Blow, Zealous Accusation, Inspiring Cry, Rallying Cry | Reap, Battle Heal, Bulwark of Faith, Holy Lance, Radiance, Tenacity |
+| **Grave Robber** (cutthroat) | 29 | 5 | ±1 or ±2 | Pick to the Face, Thrown Dagger, Flashing Daggers, Poison Dart, Absinthe | Dead of Night, Repartee, Lunge, Shadow Fade, Pirouette, Glint in the Dark |
+| **Vestal** (mender) | 41 | 2 | ±1 | Hand of Light, Illumination, Judgement, Divine Grace, Consecration of Fortitude | Ministrations, Mace Bash, Sanctuary, Consecration of Light, Divine Comfort, Mantra |
+| **Man-at-Arms** (warden) | 42 | 2 | ±1 or ±2 | Crush, Rampart, Defender, Bolster, Hold the Line | Bellow, Stand Fast, Retribution, Courageous Abandon, Command, Strategic Withdrawal |
+| **Plague Doctor** (plaguebearer) | 30 | 4 | ±1 | Noxious Blast, Blinding Gas, Incision, Battlefield Medicine, Ounce of Prevention | Emboldening Vapours, Plague Grenade, Indiscriminate Science, Cause of Death, Disorienting Blast, Magnesium Rain |
+| **Jester** (minstrel) | 29 | 4 | ±1 to ±3 | Razor's Wit, Fade to Black, Slice Off, Battle Ballad, Inspiring Tune | Play Out, Harvest, Echoing March, Finale, Solo, Encore |
+| **Flagellant** (penitent) | 50 | 3 | forward 1–2, back 1 | Punish, Fester, Deathless, Endure, Lash's Gift | Acid Rain, More! MORE!, Suffer, Sepsis, Undying, Necrosis |
 
-How DD1 translates:
+Class rules:
 
-- **Damage:** each class has a weapon damage range on our scale: Crusader 5–9; Grave Robber and Arbalest 4–8; Man-at-Arms and Flagellant 4–7; Vestal, Plague Doctor and Jester 3–6. A skill applies DD1's modifier to it, so Zealous Accusation's −40% gives 3–5. Crit is the class's DD1 base plus the skill's modifier, plus 2 points.
-- **Stats:** HP is about 1.2× DD1's. Speed, resistances and Swap distances (DD1's move skill) are DD1's.
-- **No accuracy or PROT,** as in DD2, so DD1's stat buffs become tokens:
+- **Vestal:**
+  - **Conviction:** she gains 1 at each turn start, up to 3. Judgement, Mace Bash, Divine Grace and Mantra grow stronger at 2 and 3, and spend all of it at 2 or more. Without Paths, the gain is wired to her class (DD2 puts it on her Wanderer path).
+  - **Consecrations:** they bless a hero rank for 3 rounds. Whoever stands there gains Block or Dodge (Fortitude) or Strength (Light) at each turn start, and a new Consecration replaces the old.
+- **Flagellant:**
+  - **Toxic:** at max stress he turns Toxic instead of melting down or turning resolute. His stress drops to 1, his HP is set to 30%, his cooldowns reset, and he gains a Toxic token (up to 3) that Blights anyone who hits him by 2 per token.
+  - **Pain:** More! MORE! gives him Pain each time he is hurt, until the end of his next turn. At his turn end he heals 10% per Pain token, then the tokens go.
+  - **Death's Door:** he isn't made Weak there.
+  - **Costs:** many of his skills cost him HP or stress.
+- **Man-at-Arms:** he has his own Riposte attack (3–5).
 
-  | DD1 effect | Token |
-  |---|---|
-  | PROT buff | Block |
-  | Dodge buff | Dodge |
-  | Damage buff | Strength |
-  | Crit buff | Crit |
-  | Speed buff | Speed |
-  | Accuracy debuff | Blind |
-  | Dodge debuff | Vulnerable |
-  | Speed debuff | Daze |
-  | Mark on an enemy | Combo; skills with a bonus against Marked targets get a Combo bonus |
-  | Mark on oneself | Taunt |
-- **Healing and DoTs:**
-  - DoTs are 0.6× DD1's per-turn amount, rounded up.
-  - Heals are about 1.3× DD1's.
-  - Stress relief is −1 for Inspiring Cry and Bolster, and −2 for Inspiring Tune and Endure.
-  - Judgement, Exsanguinate and Redeem heal the user a share of their max HP.
-- **Limits:**
-  - Per-battle limits are DD1's: 1 for Bulwark of Faith, Toxin Trickery and Bolster, 2 for Emboldening Vapours, Solo and Redeem, 3 for Blinding Gas and Exsanguinate.
-  - Exsanguinate and Redeem need the Flagellant below 40% HP.
-  - Cooldowns are ours, since DD1 has none. They go on stuns from the back ranks, Shadow Fade, Retribution, the party-wide buffs and Disorienting Blast.
-- **Left out for now:**
-  - Unholy and Blighted damage bonuses, and accuracy buffs.
-  - The Jester's Finale build-up; Finale hits for +100% instead.
-  - Stealth reveal on Rallying Flare and Illumination.
-  - Pick to the Face ignoring PROT, and Blindfire's random target.
-  - Disorienting Blast's shuffle, which is a knockback instead.
-  - Resistance debuffs.
-  - The Flagellant's low-HP bonus applies below half HP, the engine's threshold, rather than DD1's 40%.
+The kits brought these mechanics to the combat engine:
+
+- **Ignored tokens:** Block, Dodge, Guard or Stealth, of which one stack is still spent.
+- **Combo payoffs:** extra crit, resistance piercing, and effects that only work against Combo.
+- **Tier tokens.**
+- **Corpse skills.**
+- **Effects over time:** Regen, and timed stat buffs and debuffs, such as speed, piercing, healing received, can't-gain-Block, and pulls each turn.
+- **Turn and position:** extra turns (Encore), Shuffle, and taking over DoTs.
+- **Unusual damage:** damage from the target's remaining DoTs (Cause of Death), heals scaling with tokens, and stress relief on a kill.
+
+**Placeholders:** the skill icons are copies of older ones, and the attack poses are generated.
 ### Enemies
 
 | Enemy | Ranks | HP | Speed | Skills |
@@ -339,7 +346,7 @@ How DD1 translates:
 
 ### Sandbox run
 
-- Starting order: Crusader (1), Grave Robber (2), Arbalest (3), Vestal (4), each with their starting skills.
+- Starting order: Crusader (1), Grave Robber (2), Plague Doctor (3), Vestal (4), each with their first 5 skills.
 - Wave 1 "Ghoul Pack": Ghoul, Ghoul, Spitter, Cultist.
 - Wave 2 "Bone Line": Bone Spearman, Ghoul, Spitter, Cultist.
 - Wave 3 "The Brute": Brute (ranks 1–2), Cultist, Spitter.
@@ -354,12 +361,12 @@ How DD1 translates:
 
 `tests/test_simulation.gd` plays full sandbox runs with scripted players and prints:
 
-- Sensible player (heals the hurt, calms the stressed, otherwise hits hardest on the weakest foe): wins ~96% of runs, losing ~1.1 heroes per run.
-- Random player: wins ~52% of runs.
+- Sensible player (heals the hurt, calms the stressed, otherwise hits hardest on the weakest foe): wins ~100% of runs, losing ~1 hero per run.
+- Random player: wins ~34% of runs.
 
 A human should land between the two. Retune once it has been played.
 
-`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 40% of short missions, 23% of medium and 19% of long. Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear. The bot is a pessimistic stand-in for a human, who picks a party and a route on purpose.
+`scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 46% of short missions, 28% of medium and 20% of long (heroes without trinkets). Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear. The bot is a pessimistic stand-in for a human, who picks a party and a route on purpose.
 
 ## Future features
 
@@ -402,7 +409,7 @@ To decide when we design it:
 ## Open / deferred
 
 - **Theme and setting**, and with it all names.
-- Town features after v1, roughly in DD1's priority: quirks, with their Abbey and Tavern side effects, and the Sanitarium; trinkets and the Nomad Wagon; diseases; region bosses, with DD1's per-region progress bar and dungeon levels; quest goals beyond winning every fight; town events; a dungeon map with supplies, light and camping (Survivalist).
+- Town features after v1, roughly in DD1's priority: quirks, with their Abbey and Tavern side effects, and the Sanitarium; diseases; quest goals beyond winning every fight; town events; a dungeon map with supplies, light and camping (Survivalist).
 - Relationships, Paths, combat items, skill loadouts.
 - Real art, audio, controller support, multiple save slots.
 - DD2 screen features waiting on mechanics or writing: the Flame emblem at the top, speech-bubble barks, right-click enemy and hero inspect sheets.

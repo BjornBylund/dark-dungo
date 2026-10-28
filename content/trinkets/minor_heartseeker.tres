@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_whgka"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_gd4c5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_nx1t0"]
+
+[resource]
+script = ExtResource("2_gd4c5")
+id = &"minor_heartseeker"
+display_name = "Minor Heartseeker"
+price = 500
+stats = Dictionary[StringName, float]({
+&"crit": 0.03,
+&"heal_received": -0.1
+})

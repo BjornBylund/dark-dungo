@@ -1,10 +1,11 @@
 # Darko Dungo
 
-A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of eight heroes (Darkest Dungeon 1's classes, each with 7 skills to choose 4 from), send four on missions across a map of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
+A Godot 4.7 prototype: Darkest Dungeon 2's turn-based combat inside a Darkest Dungeon 1 style town loop. Recruit a fixed cast of seven Darkest Dungeon 2 heroes (each with DD2's 11 skills, 5 taken into a fight), send four on missions across a map of fights, events and rests, and spend the gold and heirlooms on gear, skills, stress relief and buildings. Dungeons give DD2's trinkets, rarer ones less often and mostly in harder dungeons, and the Nomad Wagon trades them; each hero wears two. Heroes who go out together and help each other form bonds (Friendly, Respected, Partners) that make them stronger side by side. A combat sandbox (four heroes against three waves) is still there for testing fights.
 
 - Design decisions: [docs/design.md](docs/design.md)
 - DD2 combat research: [docs/research/darkest-dungeon-combat.md](docs/research/darkest-dungeon-combat.md)
-- DD1 hero kits the cast is built from: [docs/research/darkest-dungeon-1-heroes.md](docs/research/darkest-dungeon-1-heroes.md)
+- DD2 hero kits the cast is built from: [docs/research/darkest-dungeon-2-heroes.md](docs/research/darkest-dungeon-2-heroes.md)
+- DD2 trinkets: [docs/research/darkest-dungeon-2-trinkets.md](docs/research/darkest-dungeon-2-trinkets.md)
 
 ## Run it
 
@@ -16,7 +17,7 @@ godot --path .
 
 The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight of a mission.
 
-- **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Tavern and Heirloom Exchange), or a hero in the roster for their sheet. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
+- **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Nomad Wagon, Tavern and Heirloom Exchange), or a hero in the roster for their sheet, where they put on and take off trinkets. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
 - **Mission map:** click a glowing room to go there; hover a room to see what it holds. Fights open the combat screen and come back; rests, caches and events open a panel over the map. **Retreat** (click twice) ends the mission with what you earned on the way.
 - **Combat:** click a skill, then a highlighted target. Keys: `1`–`8` skills, `Left`/`Right`/`Tab` change target, `Enter`/`Space` confirm, `L` combat log, `S` speed, `R` restart (sandbox only). Hover any unit for its stats.
@@ -92,6 +93,7 @@ Other art, all replaceable:
 
 ## Add content
 
+- **Trinkets:** `content/trinkets/`, listed under **Trinkets** in `content/campaign.tres`. Each has a rarity, an optional class, a price, stats (fractions like 0.15 for +15%, speed in points, `max_hp` as a share of base HP), **Bonuses** (stats with a condition) and **Triggers** (effects fired by combat events, like Apply on Hit). An empty **Icon** draws a placeholder in the rarity's colour.
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Recruits** (one joins, chosen by the player, for each region boss beaten for the first time).
 - **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. They open in that order: the first from the start, each next one when the boss before it is beaten for the first time. Each open region offers two missions a week (four while only the first is open).
 - **Enemy groups:** `content/encounters/`. A mission map's fight rooms draw from its region's **Encounters**, elite rooms from its **Elites**, and the final room from its **Finales**, or its **Boss** on a boss mission.
@@ -114,11 +116,11 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | Path | What |
 |---|---|
 | `src/core/` | Combat rules: `battle.gd` (turns, hits, death, stress), `combatant.gd` (unit state), `tokens.gd` and `rules.gd` (DD2 numbers), `enemy_ai.gd`, `sandbox_run.gd` |
-| `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
-| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, saving), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
+| `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `TrinketDef` (with `TrinketBonus` and `TrinketTrigger`), `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
+| `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, trinkets, saving), `trinkets.gd` (trinket drops), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
-| `content/` | Heroes, enemies, encounters, regions, events, the campaign and the sandbox as `.tres` files |
+| `content/` | Heroes, enemies, encounters, regions, events, trinkets, the campaign and the sandbox as `.tres` files |
 | `art/` | Unit sprites, close-up poses (`art/poses/<unit>/<skill>.png` and `hurt.png`), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
 | `export_presets.cfg` | The Web export preset |
 | `.github/workflows/pages.yml` | Test, export and deploy to GitHub Pages |

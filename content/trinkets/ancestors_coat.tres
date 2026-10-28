@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_fd6uf"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_6qjco"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_bxvmb"]
+
+[resource]
+script = ExtResource("2_6qjco")
+id = &"ancestors_coat"
+display_name = "Ancestor's Coat"
+rarity = 3
+stats = Dictionary[StringName, float]({
+&"damage_taken": -0.15,
+&"dot_duration_received": -2.0
+})

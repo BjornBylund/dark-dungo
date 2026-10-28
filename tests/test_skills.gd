@@ -5,7 +5,7 @@ extends TestCase
 
 func _campaign() -> Campaign:
 	var def := CampaignDef.new()
-	for id: String in ["vanguard", "cutthroat", "marksman", "mender"]:
+	for id: String in ["vanguard", "cutthroat", "plaguebearer", "mender"]:
 		def.starting_heroes.append(load("res://content/heroes/%s.tres" % id))
 	def.regions.assign([Fixtures.region(&"first", ["wave_1"], ["brute_and_bones"], ["wave_3"])])
 	var campaign := Campaign.create(def, 1)

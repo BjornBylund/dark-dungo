@@ -26,6 +26,8 @@ var activity := &""
 var away_weeks := 0
 ## Tavern perks for the hero's next mission: "max_hp" (a fraction) and "speed".
 var next_mission: Dictionary[StringName, float] = {}
+## Trinkets worn, at most CampaignRules.TRINKET_SLOTS.
+var trinkets: Array[TrinketDef] = []
 
 var display_name: String:
 	get:
@@ -85,7 +87,7 @@ func to_dict() -> Dictionary:
 		def = def.resource_path, recruited = recruited, xp = xp, stress = stress,
 		weapon_rank = weapon_rank, armor_rank = armor_rank, skill_ranks = skill_ranks, known = known,
 		equipped = equipped, wounded = wounded, activity = activity, away_weeks = away_weeks,
-		next_mission = next_mission,
+		next_mission = next_mission, trinkets = Trinkets.to_paths(trinkets),
 	}
 
 
@@ -124,4 +126,5 @@ static func from_dict(data: Dictionary) -> HeroRecord:
 		record.away_weeks = int(data.away_weeks)
 		for perk: String in data.next_mission:
 			record.next_mission[StringName(perk)] = float(data.next_mission[perk])
+	record.trinkets = Trinkets.from_paths(data.get("trinkets", []))
 	return record

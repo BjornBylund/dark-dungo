@@ -3,64 +3,91 @@
 [ext_resource type="Script" path="res://src/core/defs/unit_def.gd" id="1_t46oa"]
 [ext_resource type="Script" path="res://src/core/defs/skill_def.gd" id="2_tmaee"]
 [ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="3_sqyoy"]
-[ext_resource type="Texture2D" path="res://art/skills/dirk_stab.svg" id="4_sqyoy"]
+[ext_resource type="Texture2D" path="res://art/skills/razors_wit.svg" id="4_juvq8"]
+[ext_resource type="Texture2D" path="res://art/skills/fade_to_black.svg" id="5_6tkaq"]
 [ext_resource type="Texture2D" path="res://art/skills/harvest.svg" id="5_f1fn4"]
 [ext_resource type="Texture2D" path="res://art/skills/slice_off.svg" id="6_mtmil"]
 [ext_resource type="Texture2D" path="res://art/skills/inspiring_tune.svg" id="7_1ged6"]
 [ext_resource type="Texture2D" path="res://art/skills/finale.svg" id="8_6tkaq"]
+[ext_resource type="Texture2D" path="res://art/skills/play_out.svg" id="9_5ghx7"]
 [ext_resource type="Texture2D" path="res://art/units/minstrel.png" id="9_gb7rb"]
 [ext_resource type="Texture2D" path="res://art/skills/solo.svg" id="9_juvq8"]
 [ext_resource type="Texture2D" path="res://art/skills/battle_ballad.svg" id="10_6tkaq"]
+[ext_resource type="Texture2D" path="res://art/skills/echoing_march.svg" id="11_2fx16"]
+[ext_resource type="Texture2D" path="res://art/skills/encore.svg" id="14_smws5"]
 
-[sub_resource type="Resource" id="Resource_sqyoy"]
+[sub_resource type="Resource" id="Resource_1uqnj"]
+script = ExtResource("3_sqyoy")
+token = &"combo"
+
+[sub_resource type="Resource" id="Resource_qgntd"]
 script = ExtResource("2_tmaee")
-id = &"dirk_stab"
-display_name = "Dirk Stab"
-icon = ExtResource("4_sqyoy")
+id = &"razors_wit"
+display_name = "Razor's Wit"
+icon = ExtResource("4_juvq8")
+launch_ranks = Array[int]([2, 3, 4])
 target_ranks = Array[int]([1, 2, 3])
 damage_min = 3
 damage_max = 6
-crit_chance = 0.11
+crit_chance = 0.1
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_1uqnj")])
 self_move = 1
 
-[sub_resource type="Resource" id="Resource_f1fn4"]
+[sub_resource type="Resource" id="Resource_5i6yh"]
 script = ExtResource("3_sqyoy")
-kind = 1
-dot = &"bleed"
-amount = 2
+token = &"blind"
 
-[sub_resource type="Resource" id="Resource_mtmil"]
+[sub_resource type="Resource" id="Resource_i454e"]
 script = ExtResource("2_tmaee")
-id = &"harvest"
-display_name = "Harvest"
-icon = ExtResource("5_f1fn4")
-launch_ranks = Array[int]([2, 3])
-target_ranks = Array[int]([2, 3])
-multi_target = true
-damage_min = 2
-damage_max = 3
-crit_chance = 0.06
-effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_f1fn4")])
+id = &"fade_to_black"
+display_name = "Fade to Black"
+icon = ExtResource("5_6tkaq")
+launch_ranks = Array[int]([1, 2, 3])
+target_ranks = Array[int]([1, 2, 3])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.1
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_5i6yh")])
+self_move = -1
 
-[sub_resource type="Resource" id="Resource_1ged6"]
+[sub_resource type="Resource" id="Resource_x54v5"]
 script = ExtResource("3_sqyoy")
 kind = 1
 dot = &"bleed"
-amount = 2
+amount = 3
 
-[sub_resource type="Resource" id="Resource_juvq8"]
+[sub_resource type="Resource" id="Resource_4enkl"]
 script = ExtResource("2_tmaee")
 id = &"slice_off"
 display_name = "Slice Off"
 icon = ExtResource("6_mtmil")
 launch_ranks = Array[int]([2, 3])
 target_ranks = Array[int]([2, 3])
-damage_min = 2
-damage_max = 4
-crit_chance = 0.14
-effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_1ged6")])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.05
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_x54v5")])
 
-[sub_resource type="Resource" id="Resource_6tkaq"]
+[sub_resource type="Resource" id="Resource_tfmon"]
+script = ExtResource("3_sqyoy")
+kind = 2
+amount = 1
+
+[sub_resource type="Resource" id="Resource_662ji"]
+script = ExtResource("3_sqyoy")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_ttmqv"]
+script = ExtResource("2_tmaee")
+id = &"battle_ballad"
+display_name = "Battle Ballad"
+icon = ExtResource("10_6tkaq")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_tfmon"), SubResource("Resource_662ji")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_kycys"]
 script = ExtResource("2_tmaee")
 id = &"inspiring_tune"
 display_name = "Inspiring Tune"
@@ -69,12 +96,82 @@ launch_ranks = Array[int]([3, 4])
 side = 1
 stress = -2
 cooldown = 1
+condition = 8
+condition_value = 5.0
 
-[sub_resource type="Resource" id="Resource_gb7rb"]
+[sub_resource type="Resource" id="Resource_tcio1"]
+script = ExtResource("3_sqyoy")
+kind = 2
+amount = -1
+
+[sub_resource type="Resource" id="Resource_7ta33"]
+script = ExtResource("3_sqyoy")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_pws1t"]
+script = ExtResource("2_tmaee")
+id = &"play_out"
+display_name = "Play Out"
+icon = ExtResource("9_5ghx7")
+launch_ranks = Array[int]([2, 3, 4])
+side = 1
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_tcio1"), SubResource("Resource_7ta33")])
+
+[sub_resource type="Resource" id="Resource_x8tx3"]
+script = ExtResource("3_sqyoy")
+kind = 1
+dot = &"bleed"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_yt0gj"]
+script = ExtResource("3_sqyoy")
+token = &"combo"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_mh4lj"]
+script = ExtResource("2_tmaee")
+id = &"harvest"
+display_name = "Harvest"
+icon = ExtResource("5_f1fn4")
+launch_ranks = Array[int]([2, 3])
+target_ranks = Array[int]([2, 3])
+multi_target = true
+damage_min = 2
+damage_max = 4
+crit_chance = 0.05
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_x8tx3"), SubResource("Resource_yt0gj")])
+
+[sub_resource type="Resource" id="Resource_g1gpe"]
+script = ExtResource("3_sqyoy")
+kind = 2
+amount = 1
+
+[sub_resource type="Resource" id="Resource_mi7ca"]
+script = ExtResource("3_sqyoy")
+kind = 7
+stat = &"pull_each_turn"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_hggrd"]
+script = ExtResource("2_tmaee")
+id = &"echoing_march"
+display_name = "Echoing March"
+icon = ExtResource("11_2fx16")
+launch_ranks = Array[int]([3, 4])
+target_ranks = Array[int]([2, 3, 4])
+crit_chance = 0.05
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_g1gpe"), SubResource("Resource_mi7ca")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_5g3yf"]
 script = ExtResource("3_sqyoy")
 token = &"vulnerable"
 
-[sub_resource type="Resource" id="Resource_5ghx7"]
+[sub_resource type="Resource" id="Resource_db1d5"]
+script = ExtResource("3_sqyoy")
+token = &"daze"
+
+[sub_resource type="Resource" id="Resource_w1ssr"]
 script = ExtResource("2_tmaee")
 id = &"finale"
 display_name = "Finale"
@@ -82,60 +179,81 @@ icon = ExtResource("8_6tkaq")
 launch_ranks = Array[int]([1, 2])
 damage_min = 6
 damage_max = 12
-crit_chance = 0.11
-self_effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_gb7rb")])
+crit_chance = 0.1
+combo_damage_bonus = 0.5
+kill_stress = -1
+self_effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_5g3yf"), SubResource("Resource_db1d5")])
 self_move = -3
-uses_per_battle = 1
+cooldown = 3
 
-[sub_resource type="Resource" id="Resource_2fx16"]
+[sub_resource type="Resource" id="Resource_2qju4"]
 script = ExtResource("3_sqyoy")
-token = &"taunt"
+token = &"combo"
 
-[sub_resource type="Resource" id="Resource_smws5"]
+[sub_resource type="Resource" id="Resource_pkm0u"]
 script = ExtResource("3_sqyoy")
 token = &"dodge"
 stacks = 2
 
-[sub_resource type="Resource" id="Resource_1uqnj"]
+[sub_resource type="Resource" id="Resource_5t2sr"]
+script = ExtResource("3_sqyoy")
+token = &"speed"
+
+[sub_resource type="Resource" id="Resource_r6abr"]
 script = ExtResource("2_tmaee")
 id = &"solo"
 display_name = "Solo"
 icon = ExtResource("9_juvq8")
 launch_ranks = Array[int]([3, 4])
-side = 2
-effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_2fx16"), SubResource("Resource_smws5")])
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_2qju4")])
+self_effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_pkm0u"), SubResource("Resource_5t2sr")])
 self_move = 3
-uses_per_battle = 2
+cooldown = 1
 
-[sub_resource type="Resource" id="Resource_qgntd"]
+[sub_resource type="Resource" id="Resource_kl12l"]
 script = ExtResource("3_sqyoy")
-token = &"crit"
+kind = 10
 
-[sub_resource type="Resource" id="Resource_5i6yh"]
+[sub_resource type="Resource" id="Resource_jyi2s"]
+script = ExtResource("3_sqyoy")
+kind = 1
+dot = &"bleed"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_iwuji"]
+script = ExtResource("3_sqyoy")
+token = &"daze"
+
+[sub_resource type="Resource" id="Resource_erp83"]
+script = ExtResource("3_sqyoy")
+token = &"weak"
+
+[sub_resource type="Resource" id="Resource_xeabb"]
 script = ExtResource("2_tmaee")
-id = &"battle_ballad"
-display_name = "Battle Ballad"
-icon = ExtResource("10_6tkaq")
+id = &"encore"
+display_name = "Encore"
+icon = ExtResource("14_smws5")
 launch_ranks = Array[int]([3, 4])
 side = 1
-multi_target = true
-effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_qgntd")])
-cooldown = 2
+can_target_self = false
+effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_kl12l"), SubResource("Resource_jyi2s")])
+self_effects = Array[ExtResource("3_sqyoy")]([SubResource("Resource_iwuji"), SubResource("Resource_erp83")])
+cooldown = 3
 
 [resource]
 script = ExtResource("1_t46oa")
 id = &"minstrel"
 display_name = "Jester"
 color = Color(0.42352942, 0.29803923, 0.5568628, 1)
-max_hp = 25
-speed = 7
+max_hp = 29
+speed = 4
 corpse_hp = 15
 resist_stun = 0.2
-resist_bleed = 0.3
-resist_blight = 0.4
-resist_burn = 0.3
+resist_bleed = 0.2
+resist_blight = 0.2
+resist_burn = 0.2
 resist_move = 0.2
-resist_debuff = 0.4
-skills = Array[ExtResource("2_tmaee")]([SubResource("Resource_sqyoy"), SubResource("Resource_mtmil"), SubResource("Resource_juvq8"), SubResource("Resource_6tkaq"), SubResource("Resource_5ghx7"), SubResource("Resource_1uqnj"), SubResource("Resource_5i6yh")])
+resist_debuff = 0.2
+skills = Array[ExtResource("2_tmaee")]([SubResource("Resource_qgntd"), SubResource("Resource_i454e"), SubResource("Resource_4enkl"), SubResource("Resource_ttmqv"), SubResource("Resource_kycys"), SubResource("Resource_pws1t"), SubResource("Resource_mh4lj"), SubResource("Resource_hggrd"), SubResource("Resource_w1ssr"), SubResource("Resource_r6abr"), SubResource("Resource_xeabb")])
 swap_offsets = Array[int]([-3, -2, -1, 1, 2, 3])
 sprite = ExtResource("9_gb7rb")

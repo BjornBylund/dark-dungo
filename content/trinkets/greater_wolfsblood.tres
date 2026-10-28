@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_1bew8"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_sh4b5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_nmlnv"]
+
+[resource]
+script = ExtResource("2_sh4b5")
+id = &"greater_wolfsblood"
+display_name = "Greater Wolfsblood"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"speed": 6.0
+})

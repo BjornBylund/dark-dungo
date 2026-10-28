@@ -28,6 +28,13 @@ const VULNERABLE := &"vulnerable"
 const TAUNT := &"taunt"
 const IMMOBILIZE := &"immobilize"
 const COMBO := &"combo"
+# Class tokens. They last the whole fight unless something spends them.
+## The Vestal's: +1 each turn; her skills grow stronger with it and spend it.
+const CONVICTION := &"conviction"
+## The Flagellant's, from Toxic at max stress: attackers who hit him are Blighted.
+const TOXIC := &"toxic"
+## The Flagellant's, from More! MORE!: each heals him at his turn end, then all go.
+const PAIN := &"pain"
 
 const RULES := {
 	CRIT: {"limit": 2, "expiry": Expiry.TURNS, "negative": false},
@@ -48,7 +55,19 @@ const RULES := {
 	TAUNT: {"limit": 3, "expiry": Expiry.TURNS, "negative": true, "resist": &"debuff"},
 	IMMOBILIZE: {"limit": 3, "expiry": Expiry.SINGLE_REMOVE, "negative": true, "resist": &"debuff"},
 	COMBO: {"limit": 1, "expiry": Expiry.TURNS, "negative": false},
+	CONVICTION: {"limit": 3, "expiry": Expiry.CONSUMED, "negative": false},
+	TOXIC: {"limit": 3, "expiry": Expiry.CONSUMED, "negative": false},
+	PAIN: {"limit": 3, "expiry": Expiry.CONSUMED, "negative": false},
 }
+
+
+## DD2's "Add 1 Positive Token" and "Add 1 Negative Token" draw from these.
+const RANDOM_POSITIVE: Array[StringName] = [CRIT, DODGE, STRENGTH, BLOCK, SPEED]
+const RANDOM_NEGATIVE: Array[StringName] = [BLIND, WEAK, TAUNT, VULNERABLE, IMMOBILIZE]
+## What "a positive token" and "a negative token" mean to effects that remove
+## or steal one (class tokens and Combo aside).
+const POSITIVE: Array[StringName] = [CRIT, DODGE, DODGE_PLUS, BLOCK, BLOCK_PLUS, STRENGTH, RIPOSTE, SPEED, STEALTH]
+const NEGATIVE: Array[StringName] = [STUN, DAZE, BLIND, WEAK, VULNERABLE, TAUNT, IMMOBILIZE]
 
 
 static func limit(token: StringName) -> int:
@@ -63,7 +82,7 @@ const NAMES := {
 	CRIT: "Crit", DODGE: "Dodge", DODGE_PLUS: "Dodge+", BLOCK: "Block", BLOCK_PLUS: "Block+",
 	STRENGTH: "Strength", RIPOSTE: "Riposte", GUARD: "Guard", SPEED: "Speed", STEALTH: "Stealth", STUN: "Stun",
 	DAZE: "Daze", BLIND: "Blind", WEAK: "Weak", VULNERABLE: "Vulnerable", TAUNT: "Taunt",
-	IMMOBILIZE: "Immobilize", COMBO: "Combo",
+	IMMOBILIZE: "Immobilize", COMBO: "Combo", CONVICTION: "Conviction", TOXIC: "Toxic", PAIN: "Pain",
 }
 
 

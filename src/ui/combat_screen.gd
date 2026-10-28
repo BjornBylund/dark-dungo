@@ -262,7 +262,12 @@ func _on_fight_over() -> void:
 		survivors += "\n\n%s\nBoth heroes of a new bond: -%d stress, +%d%% damage this mission." % ["\n".join(_mission_run.new_bonds),
 				CampaignRules.BOND_BOOST_STRESS, roundi(CampaignRules.BOND_BOOST_DAMAGE * 100)]
 		_mission_run.new_bonds.clear()
-	_show_end("Fight won", "Gold so far: %d\n%s" % [_mission_run.gold_earned, survivors], "Back to the map",
+	var loot := ""
+	if _mission_run.just_found:
+		loot = "\nFound a trinket: %s (%s)" % [_mission_run.just_found.display_name,
+				CampaignRules.RARITY_NAMES[_mission_run.just_found.rarity]]
+		_mission_run.just_found = null
+	_show_end("Fight won", "Gold so far: %d%s\n%s" % [_mission_run.gold_earned, loot, survivors], "Back to the map",
 			Game.go_to_map)
 
 
@@ -707,6 +712,30 @@ func _apply_event(event: Dictionary) -> float:
 				view.set_stress(0)
 			_float(view, "Resolute!", UiStyle.GOLD, 64)
 			return 1.0
+		&"toxic":
+			if view:
+				view.set_hp(event.hp)
+				view.set_stress(event.stress)
+			_float(view, "Toxic!", UiStyle.DOT_COLORS.get(&"blight", UiStyle.GREEN), 64)
+			return 1.0
+		&"token_removed":
+			_float(view, "[s]%s[/s]" % UiStyle.token_name(event.token), UiStyle.GREY, 28)
+			if view:
+				view.refresh_status()
+			return 0.15
+		&"buffed":
+			_float(view, UiStyle.buff_text(event.stat, event.amount), UiStyle.GOLD if event.amount > 0 else UiStyle.GREY, 28)
+			return 0.2
+		&"regen_applied":
+			_float(view, "Regen %d" % event.amount, UiStyle.GREEN, 30)
+			return 0.2
+		&"extra_turn":
+			_float(view, "Extra turn!", UiStyle.GOLD, 40)
+			_queue.show_units(_battle.turn_order())
+			return 0.4
+		&"consecrated":
+			_float(view, "Consecration of %s" % String(event.name).capitalize(), UiStyle.GOLD, 34)
+			return 0.4
 	return 0.0
 
 

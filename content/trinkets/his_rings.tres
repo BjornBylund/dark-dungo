@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_am1id"]
+[ext_resource type="Resource" path="res://content/heroes/cutthroat.tres" id="2_jb4qm"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_jtfdq"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_napip"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_fdmrp"]
+
+[sub_resource type="Resource" id="Resource_ii1wc"]
+script = ExtResource("1_am1id")
+stat = &"crit"
+amount = 0.1
+if_skills = Array[StringName]([&"pick_to_the_face"])
+
+[sub_resource type="Resource" id="Resource_h1wbp"]
+script = ExtResource("5_fdmrp")
+token = &"combo"
+
+[sub_resource type="Resource" id="Resource_sq5ix"]
+script = ExtResource("4_napip")
+when = 9
+to = 1
+effects = Array[ExtResource("5_fdmrp")]([SubResource("Resource_h1wbp")])
+
+[sub_resource type="Resource" id="Resource_u4wdy"]
+script = ExtResource("5_fdmrp")
+kind = 13
+amount = 1
+chance = 0.15
+
+[sub_resource type="Resource" id="Resource_ecxvj"]
+script = ExtResource("4_napip")
+when = 8
+effects = Array[ExtResource("5_fdmrp")]([SubResource("Resource_u4wdy")])
+malus = true
+
+[resource]
+script = ExtResource("3_jtfdq")
+id = &"his_rings"
+display_name = "His Rings"
+rarity = 2
+hero = ExtResource("2_jb4qm")
+price = 6500
+bonuses = Array[ExtResource("1_am1id")]([SubResource("Resource_ii1wc")])
+triggers = Array[ExtResource("4_napip")]([SubResource("Resource_sq5ix"), SubResource("Resource_ecxvj")])

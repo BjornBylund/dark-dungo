@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_bab4w"]
+[ext_resource type="Resource" path="res://content/heroes/penitent.tres" id="2_17eyk"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_rbk35"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_xfkht"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_gj2uq"]
+
+[sub_resource type="Resource" id="Resource_spkfb"]
+script = ExtResource("5_gj2uq")
+kind = 18
+token_pool = Array[StringName]([&"stun", &"daze", &"blind", &"weak", &"vulnerable", &"taunt", &"immobilize"])
+
+[sub_resource type="Resource" id="Resource_v6o5r"]
+script = ExtResource("5_gj2uq")
+kind = 6
+token_pool = Array[StringName]([&"combo"])
+
+[sub_resource type="Resource" id="Resource_mptlk"]
+script = ExtResource("4_xfkht")
+when = 2
+effects = Array[ExtResource("5_gj2uq")]([SubResource("Resource_spkfb"), SubResource("Resource_v6o5r")])
+
+[sub_resource type="Resource" id="Resource_0k80v"]
+script = ExtResource("5_gj2uq")
+kind = 19
+token_pool = Array[StringName]([&"stun", &"daze", &"blind", &"weak", &"vulnerable", &"taunt", &"immobilize"])
+
+[sub_resource type="Resource" id="Resource_neyhl"]
+script = ExtResource("5_gj2uq")
+kind = 19
+token_pool = Array[StringName]([&"combo"])
+
+[sub_resource type="Resource" id="Resource_vp8l7"]
+script = ExtResource("4_xfkht")
+when = 15
+to = 1
+effects = Array[ExtResource("5_gj2uq")]([SubResource("Resource_0k80v"), SubResource("Resource_neyhl")])
+if_ally_target = true
+
+[resource]
+script = ExtResource("3_rbk35")
+id = &"searing_scripture"
+display_name = "Searing Scripture"
+rarity = 2
+hero = ExtResource("2_17eyk")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"resist_burn": -0.2
+})
+triggers = Array[ExtResource("4_xfkht")]([SubResource("Resource_mptlk"), SubResource("Resource_vp8l7")])

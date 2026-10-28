@@ -29,6 +29,10 @@ var region_progress: Dictionary[StringName, int] = {}
 var bosses_beaten: Dictionary[StringName, int] = {}
 ## Heroes the player may still pick to join, earned by first boss wins.
 var recruits_waiting := 0
+## The estate's trinkets that nobody is wearing.
+var trinkets: Array[TrinketDef] = []
+## What the Nomad Wagon sells this week.
+var wagon: Array[TrinketDef] = []
 ## The mission in progress, or null when the party is in town.
 var run: MissionRun
 var rng := RandomNumberGenerator.new()
@@ -49,6 +53,7 @@ static func create(campaign_def: CampaignDef, seed_value: int) -> Campaign:
 	for unit in campaign_def.recruits:
 		campaign.heroes.append(HeroRecord.new(unit))
 	campaign._refresh_board()
+	campaign._restock_wagon()
 	return campaign
 
 
@@ -379,6 +384,104 @@ func exchange(index: int) -> String:
 	return reason
 
 
+# --- Trinkets and the Nomad Wagon ---
+
+## Every trinket the estate owns: unworn, then worn by the cast.
+func owned_trinkets() -> Array[TrinketDef]:
+	var result: Array[TrinketDef] = trinkets.duplicate()
+	for hero in heroes:
+		result.append_array(hero.trinkets)
+	return result
+
+
+## Whether the hero can put on this unworn trinket: in the roster, of the
+## trinket's class, with a slot free, and not already wearing the same one.
+func can_wear(hero: HeroRecord, trinket: TrinketDef) -> String:
+	if not hero.recruited:
+		return "Not in the roster."
+	if trinket not in trinkets:
+		return "Not in the estate's trinkets."
+	if trinket.hero and trinket.hero != hero.def:
+		return "Only the %s can wear this." % trinket.hero.display_name
+	if trinket in hero.trinkets:
+		return "Already wearing one."
+	if hero.trinkets.size() >= CampaignRules.TRINKET_SLOTS:
+		return "Both trinket slots are full. Take one off first."
+	return ""
+
+
+func wear(hero: HeroRecord, trinket: TrinketDef) -> String:
+	var reason := can_wear(hero, trinket)
+	if reason == "":
+		trinkets.erase(trinket)
+		hero.trinkets.append(trinket)
+	return reason
+
+
+func take_off(hero: HeroRecord, trinket: TrinketDef) -> String:
+	if trinket not in hero.trinkets:
+		return "Not wearing that."
+	hero.trinkets.erase(trinket)
+	trinkets.append(trinket)
+	return ""
+
+
+func sell_price(trinket: TrinketDef) -> int:
+	return roundi(trinket.price * CampaignRules.TRINKET_SELL_SHARE)
+
+
+func can_sell(trinket: TrinketDef) -> String:
+	if trinket not in trinkets:
+		return "Take it off first."
+	if sell_price(trinket) <= 0:
+		return "Boss and Ancestral trinkets can't be sold."
+	return ""
+
+
+func sell(trinket: TrinketDef) -> String:
+	var reason := can_sell(trinket)
+	if reason == "":
+		trinkets.erase(trinket)
+		gold += sell_price(trinket)
+	return reason
+
+
+## Gold for a trinket at the Nomad Wagon: its price, less the Haggling line's discount.
+func wagon_price(trinket: TrinketDef) -> int:
+	var discount := CampaignRules.UPGRADE_DISCOUNT * upgrades[&"haggling"]
+	return roundi(trinket.price * (1.0 - discount))
+
+
+func can_buy(trinket: TrinketDef) -> String:
+	if not building_open(&"wagon"):
+		return "The Nomad Wagon isn't here yet."
+	if trinket not in wagon:
+		return "Already sold."
+	if gold < wagon_price(trinket):
+		return "Not enough gold."
+	return ""
+
+
+func buy(trinket: TrinketDef) -> String:
+	var reason := can_buy(trinket)
+	if reason == "":
+		gold -= wagon_price(trinket)
+		wagon.erase(trinket)
+		trinkets.append(trinket)
+	return reason
+
+
+## A new week's wares, at the best tier the roster can take on, none of them
+## already owned.
+func _restock_wagon() -> void:
+	wagon.clear()
+	var tier: int = available_tiers().back()
+	for i in CampaignRules.WAGON_STOCK + upgrades[&"wagon_stock"]:
+		var trinket := Trinkets.roll(def.trinkets, tier, rng, owned_trinkets() + wagon)
+		if trinket:
+			wagon.append(trinket)
+
+
 # --- Missions ---
 
 func available_tiers() -> Array[int]:
@@ -441,6 +544,8 @@ func embark(mission: Mission, party: Array[HeroRecord]) -> MissionRun:
 			hero.stress = mini(hero.stress + short * CampaignRules.UNDERLEVEL_STRESS, Rules.STRESS_MAX)
 	run = MissionRun.new(mission, _draw_map(mission), party, rng)
 	run.bonds = bonds
+	run.trinket_pool = def.trinkets
+	run.trinkets_owned = owned_trinkets()
 	run.set_out()
 	return run
 
@@ -465,15 +570,17 @@ func _events_for(mission: Mission) -> Array[EventDef]:
 ## results screen: {outcome, gold, heirlooms: {type: amount}, xp, level_ups,
 ## bonds (level-up lines), wounded, town (the week's report), recruit (a new
 ## hero may join), opened (the name of a region the boss win opened, or ""),
-## progress (the region whose boss progress grew, or null)}.
-## Completing pays everything, and counts towards the region's boss;
-## retreating keeps what was earned on the way. Every pair in the party bonds a
-## little, more for completing. Tavern perks for this mission end.
+## progress (the region whose boss progress grew, or null), trinkets (the ones
+## brought home)}.
+## Completing pays everything, including a trinket (an Ancestral one for a
+## boss), and counts towards the region's boss; retreating keeps what was
+## earned on the way. Every pair in the party bonds a little, more for
+## completing. Tavern perks for this mission end.
 func finish_mission() -> Dictionary:
 	var mission := run.mission
 	var summary := {
 		outcome = run.outcome, gold = 0, heirlooms = {}, xp = 0, level_ups = [], wounded = [],
-		bonds = run.new_bonds.duplicate(), recruit = false, opened = "", progress = null,
+		bonds = run.new_bonds.duplicate(), recruit = false, opened = "", progress = null, trinkets = [],
 	}
 	var bond_points := CampaignRules.BOND_COMPLETED_POINTS if run.outcome == MissionRun.Outcome.COMPLETED \
 			else CampaignRules.BOND_MISSION_POINTS
@@ -490,8 +597,14 @@ func finish_mission() -> Dictionary:
 	if run.outcome != MissionRun.Outcome.FAILED:
 		summary.gold = run.gold_earned
 		summary.heirlooms = run.heirlooms_earned.duplicate()
+		summary.trinkets.append_array(run.trinkets_found)
 	match run.outcome:
 		MissionRun.Outcome.COMPLETED:
+			var owned := owned_trinkets() + run.trinkets_found
+			var reward := Trinkets.boss_reward(def.trinkets, owned, rng) if mission.boss \
+					else Trinkets.roll(def.trinkets, mission.tier, rng, owned)
+			if reward:
+				summary.trinkets.append(reward)
 			summary.gold += mission.completion_gold()
 			summary.heirlooms[mission.heirloom] = summary.heirlooms.get(mission.heirloom, 0) + mission.heirloom_amount()
 			summary.xp = mission.xp()
@@ -514,6 +627,8 @@ func finish_mission() -> Dictionary:
 	gold += summary.gold
 	for type: StringName in summary.heirlooms:
 		heirlooms[type] += summary.heirlooms[type]
+	for trinket: TrinketDef in summary.trinkets:
+		trinkets.append(trinket)
 	var party := run.party
 	var defeated := run.defeated
 	run = null
@@ -549,6 +664,7 @@ func _advance_week(party: Array[HeroRecord]) -> void:
 			hero.stress = maxi(0, hero.stress - CampaignRules.IDLE_STRESS_RELIEF)
 	_drink_together(at_bar)
 	_refresh_board()
+	_restock_wagon()
 
 
 ## Takes the activity's stress off and, at the Tavern, rolls its side effect.
@@ -723,6 +839,7 @@ func to_dict() -> Dictionary:
 		board = board.map(func(m: Mission) -> Dictionary: return m.to_dict()),
 		bonds = bonds.to_dict(),
 		region_progress = region_progress, bosses_beaten = bosses_beaten, recruits_waiting = recruits_waiting,
+		trinkets = Trinkets.to_paths(trinkets), wagon = Trinkets.to_paths(wagon),
 		run = null,
 	}
 	if run:
@@ -761,7 +878,15 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 	campaign.recruits_waiting = int(data.get("recruits_waiting", 0))
 	campaign.rng.seed = String(data.seed).to_int()
 	campaign.rng.state = String(data.rng_state).to_int()
-	for hero_data: Dictionary in data.heroes:
+	# Heroes whose class has left the cast (the Arbalest) are dropped, and their
+	# trinkets go back to the estate. Saved hero indices map to the kept ones.
+	var kept := {}
+	for i in data.heroes.size():
+		var hero_data: Dictionary = data.heroes[i]
+		if not ResourceLoader.exists(hero_data.def):
+			campaign.trinkets.append_array(Trinkets.from_paths(hero_data.get("trinkets", [])))
+			continue
+		kept[i] = campaign.heroes.size()
 		campaign.heroes.append(HeroRecord.from_dict(hero_data))
 	if int(data.version) < 2:
 		# Saves from before regions: deal a fresh board with them.
@@ -773,15 +898,25 @@ static func from_dict(data: Dictionary, campaign_def: CampaignDef) -> Campaign:
 		if campaign.board.any(func(m: Mission) -> bool: return m.region and not campaign.region_open(m.region)):
 			campaign._refresh_board()
 	campaign.bonds = Bonds.from_dict(data.get("bonds", {}))
-	if data.run != null:
+	campaign.trinkets.append_array(Trinkets.from_paths(data.get("trinkets", [])))
+	if data.has("wagon"):
+		campaign.wagon = Trinkets.from_paths(data.wagon)
+	else:
+		# Saves from before trinkets: stock the Wagon now.
+		campaign._restock_wagon()
+	# A mission under way with a dropped hero in the party can't carry on; it is
+	# abandoned without a week passing.
+	if data.run != null and data.run.party.all(func(index: Variant) -> bool: return kept.has(int(index))):
 		var party: Array[HeroRecord] = []
 		for index in data.run.party:
-			party.append(campaign.heroes[int(index)])
+			party.append(campaign.heroes[kept[int(index)]])
 		var run_data: Dictionary = data.run
 		if int(data.version) < 3:
 			run_data = campaign._run_before_maps(run_data)
 		campaign.run = MissionRun.from_dict(run_data, party, campaign.rng)
 		campaign.run.bonds = campaign.bonds
+		campaign.run.trinket_pool = campaign_def.trinkets
+		campaign.run.trinkets_owned = campaign.owned_trinkets()
 		campaign.run.apply_bonds()
 	return campaign
 

@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_fmn2c"]
+[ext_resource type="Resource" path="res://content/heroes/plaguebearer.tres" id="2_luw20"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_sg4oo"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_dq6im"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_07x48"]
+
+[sub_resource type="Resource" id="Resource_o32jn"]
+script = ExtResource("5_07x48")
+kind = 18
+token_pool = Array[StringName]([&"stun", &"daze", &"blind", &"weak", &"vulnerable", &"taunt", &"immobilize"])
+chance = 0.65
+
+[sub_resource type="Resource" id="Resource_vp3kf"]
+script = ExtResource("5_07x48")
+kind = 13
+amount = 1
+chance = 0.05
+
+[sub_resource type="Resource" id="Resource_wmsgc"]
+script = ExtResource("4_dq6im")
+when = 15
+to = 1
+effects = Array[ExtResource("5_07x48")]([SubResource("Resource_o32jn"), SubResource("Resource_vp3kf")])
+pick_one = true
+if_ally_target = true
+
+[sub_resource type="Resource" id="Resource_5pcwr"]
+script = ExtResource("5_07x48")
+token = &"vulnerable"
+chance = 0.33
+
+[sub_resource type="Resource" id="Resource_quba5"]
+script = ExtResource("4_dq6im")
+effects = Array[ExtResource("5_07x48")]([SubResource("Resource_5pcwr")])
+malus = true
+if_first = true
+
+[resource]
+script = ExtResource("3_sg4oo")
+id = &"annotated_textbook"
+display_name = "Annotated Textbook"
+rarity = 2
+hero = ExtResource("2_luw20")
+price = 6500
+triggers = Array[ExtResource("4_dq6im")]([SubResource("Resource_wmsgc"), SubResource("Resource_quba5")])

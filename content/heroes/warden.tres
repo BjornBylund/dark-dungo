@@ -7,20 +7,25 @@
 [ext_resource type="Texture2D" path="res://art/skills/rampart.svg" id="5_vf7to"]
 [ext_resource type="Texture2D" path="res://art/skills/defender.svg" id="6_niwqt"]
 [ext_resource type="Texture2D" path="res://art/skills/retribution.svg" id="7_cnkio"]
+[ext_resource type="Texture2D" path="res://art/skills/hold_the_line.svg" id="8_8lg4g"]
 [ext_resource type="Texture2D" path="res://art/skills/bellow.svg" id="8_24ohb"]
 [ext_resource type="Texture2D" path="res://art/units/warden.png" id="9_1y2y3"]
 [ext_resource type="Texture2D" path="res://art/skills/command.svg" id="9_8lg4g"]
 [ext_resource type="Texture2D" path="res://art/skills/bolster.svg" id="10_1y2y3"]
+[ext_resource type="Texture2D" path="res://art/skills/stand_fast.svg" id="10_x7q5s"]
+[ext_resource type="Texture2D" path="res://art/skills/courageous_abandon.svg" id="12_dkk6a"]
+[ext_resource type="Texture2D" path="res://art/skills/strategic_withdrawal.svg" id="14_0noi2"]
 
-[sub_resource type="Resource" id="Resource_tf0sh"]
+[sub_resource type="Resource" id="Resource_jc205"]
 script = ExtResource("2_cckrm")
-id = &"retribution_riposte"
+id = &"maa_riposte"
 display_name = "Riposte"
-damage_min = 2
-damage_max = 4
-crit_chance = 0.04
+damage_min = 3
+damage_max = 5
+crit_chance = 0.05
+ignore_tokens = Array[StringName]([&"guard"])
 
-[sub_resource type="Resource" id="Resource_vf7to"]
+[sub_resource type="Resource" id="Resource_o7kgr"]
 script = ExtResource("2_cckrm")
 id = &"crush"
 display_name = "Crush"
@@ -28,129 +33,260 @@ icon = ExtResource("4_tf0sh")
 launch_ranks = Array[int]([1, 2])
 target_ranks = Array[int]([1, 2, 3])
 damage_min = 4
-damage_max = 7
-crit_chance = 0.09
+damage_max = 6
+crit_chance = 0.05
+ends_combo = true
+combo_self_heal = 0.1
 
-[sub_resource type="Resource" id="Resource_niwqt"]
+[sub_resource type="Resource" id="Resource_vgw25"]
 script = ExtResource("1_gnc3r")
 kind = 2
 amount = -1
 
-[sub_resource type="Resource" id="Resource_cnkio"]
+[sub_resource type="Resource" id="Resource_lgr7v"]
 script = ExtResource("1_gnc3r")
-token = &"stun"
+token = &"daze"
 
-[sub_resource type="Resource" id="Resource_24ohb"]
+[sub_resource type="Resource" id="Resource_bu53l"]
 script = ExtResource("2_cckrm")
 id = &"rampart"
 display_name = "Rampart"
 icon = ExtResource("5_vf7to")
 launch_ranks = Array[int]([1, 2, 3])
 target_ranks = Array[int]([1, 2])
-damage_min = 2
-damage_max = 3
-crit_chance = 0.09
-effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_niwqt"), SubResource("Resource_cnkio")])
+damage_min = 3
+damage_max = 5
+crit_chance = 0.05
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_vgw25"), SubResource("Resource_lgr7v")])
 self_move = 1
-cooldown = 1
 
-[sub_resource type="Resource" id="Resource_8lg4g"]
+[sub_resource type="Resource" id="Resource_1grja"]
 script = ExtResource("1_gnc3r")
 kind = 5
 stacks = 2
 
-[sub_resource type="Resource" id="Resource_1y2y3"]
+[sub_resource type="Resource" id="Resource_5jtaw"]
 script = ExtResource("1_gnc3r")
 token = &"block"
+stacks = 2
 
-[sub_resource type="Resource" id="Resource_x7q5s"]
+[sub_resource type="Resource" id="Resource_tv6e8"]
 script = ExtResource("2_cckrm")
 id = &"defender"
 display_name = "Defender"
 icon = ExtResource("6_niwqt")
 side = 1
 can_target_self = false
-effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_8lg4g")])
-self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_1y2y3")])
-
-[sub_resource type="Resource" id="Resource_dkk6a"]
-script = ExtResource("1_gnc3r")
-token = &"taunt"
-
-[sub_resource type="Resource" id="Resource_0noi2"]
-script = ExtResource("1_gnc3r")
-token = &"riposte"
-stacks = 2
-
-[sub_resource type="Resource" id="Resource_jc205"]
-script = ExtResource("2_cckrm")
-id = &"retribution"
-display_name = "Retribution"
-icon = ExtResource("7_cnkio")
-launch_ranks = Array[int]([1, 2, 3])
-target_ranks = Array[int]([1, 2, 3])
-damage_min = 1
-damage_max = 2
-crit_chance = 0.07
-self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_dkk6a"), SubResource("Resource_0noi2")])
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_1grja")])
+self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_5jtaw")])
 cooldown = 1
 
-[sub_resource type="Resource" id="Resource_o7kgr"]
+[sub_resource type="Resource" id="Resource_abxbj"]
 script = ExtResource("1_gnc3r")
-token = &"daze"
+kind = 13
+amount = -1
+min_stress = 5
 
-[sub_resource type="Resource" id="Resource_vgw25"]
-script = ExtResource("2_cckrm")
-id = &"bellow"
-display_name = "Bellow"
-icon = ExtResource("8_24ohb")
-multi_target = true
-effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_o7kgr")])
-cooldown = 2
-
-[sub_resource type="Resource" id="Resource_lgr7v"]
+[sub_resource type="Resource" id="Resource_0b7s8"]
 script = ExtResource("1_gnc3r")
-token = &"crit"
+token = &"block"
 
-[sub_resource type="Resource" id="Resource_bu53l"]
-script = ExtResource("2_cckrm")
-id = &"command"
-display_name = "Command"
-icon = ExtResource("9_8lg4g")
-side = 1
-multi_target = true
-effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_lgr7v")])
-cooldown = 2
-
-[sub_resource type="Resource" id="Resource_1grja"]
+[sub_resource type="Resource" id="Resource_7vmel"]
 script = ExtResource("1_gnc3r")
-token = &"dodge"
+kind = 13
+amount = -1
+min_stress = 5
 
-[sub_resource type="Resource" id="Resource_5jtaw"]
+[sub_resource type="Resource" id="Resource_g6dr4"]
 script = ExtResource("2_cckrm")
 id = &"bolster"
 display_name = "Bolster"
 icon = ExtResource("10_1y2y3")
 side = 1
+can_target_self = false
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_abxbj")])
+self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_0b7s8"), SubResource("Resource_7vmel")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_1v05k"]
+script = ExtResource("1_gnc3r")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_j4nj4"]
+script = ExtResource("1_gnc3r")
+token = &"immobilize"
+
+[sub_resource type="Resource" id="Resource_la1uj"]
+script = ExtResource("2_cckrm")
+id = &"hold_the_line"
+display_name = "Hold the Line"
+icon = ExtResource("8_8lg4g")
+launch_ranks = Array[int]([2, 3, 4])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.1
+self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_1v05k"), SubResource("Resource_j4nj4")])
+self_move = 3
+
+[sub_resource type="Resource" id="Resource_jj6cc"]
+script = ExtResource("1_gnc3r")
+kind = 6
+token_pool = Array[StringName]([&"riposte"])
+
+[sub_resource type="Resource" id="Resource_m4bpl"]
+script = ExtResource("1_gnc3r")
+kind = 7
+stat = &"speed"
+stat_amount = -2.0
+
+[sub_resource type="Resource" id="Resource_5p2i0"]
+script = ExtResource("2_cckrm")
+id = &"bellow"
+display_name = "Bellow"
+icon = ExtResource("8_24ohb")
 multi_target = true
-stress = -1
-effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_1grja")])
-uses_per_battle = 1
+crit_chance = 0.05
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_jj6cc"), SubResource("Resource_m4bpl")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_qdu1h"]
+script = ExtResource("1_gnc3r")
+token = &"block"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_1t0ib"]
+script = ExtResource("1_gnc3r")
+token = &"taunt"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_usl18"]
+script = ExtResource("1_gnc3r")
+kind = 7
+stat = &"gain_block"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_u01be"]
+script = ExtResource("2_cckrm")
+id = &"stand_fast"
+display_name = "Stand Fast"
+icon = ExtResource("10_x7q5s")
+launch_ranks = Array[int]([1, 2])
+side = 2
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_qdu1h"), SubResource("Resource_1t0ib"), SubResource("Resource_usl18")])
+cooldown = 3
+
+[sub_resource type="Resource" id="Resource_4da5r"]
+script = ExtResource("1_gnc3r")
+token = &"riposte"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_ooryv"]
+script = ExtResource("1_gnc3r")
+token = &"taunt"
+stacks = 2
+
+[sub_resource type="Resource" id="Resource_0nour"]
+script = ExtResource("2_cckrm")
+id = &"retribution"
+display_name = "Retribution"
+icon = ExtResource("7_cnkio")
+side = 2
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_4da5r"), SubResource("Resource_ooryv")])
+cooldown = 2
+
+[sub_resource type="Resource" id="Resource_0qf0c"]
+script = ExtResource("1_gnc3r")
+kind = 6
+token_pool = Array[StringName]([&"block", &"block_plus"])
+
+[sub_resource type="Resource" id="Resource_nreur"]
+script = ExtResource("1_gnc3r")
+kind = 7
+duration = 2
+stat = &"blocks_block"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_ld3pm"]
+script = ExtResource("1_gnc3r")
+kind = 7
+duration = 2
+stat = &"blocks_block_plus"
+stat_amount = 1.0
+
+[sub_resource type="Resource" id="Resource_v04ya"]
+script = ExtResource("1_gnc3r")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_m3fnt"]
+script = ExtResource("2_cckrm")
+id = &"courageous_abandon"
+display_name = "Courageous Abandon"
+icon = ExtResource("12_dkk6a")
+launch_ranks = Array[int]([1])
+target_ranks = Array[int]([1, 2])
+damage_min = 6
+damage_max = 8
+crit_chance = 0.1
+ignore_tokens = Array[StringName]([&"block", &"block_plus"])
+self_effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_0qf0c"), SubResource("Resource_nreur"), SubResource("Resource_ld3pm"), SubResource("Resource_v04ya")])
+condition = 6
+condition_tokens = Array[StringName]([&"block", &"block_plus"])
+tier_tokens = Array[StringName]([&"block", &"block_plus"])
+tier_damage = Array[float]([0.0, 0.0, 1.0])
+
+[sub_resource type="Resource" id="Resource_pcpry"]
+script = ExtResource("1_gnc3r")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_wk5oi"]
+script = ExtResource("1_gnc3r")
+kind = 6
+token_pool = Array[StringName]([&"blind"])
+
+[sub_resource type="Resource" id="Resource_ovqko"]
+script = ExtResource("2_cckrm")
+id = &"command"
+display_name = "Command"
+icon = ExtResource("9_8lg4g")
+side = 1
+can_target_self = false
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_pcpry"), SubResource("Resource_wk5oi")])
+cooldown = 1
+
+[sub_resource type="Resource" id="Resource_gnd2e"]
+script = ExtResource("1_gnc3r")
+token = &"combo"
+
+[sub_resource type="Resource" id="Resource_i3j62"]
+script = ExtResource("2_cckrm")
+id = &"strategic_withdrawal"
+display_name = "Strategic Withdrawal"
+icon = ExtResource("14_0noi2")
+launch_ranks = Array[int]([1, 2])
+target_ranks = Array[int]([1, 2])
+damage_min = 3
+damage_max = 6
+crit_chance = 0.05
+effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_gnd2e")])
+self_move = -1
+cooldown = 1
 
 [resource]
 script = ExtResource("3_tf0sh")
 id = &"warden"
 display_name = "Man-at-Arms"
 color = Color(0.30980393, 0.41568628, 0.50980395, 1)
-max_hp = 37
+max_hp = 42
+speed = 2
 corpse_hp = 20
-resist_stun = 0.4
-resist_bleed = 0.4
+resist_stun = 0.3
+resist_bleed = 0.3
 resist_blight = 0.3
-resist_burn = 0.4
-resist_move = 0.4
-resist_debuff = 0.3
-skills = Array[ExtResource("2_cckrm")]([SubResource("Resource_vf7to"), SubResource("Resource_24ohb"), SubResource("Resource_x7q5s"), SubResource("Resource_jc205"), SubResource("Resource_vgw25"), SubResource("Resource_bu53l"), SubResource("Resource_5jtaw")])
-riposte_skill = SubResource("Resource_tf0sh")
+resist_burn = 0.3
+resist_move = 0.3
+resist_debuff = 0.2
+skills = Array[ExtResource("2_cckrm")]([SubResource("Resource_o7kgr"), SubResource("Resource_bu53l"), SubResource("Resource_tv6e8"), SubResource("Resource_g6dr4"), SubResource("Resource_la1uj"), SubResource("Resource_5p2i0"), SubResource("Resource_u01be"), SubResource("Resource_0nour"), SubResource("Resource_m3fnt"), SubResource("Resource_ovqko"), SubResource("Resource_i3j62")])
+riposte_skill = SubResource("Resource_jc205")
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_1y2y3")

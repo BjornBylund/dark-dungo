@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_8q35m"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_ih1ha"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_prj7h"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_0r748"]
+
+[sub_resource type="Resource" id="Resource_vby8l"]
+script = ExtResource("4_0r748")
+kind = 17
+token = &"vulnerable"
+token_to = &"block"
+
+[sub_resource type="Resource" id="Resource_cuw07"]
+script = ExtResource("4_0r748")
+kind = 17
+token = &"weak"
+token_to = &"strength"
+
+[sub_resource type="Resource" id="Resource_j3rhk"]
+script = ExtResource("3_prj7h")
+to = 2
+effects = Array[ExtResource("4_0r748")]([SubResource("Resource_vby8l"), SubResource("Resource_cuw07")])
+
+[resource]
+script = ExtResource("2_ih1ha")
+id = &"footmans_grog"
+display_name = "Footman's Grog"
+rarity = 2
+boss_only = true
+triggers = Array[ExtResource("3_prj7h")]([SubResource("Resource_j3rhk")])

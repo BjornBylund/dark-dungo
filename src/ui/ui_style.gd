@@ -61,6 +61,9 @@ const TOKEN_HELP := {
 	Tokens.TAUNT: "Enemies must target this unit if they can.",
 	Tokens.IMMOBILIZE: "Can't move or be moved.",
 	Tokens.COMBO: "Some skills get bonus effects against it.",
+	Tokens.CONVICTION: "+1 each turn. Some of the Vestal's skills grow stronger with it, and spend it.",
+	Tokens.TOXIC: "Whoever hits this hero gets Blight 2 per Toxic token.",
+	Tokens.PAIN: "Heals 10% HP per token at the end of the turn, then goes.",
 }
 
 ## Icons for the built-in actions, which are made in code rather than loaded as content.
@@ -261,6 +264,8 @@ static func mission_summary(summary: Dictionary, campaign: Campaign) -> Array:
 	for type: StringName in summary.heirlooms:
 		if summary.heirlooms[type] > 0:
 			lines.append("%s +%d" % [CampaignRules.HEIRLOOM_NAMES[type], summary.heirlooms[type]])
+	for trinket: TrinketDef in summary.get("trinkets", []):
+		lines.append("Trinket: %s (%s)" % [trinket.display_name, CampaignRules.RARITY_NAMES[trinket.rarity]])
 	if summary.xp > 0:
 		lines.append("XP +%d" % summary.xp)
 	for hero: HeroRecord in summary.level_ups:
@@ -304,10 +309,185 @@ static func _bond_bonuses(unit: Combatant) -> String:
 		if totals.has(stat):
 			parts.append("+%s %s" % [percent(totals[stat]), _BOND_STATS[stat]])
 	var text := "Bonds: " + ", ".join(parts) + "." if not parts.is_empty() else ""
-	var boost := unit.stat(&"damage")
+	var boost := 0.0
+	for buff in unit.buffs:
+		if buff.stat == &"damage" and buff.expiry == Combatant.BuffExpiry.RUN:
+			boost += buff.amount
 	if boost > 0.0:
 		text += (" " if text != "" else "") + "Bond boost: +%s damage." % percent(boost)
 	return text
+
+
+# --- Trinkets ---
+
+## DD2's rarity colours, lightened to read on dark panels; Ancestral's is ours.
+const RARITY_COLORS := [Color("a3a8ab"), Color("6fb4b6"), Color("d8b46e"), Color("e07a3a")]
+const _TRINKET_STATS := {
+	&"damage": "damage", &"crit": "crit", &"max_hp": "max HP", &"resolute": "Resolute chance at max stress",
+	&"heal_received": "healing received", &"heal_power": "to healing skills", &"damage_taken": "damage taken",
+}
+## Stats where less is better.
+const _LOWER_IS_BETTER: Array[String] = ["damage_taken", "dot_received_", "dot_duration_received"]
+const _TRIGGER_NAMES := {
+	TrinketTrigger.When.COMBAT_START: "Combat Start", TrinketTrigger.When.ROUND_START: "Round Start",
+	TrinketTrigger.When.ROUND_END: "Round End", TrinketTrigger.When.TURN_START: "Turn Start",
+	TrinketTrigger.When.TURN_END: "Turn End", TrinketTrigger.When.DEATHS_DOOR_ENTER: "On Entering Death's Door",
+	TrinketTrigger.When.DEATHS_DOOR_LEAVE: "On Leaving Death's Door", TrinketTrigger.When.WHEN_MOVED: "When Moving",
+	TrinketTrigger.When.WHEN_MOVED_BY_ENEMY: "When Moved by an Enemy",
+}
+
+
+## A trinket's lines, each [text, upside]: stats, conditional stats, triggers.
+static func trinket_effects(trinket: TrinketDef) -> Array[Array]:
+	var result: Array[Array] = []
+	for stat: StringName in trinket.stats:
+		result.append([trinket_stat_text(stat, trinket.stats[stat]), _upside(stat, trinket.stats[stat])])
+	for bonus in trinket.bonuses:
+		var conditions: Array[String] = []
+		if not bonus.if_skills.is_empty():
+			conditions.append(_skill_names(bonus.if_skills, trinket.hero))
+		if bonus.if_token != &"":
+			conditions.append("If %s%s" % ["no " if bonus.lacks else "", token_name(bonus.if_token)])
+		if bonus.if_target != &"":
+			conditions.append("If Target has %s" % token_name(bonus.if_target))
+		if bonus.if_hp_below > 0.0:
+			conditions.append("If HP < %s" % percent(bonus.if_hp_below))
+		result.append(["%s: %s" % [", ".join(conditions), trinket_stat_text(bonus.stat, bonus.amount)],
+				_upside(bonus.stat, bonus.amount)])
+	for trigger in trinket.triggers:
+		result.append([_trigger_text(trigger, trinket.hero), not trigger.malus])
+	return result
+
+
+## A trinket stat in words: "+15% damage", "-1 speed", "+1 Burn dealt".
+static func trinket_stat_text(stat: StringName, amount: float) -> String:
+	var name := String(stat)
+	for kind in ["dealt", "received"]:
+		if name.begins_with("dot_%s_" % kind):
+			return "%+d %s %s" % [roundi(amount), name.trim_prefix("dot_%s_" % kind).capitalize(), kind]
+	if name.begins_with("dot_duration_received"):
+		var dot := name.trim_prefix("dot_duration_received").trim_prefix("_")
+		return "%+d %s duration received" % [roundi(amount), dot.capitalize() if dot != "" else "DoT"]
+	match stat:
+		&"regen_dealt":
+			return "%+d Regeneration dealt" % roundi(amount)
+		&"damage_flat":
+			return "%+d DMG" % roundi(amount)
+	return buff_text(stat, amount)
+
+
+static func _upside(stat: StringName, amount: float) -> bool:
+	for prefix in _LOWER_IS_BETTER:
+		if String(stat).begins_with(prefix):
+			return amount < 0.0
+	return amount > 0.0
+
+
+## "Apply on Hit: Weak (15%)", "Each Hero on Combat Start: Block+",
+## "Turn Start: If First in Turn Order: Blind".
+static func _trigger_text(trigger: TrinketTrigger, hero: UnitDef = null) -> String:
+	var other := trigger.to == TrinketTrigger.To.OTHER
+	var when: String
+	match trigger.when:
+		TrinketTrigger.When.ON_HIT:
+			when = "Apply on Hit" if other else "Gain on Hit"
+		TrinketTrigger.When.ON_MISS:
+			when = "Apply on Miss" if other else "Gain on Miss"
+		TrinketTrigger.When.ON_CRIT:
+			when = "Apply on Crit" if other else "Gain on Crit"
+		TrinketTrigger.When.WHEN_HIT:
+			when = "Apply to Attacker When Hit" if other else "Gain When Hit"
+		TrinketTrigger.When.WHEN_MISSED:
+			when = "Apply to Attacker When Missed" if other else "Gain When Missed"
+		TrinketTrigger.When.ON_RESIST:
+			when = "Gain on %s Resist" % String(trigger.if_resist).capitalize()
+		TrinketTrigger.When.ON_SKILL:
+			var skills := _skill_names(trigger.if_skills, hero) if not trigger.if_skills.is_empty() else "Ally"
+			when = ("Target: %s" if other else "Self: %s") % skills
+		_:
+			when = _TRIGGER_NAMES[trigger.when]
+	match trigger.to:
+		TrinketTrigger.To.EACH_ALLY:
+			when = "Each Hero on " + when
+		TrinketTrigger.To.ALLIES_BEHIND:
+			when += ": All Allies Behind"
+		TrinketTrigger.To.ALLY_BEHIND:
+			when += ": Ally Behind"
+		TrinketTrigger.To.RANDOM_ALLY:
+			when += ": Random Ally"
+	var conditions: Array[String] = [when]
+	if trigger.if_rank > 0:
+		conditions.append("If Rank = %d" % trigger.if_rank)
+	if trigger.if_first:
+		conditions.append("If First in Turn Order")
+	if trigger.if_speed_at_most > 0:
+		conditions.append("If Speed <= %d" % trigger.if_speed_at_most)
+	if trigger.if_speed_at_least > 0:
+		conditions.append("If Speed >= %d" % trigger.if_speed_at_least)
+	if trigger.if_token != &"":
+		conditions.append("If %s%s" % ["no " if trigger.lacks else "", token_name(trigger.if_token)])
+	var effects: Array[String] = []
+	for effect in trigger.effects:
+		var text := _trinket_effect_text(effect)
+		effects.append(text + (" (%s)" % percent(effect.chance) if effect.chance < 1.0 else ""))
+	return "%s: %s" % [": ".join(conditions), (" or " if trigger.pick_one else ", ").join(effects)]
+
+
+## A trigger's payload in DD2's words.
+static func _trinket_effect_text(effect: EffectDef) -> String:
+	match effect.kind:
+		EffectDef.Kind.TOKEN:
+			if effect.token_pool == Tokens.RANDOM_POSITIVE:
+				return "Add 1 Positive Token"
+			if effect.token_pool == Tokens.RANDOM_NEGATIVE:
+				return "Add 1 Negative Token"
+			return token_name(effect.token) + (" x%d" % effect.stacks if effect.stacks > 1 else "")
+		EffectDef.Kind.DOT:
+			return "%s %d" % [String(effect.dot).capitalize(), effect.amount]
+		EffectDef.Kind.REGEN:
+			return "Regeneration %d" % effect.amount
+		EffectDef.Kind.STRESS:
+			return "%+d Stress" % effect.amount
+		EffectDef.Kind.MOVE:
+			return ("Forward %d" if effect.amount > 0 else "Back %d") % absi(effect.amount)
+		EffectDef.Kind.HEAL:
+			return "Heal %s" % (percent(effect.stat_amount) if effect.stat_amount > 0.0 else str(effect.amount))
+		EffectDef.Kind.DAMAGE:
+			return "%d DMG" % effect.amount
+		EffectDef.Kind.CONVERT:
+			return "Convert %s to %s" % [token_name(effect.token), token_name(effect.token_to)]
+		EffectDef.Kind.REMOVE_ONE, EffectDef.Kind.STEAL_ONE:
+			var verb := "Remove" if effect.kind == EffectDef.Kind.REMOVE_ONE else "Steal"
+			var what := "Positive" if effect.token_pool == Tokens.POSITIVE else "Negative" \
+					if effect.token_pool == Tokens.NEGATIVE else _token_list(effect.token_pool)
+			return "%s 1 %s Token" % [verb, what]
+		EffectDef.Kind.BUFF:
+			return "%s (%d turns)" % [trinket_stat_text(effect.stat, effect.stat_amount), effect.duration]
+		EffectDef.Kind.GUARD:
+			return "Guard x%d" % effect.stacks
+	return _effect_text(effect)
+
+
+## The skills' names, from the hero's class when there is one.
+static func _skill_names(ids: Array[StringName], hero: UnitDef = null) -> String:
+	return " or ".join(ids.map(func(id: StringName) -> String:
+		if hero:
+			for skill in hero.skills:
+				if skill.id == id:
+					return skill.display_name
+		return String(id).capitalize()))
+
+
+## The effects coloured: upsides pale green, drawbacks red, joined by `separator`.
+static func trinket_bbcode(trinket: TrinketDef, separator: String = ", ") -> String:
+	return separator.join(trinket_effects(trinket).map(func(effect: Array) -> String:
+		return "[color=#%s]%s[/color]" % [(PALE_GREEN if effect[1] else DAMAGE.lightened(0.2)).to_html(false), effect[0]]))
+
+
+## "Rare", or "Rare, Crusader only".
+static func trinket_kind(trinket: TrinketDef) -> String:
+	var text: String = CampaignRules.RARITY_NAMES[trinket.rarity]
+	return text + (", %s only" % trinket.hero.display_name if trinket.hero else "")
 
 
 ## Gold with thousands separators: 12,500.
@@ -379,7 +559,25 @@ static func icon_bbcode(id: StringName, size: int = 20) -> String:
 	return "[img=%dx%d]%s[/img]" % [size, size, path] if ResourceLoader.exists(path) else ""
 
 
-static func effect_bbcode(effect: EffectDef) -> String:
+## One effect, with its chance and conditions: "50%: Stun vs Combo".
+static func effect_bbcode(effect: EffectDef, tier_name: String = "") -> String:
+	var text := _effect_text(effect)
+	if text == "":
+		return ""
+	if effect.chance < 1.0:
+		text = "%s: %s" % [percent(effect.chance), text]
+	if effect.on_crit_only:
+		text += " on a crit"
+	if effect.requires_target_token != &"":
+		text += " vs %s" % token_name(effect.requires_target_token)
+	if effect.requires_user_token != &"":
+		text += " %s %s" % ["without" if effect.user_lacks else "with", token_name(effect.requires_user_token)]
+	if effect.min_tier > 0:
+		text += " at %d %s" % [effect.min_tier, tier_name]
+	return text
+
+
+static func _effect_text(effect: EffectDef) -> String:
 	match effect.kind:
 		EffectDef.Kind.TOKEN:
 			if not effect.token_pool.is_empty():
@@ -388,9 +586,10 @@ static func effect_bbcode(effect: EffectDef) -> String:
 			var stacks := " x%d" % effect.stacks if effect.stacks > 1 else ""
 			return "%s %s%s" % [icon_bbcode(effect.token), token_name(effect.token), stacks]
 		EffectDef.Kind.DOT:
-			return "%s [color=#%s]%s %d[/color] (%d Turns)" % [icon_bbcode(effect.dot),
+			var crit := " (%d on a crit)" % effect.crit_duration if effect.crit_duration > 0 else ""
+			return "%s [color=#%s]%s %d[/color] (%d Turns%s)" % [icon_bbcode(effect.dot),
 					DOT_COLORS.get(effect.dot, TEXT).to_html(false), String(effect.dot).capitalize(),
-					effect.amount, effect.duration]
+					effect.amount, effect.duration, crit]
 		EffectDef.Kind.MOVE:
 			return ("Pull %d" if effect.amount > 0 else "Knockback %d") % absi(effect.amount)
 		EffectDef.Kind.CLEANSE_DOTS:
@@ -399,7 +598,50 @@ static func effect_bbcode(effect: EffectDef) -> String:
 			return "Clear negative tokens"
 		EffectDef.Kind.GUARD:
 			return "%s Guard x%d" % [icon_bbcode(Tokens.GUARD), effect.stacks]
+		EffectDef.Kind.REMOVE_TOKENS:
+			return "Remove " + ", ".join(effect.token_pool.map(func(t: StringName) -> String: return token_name(t)))
+		EffectDef.Kind.BUFF:
+			return "%s (%d rounds)" % [buff_text(effect.stat, effect.stat_amount), effect.duration]
+		EffectDef.Kind.REGEN:
+			return "[color=#%s]Regen %d[/color] (%d Turns)" % [PALE_GREEN.to_html(false), effect.amount, effect.duration]
+		EffectDef.Kind.SHUFFLE:
+			return "Shuffle"
+		EffectDef.Kind.EXTRA_TURN:
+			return "An extra turn"
+		EffectDef.Kind.STEAL_DOTS:
+			return "Take over their Bleed, Blight and Burn"
+		EffectDef.Kind.CLEANSE_POSITIVE:
+			return "Remove positive tokens"
+		EffectDef.Kind.STRESS:
+			return "Stress %+d%s" % [effect.amount, " if %d+" % effect.min_stress if effect.min_stress > 0 else ""]
+		EffectDef.Kind.CONSECRATE:
+			return "Consecration of %s on their rank (%d rounds): %s each turn" % [String(effect.token).capitalize(),
+					effect.duration, " or ".join(effect.token_pool.map(func(t: StringName) -> String: return token_name(t)))]
 	return ""
+
+
+## A stat change in words: "+2 speed", "-20% healing received", "+20% Burn
+## piercing", "can't gain Block", "+1 Block each turn".
+static func buff_text(stat: StringName, amount: float) -> String:
+	var name := String(stat)
+	if name.begins_with("blocks_"):
+		return "Can't gain %s" % token_name(StringName(name.trim_prefix("blocks_")))
+	if name.begins_with("gain_"):
+		return "+%d %s each turn" % [roundi(amount), token_name(StringName(name.trim_prefix("gain_")))]
+	if name.begins_with("pierce_"):
+		return "+%s %s piercing" % [percent(amount), name.trim_prefix("pierce_").capitalize()]
+	match stat:
+		&"speed":
+			return "%+d speed" % roundi(amount)
+		&"pull_each_turn":
+			return "Pulled %d each turn" % roundi(amount)
+		&"pain_on_damage":
+			return "Pain each time he is hurt"
+	var label: String = _TRINKET_STATS.get(stat, "")
+	if label == "" and name.begins_with("resist_"):
+		var kind := name.trim_prefix("resist_")
+		label = "death blow resist" if kind == "deathblow" else "%s resist" % kind
+	return "%s%s %s" % ["+" if amount > 0.0 else "-", percent(absf(amount)), label if label != "" else name]
 
 
 ## Skill details in DD2's order: numbers, Target lines, Self lines, then
@@ -407,12 +649,18 @@ static func effect_bbcode(effect: EffectDef) -> String:
 static func skill_bbcode(skill: SkillDef) -> String:
 	var lines: Array[String] = []
 	var numbers: Array[String] = []
-	if skill.deals_damage():
+	var tier_name := " / ".join(skill.tier_tokens.map(func(t: StringName) -> String: return token_name(t)))
+	if skill.damage_from_dots > 0.0:
+		numbers.append("DMG: %s of the target's remaining DoT damage" % percent(skill.damage_from_dots))
+	elif skill.deals_damage():
 		numbers.append("DMG: %d-%d" % [skill.damage_min, skill.damage_max])
 		numbers.append("CRIT: %s" % percent(skill.crit_chance))
 	if skill.heal_max > 0:
 		numbers.append("HEAL: %d-%d" % [skill.heal_min, skill.heal_max])
-	if skill.heal_fraction > 0.0:
+	if not skill.tier_heal.is_empty():
+		numbers.append("HEAL: %s HP by %s" % [" / ".join(skill.tier_heal.map(func(v: float) -> String: return percent(v))),
+				tier_name])
+	elif skill.heal_fraction > 0.0:
 		numbers.append("HEAL: %s HP" % percent(skill.heal_fraction))
 	if not numbers.is_empty():
 		lines.append("   ".join(numbers))
@@ -420,25 +668,41 @@ static func skill_bbcode(skill: SkillDef) -> String:
 	var target_parts: Array[String] = []
 	if skill.side != SkillDef.TargetSide.SELF:
 		for effect in skill.effects:
-			target_parts.append(effect_bbcode(effect))
+			target_parts.append(effect_bbcode(effect, tier_name))
 		if skill.stress != 0:
 			target_parts.append("Stress %+d" % skill.stress)
+	if skill.targets_corpse:
+		target_parts.append("a corpse, which it clears")
+		for effect in skill.neighbor_effects:
+			target_parts.append("next to it: " + effect_bbcode(effect, tier_name))
 	var self_parts: Array[String] = []
 	if skill.side == SkillDef.TargetSide.SELF:
 		for effect in skill.effects:
-			self_parts.append(effect_bbcode(effect))
+			self_parts.append(effect_bbcode(effect, tier_name))
 		if skill.stress != 0:
 			self_parts.append("Stress %+d" % skill.stress)
-	for effect in skill.self_effects:
-		self_parts.append(effect_bbcode(effect))
 	if skill.self_move != 0:
 		self_parts.append(("Forward %d" if skill.self_move > 0 else "Back %d") % absi(skill.self_move))
+	for effect in skill.self_effects:
+		self_parts.append(effect_bbcode(effect, tier_name))
 	if skill.self_stress != 0:
 		self_parts.append("Stress %+d" % skill.self_stress)
 	if skill.self_heal_fraction > 0.0:
-		self_parts.append("[color=#%s]Heal %s HP[/color]" % [PALE_GREEN.to_html(false), percent(skill.self_heal_fraction)])
+		var below := " if below %s HP" % percent(skill.self_heal_below) if skill.self_heal_below < 1.0 else ""
+		self_parts.append("[color=#%s]Heal %s HP%s[/color]" % [PALE_GREEN.to_html(false), percent(skill.self_heal_fraction),
+				below])
+	if skill.self_heal_per_hit > 0.0:
+		self_parts.append("[color=#%s]Heal %s HP per target hit[/color]" % [PALE_GREEN.to_html(false),
+				percent(skill.self_heal_per_hit)])
+	if skill.combo_self_heal > 0.0:
+		self_parts.append("[color=#%s]Heal %s HP vs Combo[/color]" % [PALE_GREEN.to_html(false),
+				percent(skill.combo_self_heal)])
+	if skill.kill_stress != 0:
+		self_parts.append("Stress %+d on a kill" % skill.kill_stress)
 	if skill.self_damage > 0:
 		self_parts.append("[color=#%s]-%d HP[/color]" % [DAMAGE.to_html(false), skill.self_damage])
+	if skill.self_damage_fraction > 0.0:
+		self_parts.append("[color=#%s]-%s HP[/color]" % [DAMAGE.to_html(false), percent(skill.self_damage_fraction)])
 	if skill.kind == SkillDef.Kind.SWAP:
 		self_parts.append("Trade places with a nearby ally")
 	if skill.kind == SkillDef.Kind.PASS:
@@ -453,12 +717,46 @@ static func skill_bbcode(skill: SkillDef) -> String:
 	if skill.low_hp_bonus > 0.0:
 		lines.append("[color=#%s]+%s DMG below half HP[/color]" % [PALE_GREEN.to_html(false),
 				percent(skill.low_hp_bonus)])
+	var green := "[color=#%s]%%s[/color]" % PALE_GREEN.to_html(false)
+	if skill.combo_crit_bonus > 0.0:
+		lines.append(green % ("+%s CRIT vs Combo" % percent(skill.combo_crit_bonus)))
+	if skill.combo_pierce > 0.0:
+		lines.append(green % ("+%s resistance piercing vs Combo" % percent(skill.combo_pierce)))
+	if skill.ends_combo:
+		lines.append(green % "Ends Combo")
+	if not skill.ignore_tokens.is_empty():
+		lines.append(green % ("Ignores " + _token_list(skill.ignore_tokens)))
+	if not skill.ignore_tokens_if_stealthed.is_empty():
+		lines.append(green % ("With Stealth, ignores " + _token_list(skill.ignore_tokens_if_stealthed)))
+	for count in skill.tier_damage.size():
+		if skill.tier_damage[count] > 0.0 and (count == 0 or skill.tier_damage[count] != skill.tier_damage[count - 1]):
+			lines.append(green % ("+%s DMG at %d %s" % [percent(skill.tier_damage[count]), count, tier_name]))
+	if skill.tier_ignore_from > 0:
+		lines.append(green % ("At %d %s, ignores %s" % [skill.tier_ignore_from, tier_name,
+				_token_list(skill.tier_ignore_tokens)]))
+	if skill.tier_spend_from > 0:
+		lines.append(green % ("Spends all %s at %d or more" % [tier_name, skill.tier_spend_from]))
+	if skill.heal_below < 1.0:
+		lines.append(green % ("Heals only below %s HP" % percent(skill.heal_below)))
+	if skill.heal_per_buff_token > 0.0:
+		lines.append(green % ("+%s HP healed per positive token" % percent(skill.heal_per_buff_token)))
+	if skill.clears_corpses:
+		lines.append(green % "Clears every enemy corpse")
 	if skill.multi_target:
-		lines.append("[color=#%s]Hits every target in range[/color]" % PALE_GREEN.to_html(false))
+		lines.append(green % "Hits every target in range")
 	var limits := usage_text(skill)
 	if limits != "":
 		lines.append("[color=#%s]%s[/color]" % [GOLD.to_html(false), limits])
 	return "\n".join(lines)
+
+
+## BBCode text without its tags, for tooltips.
+static func plain(bbcode: String) -> String:
+	return RegEx.create_from_string("\\[[^\\]]*\\]").sub(bbcode, "", true)
+
+
+static func _token_list(tokens: Array[StringName]) -> String:
+	return ", ".join(tokens.map(func(t: StringName) -> String: return token_name(t)))
 
 
 ## "Cooldown 2 turns, 1 use per battle, only below 40% HP", or "" for a skill with no limits.
@@ -468,8 +766,25 @@ static func usage_text(skill: SkillDef) -> String:
 		parts.append("Cooldown %d turn%s" % [skill.cooldown, "" if skill.cooldown == 1 else "s"])
 	if skill.uses_per_battle > 0:
 		parts.append("%d use%s per battle" % [skill.uses_per_battle, "" if skill.uses_per_battle == 1 else "s"])
-	if skill.condition == SkillDef.Condition.SELF_HP_BELOW:
-		parts.append("only below %s HP" % percent(skill.condition_value))
+	match skill.condition:
+		SkillDef.Condition.SELF_HP_BELOW:
+			parts.append("only below %s HP" % percent(skill.condition_value))
+		SkillDef.Condition.SELF_HAS_ANY:
+			parts.append("needs " + " or ".join(skill.condition_tokens.map(func(t: StringName) -> String:
+				return token_name(t))))
+		SkillDef.Condition.TARGET_HP_BELOW:
+			parts.append("target below %s HP" % percent(skill.condition_value))
+		SkillDef.Condition.TARGET_HAS_TOKEN:
+			parts.append("target with %s" % token_name(skill.condition_token))
+		SkillDef.Condition.TARGET_HAS_ANY:
+			var needs := " or ".join(skill.condition_tokens.map(func(t: StringName) -> String: return token_name(t)))
+			if skill.condition_value > 0.0:
+				needs += " or below %s HP" % percent(skill.condition_value)
+			parts.append("target with " + needs)
+		SkillDef.Condition.TARGET_STRESS_AT_LEAST:
+			parts.append("target at %d+ stress" % roundi(skill.condition_value))
+		SkillDef.Condition.TARGET_ON_CONSECRATION:
+			parts.append("allies on a Consecration")
 	return ", ".join(parts)
 
 

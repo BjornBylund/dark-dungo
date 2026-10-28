@@ -157,14 +157,18 @@ const UPGRADES := {
 	&"bar": TAVERN_LADDER,
 	&"gambling": TAVERN_LADDER,
 	&"bathhouse": TAVERN_LADDER,
+	&"wagon_stock": [{&"portrait": 3, &"crest": 6}, {&"portrait": 6, &"crest": 12}, {&"portrait": 10, &"crest": 20}],
+	&"haggling": [{&"portrait": 2, &"crest": 4}, {&"portrait": 4, &"crest": 9}, {&"portrait": 7, &"crest": 14},
+			{&"portrait": 9, &"crest": 18}, {&"portrait": 12, &"crest": 24}],
 }
 const UPGRADE_NAMES := {
 	&"weaponsmith": "Weaponsmithing", &"armorsmith": "Armorsmithing",
 	&"furnace": "Furnace", &"guild": "Instructors", &"regimen": "Training regimen", &"meditation": "Cloister",
 	&"prayer": "Transept", &"flagellation": "Penance hall", &"bar": "Bar", &"gambling": "Gambling hall",
-	&"bathhouse": "Bathhouse",
+	&"bathhouse": "Bathhouse", &"wagon_stock": "Stock", &"haggling": "Haggling",
 }
-## Off gear gold per Furnace level, and off skill gold per Training regimen level.
+## Off gear gold per Furnace level, off skill gold per Training regimen level,
+## and off Nomad Wagon prices per Haggling level.
 const UPGRADE_DISCOUNT := 0.1
 ## The hamlet's buildings: their upgrade lines, and the week they open (DD1
 ## opens buildings over the first weeks).
@@ -174,7 +178,25 @@ const BUILDINGS := {
 	&"abbey": {name = "Abbey", lines = [&"meditation", &"prayer", &"flagellation"], opens = 1},
 	&"tavern": {name = "Tavern", lines = [&"bar", &"gambling", &"bathhouse"], opens = 3},
 	&"exchange": {name = "Heirloom Exchange", lines = [], opens = 5},
+	&"wagon": {name = "Nomad Wagon", lines = [&"wagon_stock", &"haggling"], opens = 2},
 }
+# Trinkets, DD2's (docs/research/darkest-dungeon-2-trinkets.md).
+const TRINKET_SLOTS := 2
+const RARITY_NAMES := ["Vague", "Distant", "Indelible", "Ancestral"]
+## Drop weights by rarity, [mission tier][Vague, Distant, Indelible]: DD2's
+## road-battle ladder (10 : 6 : 2) at Apprentice. As in DD2, Vague trinkets fade
+## out of harder dungeons, where Indelible ones grow common. Boss and Ancestral
+## trinkets come only from region bosses.
+const TRINKET_WEIGHTS := [[10, 6, 2], [3, 6, 3], [0, 6, 4]]
+## Chance of a trinket in a cache room and from a won elite fight. Completing
+## a mission always gives one, and a boss one of its own.
+const CACHE_TRINKET_CHANCE := 0.5
+const ELITE_TRINKET_CHANCE := 0.5
+## The Nomad Wagon buys trinkets back for this share of their price.
+const TRINKET_SELL_SHARE := 0.25
+## The Nomad Wagon sells this many trinkets a week (more with its Stock line).
+const WAGON_STOCK := 4
+
 ## DD1's Heirloom Exchange: [give, get]. A Crest is worth about 1, a Bust or
 ## Deed about 2 and a Portrait about 4, and every trade loses a little.
 const EXCHANGE_TRADES := [

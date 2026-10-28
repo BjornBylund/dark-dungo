@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_kgys2"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_n1h8v"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_bkeq4"]
+
+[resource]
+script = ExtResource("2_n1h8v")
+id = &"greater_hale_draught"
+display_name = "Greater Hale Draught"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"max_hp": 0.2
+})

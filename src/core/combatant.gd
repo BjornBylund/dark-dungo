@@ -10,6 +10,7 @@ enum BuffExpiry {
 	RUN,           ## Kept until the run restarts ("until next Inn" in DD2).
 	DEATHS_DOOR,   ## Removed when the unit leaves Death's Door.
 	BOND,          ## From the hero's bonds with the party; the campaign sets them between fights.
+	TRINKET,       ## From the hero's trinkets, for as long as they're worn.
 }
 
 static var _next_uid := 1
@@ -28,11 +29,16 @@ var tokens: Dictionary[StringName, int] = {}
 var token_turns: Dictionary[StringName, int] = {}
 ## Bleed, blight and burn instances: {type: StringName, amount: int, turns: int}.
 var dots: Array[Dictionary] = []
+## Regen, healing over time: {amount: int, turns: int}, ticking with the DoTs.
+var regens: Array[Dictionary] = []
 ## Stat modifiers: {stat: StringName, amount: float, expiry: BuffExpiry, rounds: int}.
 ## Stats are "speed", "resist_<kind>", "crit" and "damage" (added to the
-## attacker's chance and modifier), and "resolute" (added to the chance of
-## Resolute instead of Meltdown).
+## attacker's chance and modifier), "resolute" (added to the chance of
+## Resolute instead of Meltdown), "heal_received" (more or less from healing
+## skills) and "heal_power" (the unit's healing skills heal more or less).
 var buffs: Array[Dictionary] = []
+## Trinket lines that fire on combat events; the battle runs them.
+var triggers: Array[TrinketTrigger] = []
 ## Skill id -> turns until usable again.
 var cooldowns: Dictionary[StringName, int] = {}
 ## Skill id -> uses this battle.
@@ -90,12 +96,29 @@ func hp_fraction() -> float:
 	return float(hp) / float(max_hp)
 
 
-func stat(name: StringName) -> float:
+## The stat's total. A buff with a condition ("if", see TrinketBonus) counts
+## only while it holds: target and skill conditions need the target or skill.
+func stat(name: StringName, target: Combatant = null, skill: SkillDef = null) -> float:
 	var total := 0.0
 	for buff in buffs:
-		if buff.stat == name:
+		if buff.stat == name and (not buff.has("if") or _holds(buff.if, target, skill)):
 			total += buff.amount
 	return total
+
+
+func _holds(condition: Dictionary, target: Combatant, skill: SkillDef) -> bool:
+	if condition.token != &"" and has_status(condition.token) == condition.lacks:
+		return false
+	if condition.target != &"" and (target == null or not target.has_status(condition.target)):
+		return false
+	if condition.hp_below > 0.0 and hp_fraction() >= condition.hp_below:
+		return false
+	return condition.skills.is_empty() or (skill != null and skill.id in condition.skills)
+
+
+## Holds the token, or the DoT when `name` is bleed, blight or burn.
+func has_status(name: StringName) -> bool:
+	return dot_total(name) > 0 if name in [&"bleed", &"blight", &"burn"] else has_token(name)
 
 
 ## Raises max HP and fills HP to match. Meant for setting up a new combatant.
@@ -117,8 +140,11 @@ func skill_rank(skill: SkillDef) -> int:
 	return skill_ranks.get(skill.id, 1)
 
 
-func add_buff(name: StringName, amount: float, expiry: BuffExpiry, rounds: int = 0) -> void:
-	buffs.append({stat = name, amount = amount, expiry = expiry, rounds = rounds})
+func add_buff(name: StringName, amount: float, expiry: BuffExpiry, rounds: int = 0, condition: Dictionary = {}) -> void:
+	var buff := {stat = name, amount = amount, expiry = expiry, rounds = rounds}
+	if not condition.is_empty():
+		buff["if"] = condition
+	buffs.append(buff)
 
 
 func remove_buffs(expiry: BuffExpiry) -> void:
@@ -149,21 +175,34 @@ func heal(amount: int) -> bool:
 
 ## At max stress, one of DD2's one-off events: a Meltdown (MELTDOWN_CHANCE, less
 ## the "resolute" stat) cuts HP and leaves the hero easier to kill; a Resolute
-## heals and steadies them. Both reset stress. Returns true for a Meltdown.
-func overstress(rng: RandomNumberGenerator) -> bool:
+## heals and steadies them. Both reset stress. A unit whose class has its own
+## overstress (the Flagellant's Toxic) always gets that. Returns &"meltdown",
+## &"resolute" or &"toxic".
+func overstress(rng: RandomNumberGenerator) -> StringName:
+	if def.overstress == &"toxic":
+		stress = Rules.TOXIC_STRESS
+		var target_hp := roundi(max_hp * Rules.TOXIC_HP_FRACTION)
+		if hp < target_hp:
+			heal(target_hp - hp)
+		elif hp > 0:
+			hp = target_hp
+		cooldowns.clear()
+		add_token(Tokens.TOXIC)
+		add_buff(&"resist_deathblow", Rules.TOXIC_DEATHBLOW, BuffExpiry.RUN)
+		return &"toxic"
 	if rng.randf() < Rules.MELTDOWN_CHANCE - stat(&"resolute"):
 		stress = Rules.MELTDOWN_STRESS
 		if hp > 0:
 			hp = mini(hp, maxi(1, roundi(max_hp * Rules.MELTDOWN_HP_FRACTION)))
 		add_buff(&"resist_deathblow", Rules.MELTDOWN_DEATHBLOW, BuffExpiry.RUN)
 		add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
-		return true
+		return &"meltdown"
 	stress = 0
 	add_buff(&"resist_deathblow", Rules.RESOLUTE_DEATHBLOW, BuffExpiry.RUN)
 	add_buff(&"resist_debuff", Rules.RESOLUTE_DEBUFF_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
 	add_buff(&"resist_stress", Rules.OVERSTRESS_STRESS_RESIST, BuffExpiry.ROUNDS, Rules.OVERSTRESS_BUFF_ROUNDS)
 	heal(roundi(max_hp * Rules.RESOLUTE_HEAL_FRACTION))
-	return false
+	return &"resolute"
 
 
 # --- Tokens ---
@@ -183,6 +222,8 @@ func token_count(token: StringName) -> int:
 func add_token(token: StringName, stacks: int = 1) -> Dictionary:
 	var added := 0
 	var negated: Array[StringName] = []
+	if stat(StringName("blocks_%s" % token)) > 0.0:
+		return {added = added, negated = negated}
 	for i in stacks:
 		var opposite := _present_opposite(token)
 		if opposite != &"":
@@ -290,8 +331,9 @@ func tick_cooldowns(used_this_turn: StringName) -> void:
 func clear_battle_state() -> void:
 	clear_tokens()
 	dots.clear()
+	regens.clear()
 	cooldowns.clear()
 	uses.clear()
 	speed_bonus_next_round = false
 	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool:
-		return buff.expiry in [BuffExpiry.RUN, BuffExpiry.DEATHS_DOOR, BuffExpiry.BOND]))
+		return buff.expiry in [BuffExpiry.RUN, BuffExpiry.DEATHS_DOOR, BuffExpiry.BOND, BuffExpiry.TRINKET]))

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_u7jql"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_jymew"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_mhugd"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_xmicl"]
+
+[sub_resource type="Resource" id="Resource_b13ms"]
+script = ExtResource("4_xmicl")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_vsm30"]
+script = ExtResource("3_mhugd")
+when = 6
+effects = Array[ExtResource("4_xmicl")]([SubResource("Resource_b13ms")])
+
+[sub_resource type="Resource" id="Resource_3d50r"]
+script = ExtResource("4_xmicl")
+token = &"block"
+chance = 0.66
+
+[sub_resource type="Resource" id="Resource_c3ris"]
+script = ExtResource("3_mhugd")
+when = 8
+effects = Array[ExtResource("4_xmicl")]([SubResource("Resource_3d50r")])
+if_speed_at_most = 2
+
+[resource]
+script = ExtResource("2_jymew")
+id = &"calibrating_censer"
+display_name = "Calibrating Censer"
+rarity = 2
+price = 6500
+triggers = Array[ExtResource("3_mhugd")]([SubResource("Resource_vsm30"), SubResource("Resource_c3ris")])

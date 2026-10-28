@@ -223,6 +223,10 @@ func _open_room(entered: bool = false) -> void:
 			if entered:
 				var found := "%s gold" % UiStyle.gold_text(run.cache_gold()) if room.cache_heirloom == &"" \
 						else "%d %s" % [run.cache_heirlooms(), CampaignRules.HEIRLOOM_NAMES[room.cache_heirloom]]
+				if run.just_found:
+					found += ", and a trinket: %s (%s)" % [run.just_found.display_name,
+							CampaignRules.RARITY_NAMES[run.just_found.rarity]]
+					run.just_found = null
 				_show_panel("Cache", "Someone hid this well, but not well enough. You find %s." % found,
 						[["Continue", _close_panel]])
 		MapRoom.Type.REST:

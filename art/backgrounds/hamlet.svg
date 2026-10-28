@@ -87,12 +87,25 @@
     <path d="M876 888 Q884 906 892 888 M948 888 Q956 906 964 888" fill="none" stroke="#c9a24a" stroke-width="4"/>
     <rect x="836" y="1004" width="40" height="30" fill="#7a5a3a"/>
     <rect x="966" y="1000" width="44" height="34" fill="#55606a"/>
+
+    <!-- Nomad Wagon: a covered caravan with a lantern, its horse long gone -->
+    <path d="M1310 1010 L1384 1044" fill="none" stroke="#3a2a1e" stroke-width="8"/>
+    <rect x="1110" y="960" width="200" height="70" fill="#4a3424"/>
+    <path d="M1110 962 Q1110 892 1210 884 Q1310 892 1310 962 Z" fill="#6e5a3e"/>
+    <path d="M1150 962 Q1152 905 1172 893 M1210 962 L1210 884 M1270 962 Q1268 905 1248 893" fill="none" stroke="#4a3e2a" stroke-width="4"/>
+    <rect x="1190" y="978" width="40" height="30" fill="#e0a050" opacity="0.8"/>
+    <circle cx="1150" cy="1040" r="30" fill="#2a1e18"/>
+    <circle cx="1272" cy="1040" r="30" fill="#2a1e18"/>
+    <path d="M1150 1010 L1150 1070 M1120 1040 L1180 1040 M1272 1010 L1272 1070 M1242 1040 L1302 1040" fill="none" stroke="#5a4636" stroke-width="4"/>
+    <path d="M1110 974 L1090 974 L1090 980" fill="none" stroke="#2a1e18" stroke-width="4"/>
+    <rect x="1083" y="980" width="14" height="20" fill="#ffb060"/>
   </g>
 
   <!-- lit windows glow -->
   <circle cx="470" cy="660" r="90" fill="url(#glow)"/>
   <circle cx="1170" cy="540" r="80" fill="url(#glow)" opacity="0.6"/>
   <circle cx="520" cy="990" r="120" fill="url(#glow)" opacity="0.7"/>
+  <circle cx="1090" cy="990" r="60" fill="url(#glow)" opacity="0.7"/>
 
   <!-- foreground -->
   <g fill="#070505">

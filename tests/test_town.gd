@@ -3,7 +3,7 @@
 ## over the first weeks.
 extends TestCase
 
-const HEROES := ["vanguard", "cutthroat", "marksman", "mender"]
+const HEROES := ["vanguard", "cutthroat", "plaguebearer", "mender"]
 
 
 func _campaign(seed_value: int = 1) -> Campaign:

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_238e5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_3mukc"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_or2ce"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_rm4y5"]
+
+[sub_resource type="Resource" id="Resource_qse75"]
+script = ExtResource("4_rm4y5")
+token = &"crit"
+chance = 0.1
+
+[sub_resource type="Resource" id="Resource_m4bih"]
+script = ExtResource("3_or2ce")
+effects = Array[ExtResource("4_rm4y5")]([SubResource("Resource_qse75")])
+
+[sub_resource type="Resource" id="Resource_eoguw"]
+script = ExtResource("4_rm4y5")
+token = &"vulnerable"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_mh8sc"]
+script = ExtResource("3_or2ce")
+when = 6
+effects = Array[ExtResource("4_rm4y5")]([SubResource("Resource_eoguw")])
+malus = true
+
+[resource]
+script = ExtResource("2_3mukc")
+id = &"buttressing_band"
+display_name = "Buttressing Band"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_or2ce")]([SubResource("Resource_m4bih"), SubResource("Resource_mh8sc")])

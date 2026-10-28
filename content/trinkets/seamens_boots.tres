@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_pm4dn"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_bj6pv"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_4l4g4"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_je3we"]
+
+[sub_resource type="Resource" id="Resource_7nj4q"]
+script = ExtResource("4_je3we")
+token = &"block"
+chance = 0.66
+
+[sub_resource type="Resource" id="Resource_kspya"]
+script = ExtResource("3_4l4g4")
+when = 12
+effects = Array[ExtResource("4_je3we")]([SubResource("Resource_7nj4q")])
+if_speed_at_most = 2
+
+[sub_resource type="Resource" id="Resource_c0cjs"]
+script = ExtResource("4_je3we")
+token = &"dodge"
+chance = 0.66
+
+[sub_resource type="Resource" id="Resource_5o7mg"]
+script = ExtResource("3_4l4g4")
+when = 12
+effects = Array[ExtResource("4_je3we")]([SubResource("Resource_c0cjs")])
+if_speed_at_least = 6
+
+[resource]
+script = ExtResource("2_bj6pv")
+id = &"seamens_boots"
+display_name = "Seamen's Boots"
+rarity = 1
+price = 3000
+triggers = Array[ExtResource("3_4l4g4")]([SubResource("Resource_kspya"), SubResource("Resource_5o7mg")])

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_5kdre"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_vgvpw"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_hxf0o"]
+
+[resource]
+script = ExtResource("2_vgvpw")
+id = &"bouncers_belt"
+display_name = "Bouncer's Belt"
+rarity = 1
+price = 2000
+stats = Dictionary[StringName, float]({
+&"heal_received": 0.2,
+&"resist_move": -0.15
+})

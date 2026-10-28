@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_3alhe"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_wtxem"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_b0vlf"]
+
+[resource]
+script = ExtResource("2_wtxem")
+id = &"clotting_cruor"
+display_name = "Clotting Cruor"
+rarity = 1
+price = 2000
+stats = Dictionary[StringName, float]({
+&"resist_bleed": 0.33,
+&"resist_burn": -0.1
+})

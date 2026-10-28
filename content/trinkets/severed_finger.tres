@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_tswps"]
+[ext_resource type="Resource" path="res://content/heroes/minstrel.tres" id="2_fh1a1"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="3_8h2nl"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="4_g42bg"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="5_wp3xa"]
+
+[sub_resource type="Resource" id="Resource_ji6r7"]
+script = ExtResource("1_tswps")
+stat = &"damage"
+amount = 0.25
+if_target = &"bleed"
+
+[sub_resource type="Resource" id="Resource_pj75p"]
+script = ExtResource("5_wp3xa")
+token_pool = Array[StringName]([&"crit", &"dodge", &"strength", &"block", &"speed"])
+
+[sub_resource type="Resource" id="Resource_ty03q"]
+script = ExtResource("4_g42bg")
+when = 1
+effects = Array[ExtResource("5_wp3xa")]([SubResource("Resource_pj75p")])
+if_token = &"bleed"
+
+[resource]
+script = ExtResource("3_8h2nl")
+id = &"severed_finger"
+display_name = "Severed Finger"
+rarity = 2
+hero = ExtResource("2_fh1a1")
+price = 6500
+stats = Dictionary[StringName, float]({
+&"dot_duration_received_bleed": 1.0
+})
+bonuses = Array[ExtResource("1_tswps")]([SubResource("Resource_ji6r7")])
+triggers = Array[ExtResource("4_g42bg")]([SubResource("Resource_ty03q")])

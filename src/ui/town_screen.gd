@@ -18,8 +18,11 @@ const SPOTS := {
 	&"abbey": Rect2(1040, 260, 260, 480),
 	&"tavern": Rect2(320, 830, 400, 250),
 	&"exchange": Rect2(790, 860, 260, 220),
+	&"wagon": Rect2(1080, 880, 300, 200),
 	&"board": Rect2(1330, 560, 240, 250),
 }
+## Height of a scrolling trinket list in a window, which doesn't scroll on desktop.
+const TRINKET_LIST_HEIGHT := 560.0
 ## What each level of an Abbey or Tavern activity's upgrade line brings.
 const ACTIVITY_UPGRADES := ["More stress relief", "Prices -15%", "One more slot", "More stress relief",
 		"Prices -15% more", "One more slot"]
@@ -261,6 +264,8 @@ func _open_building(id: StringName) -> void:
 					% CampaignRules.BAR_BOND_POINTS))
 		&"exchange":
 			_open(title, _build_exchange)
+		&"wagon":
+			_open(title, _build_wagon)
 
 
 func _open_hero(hero: HeroRecord) -> void:
@@ -322,7 +327,8 @@ func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
 	icon.custom_minimum_size = Vector2(48, 48)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.tooltip_text = skill.display_name
+	var details := "%s\n%s" % [skill.display_name, UiStyle.plain(UiStyle.skill_bbcode(skill))]
+	icon.tooltip_text = details
 	if not hero.knows(skill):
 		icon.modulate = Color(0.45, 0.45, 0.45)
 	row.add_child(icon)
@@ -330,6 +336,8 @@ func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
 	var title := _label("%s   %s%s" % [skill.display_name, state, "   EQUIPPED" if hero.is_equipped(skill) else ""], 18,
 			UiStyle.GOLD if hero.is_equipped(skill) else (UiStyle.TEXT if hero.knows(skill) else UiStyle.TEXT_DIM))
 	title.custom_minimum_size = Vector2(340, 0)
+	title.tooltip_text = details
+	title.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(title)
 	if not hero.knows(skill):
 		if at_guild:
@@ -420,6 +428,94 @@ func _build_exchange() -> void:
 		grid.add_child(button)
 
 
+## DD1's Nomad Wagon: this week's trinkets for sale, and the estate's unworn
+## ones to sell.
+func _build_wagon() -> void:
+	if _upgrades_tab(&"wagon"):
+		return
+	var campaign := _campaign()
+	_text("New wares every week. Sell what nobody wears; boss and Ancestral trinkets can't be sold.", 18,
+			UiStyle.TEXT_DIM)
+	var grid := GridContainer.new()
+	grid.columns = 1 if Device.phone else 2
+	grid.add_theme_constant_override("h_separation", 40)
+	_window_body.add_child(grid)
+	var buying := _trinket_list(grid, "For sale")
+	if campaign.wagon.is_empty():
+		buying.add_child(_label("Sold out until next week.", 16, UiStyle.TEXT_DIM))
+	for trinket in campaign.wagon:
+		var buy := _action("Buy  %s gold" % UiStyle.gold_text(campaign.wagon_price(trinket)),
+				func() -> void: _after(campaign.buy(trinket)))
+		buy.disabled = campaign.can_buy(trinket) != ""
+		buy.tooltip_text = campaign.can_buy(trinket)
+		buying.add_child(_trinket_row(trinket, [buy]))
+	var selling := _trinket_list(grid, "The estate's trinkets")
+	if campaign.trinkets.is_empty():
+		selling.add_child(_label("Nothing unworn. Trinkets come from caches, elites and completed missions.", 16,
+				UiStyle.TEXT_DIM))
+	for trinket in campaign.trinkets:
+		var sell := _action("Sell  %s gold" % UiStyle.gold_text(campaign.sell_price(trinket)),
+				func() -> void: _after(campaign.sell(trinket)))
+		sell.disabled = campaign.can_sell(trinket) != ""
+		sell.tooltip_text = campaign.can_sell(trinket)
+		selling.add_child(_trinket_row(trinket, [sell]))
+
+
+## A titled column of trinket rows in `parent`, `width` wide (0 to fill) and
+## scrolling past `height` on desktop, where the window doesn't scroll.
+## Returns the box to add the rows to.
+func _trinket_list(parent: Control, title: String, width: float = 640.0,
+		height: float = TRINKET_LIST_HEIGHT) -> VBoxContainer:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	column.custom_minimum_size = Vector2(0.0 if Device.phone else width, 0)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(column)
+	column.add_child(_label(title, 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 8)
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if Device.phone:
+		column.add_child(rows)
+		return rows
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(0, height)
+	scroll.add_child(rows)
+	column.add_child(scroll)
+	return rows
+
+
+## A trinket's icon, name (in its rarity's colour), kind and effects, with
+## `actions` (buttons) at the end.
+func _trinket_row(trinket: TrinketDef, actions: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var icon := TrinketIcon.new()
+	icon.setup(trinket)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(icon)
+	var text := VBoxContainer.new()
+	text.add_theme_constant_override("separation", 0)
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var name := _label("%s   %s" % [trinket.display_name, UiStyle.trinket_kind(trinket)], 18,
+			UiStyle.RARITY_COLORS[trinket.rarity])
+	text.add_child(name)
+	var effects := RichTextLabel.new()
+	effects.bbcode_enabled = true
+	effects.fit_content = true
+	effects.scroll_active = false
+	effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effects.add_theme_font_size_override("normal_font_size", 16)
+	effects.text = UiStyle.trinket_bbcode(trinket, "\n")
+	text.add_child(effects)
+	row.add_child(text)
+	for action: Control in actions:
+		action.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(action)
+	return row
+
+
 # --- Upgrades ---
 
 ## Services and Upgrades tabs at the top of a building window. Draws the
@@ -471,9 +567,11 @@ func _line_now(line: StringName) -> String:
 			return "Armour up to rank %d." % (level + 1)
 		&"guild":
 			return "Skills up to rank %d." % (level + 1)
-		&"furnace", &"regimen":
-			return "%s cost %d%% less." % ["Weapons and armour" if line == &"furnace" else "Skill ranks",
-					roundi(level * CampaignRules.UPGRADE_DISCOUNT * 100)]
+		&"furnace", &"regimen", &"haggling":
+			var what: String = {&"furnace": "Weapons and armour", &"regimen": "Skill ranks", &"haggling": "Trinkets"}[line]
+			return "%s cost %d%% less." % [what, roundi(level * CampaignRules.UPGRADE_DISCOUNT * 100)]
+		&"wagon_stock":
+			return "%d trinkets for sale each week." % (CampaignRules.WAGON_STOCK + level)
 	var slots := campaign.activity_slots(line)
 	return "%s: -%d stress, %s gold (levels 0-2), %d %s." % [CampaignRules.ACTIVITIES[line].name,
 			campaign.activity_relief(line), UiStyle.gold_text(roundi(campaign.activity_base_price(line))), slots,
@@ -489,8 +587,10 @@ func _line_next(line: StringName, level: int) -> String:
 			return "armour up to rank %d" % (level + 1)
 		&"guild":
 			return "skills up to rank %d" % (level + 1)
-		&"furnace", &"regimen":
+		&"furnace", &"regimen", &"haggling":
 			return "%d%% off" % roundi(level * CampaignRules.UPGRADE_DISCOUNT * 100)
+		&"wagon_stock":
+			return "%d trinkets a week" % (CampaignRules.WAGON_STOCK + level)
 	return ACTIVITY_UPGRADES[level - 1].to_lower()
 
 
@@ -499,7 +599,7 @@ func _build_hero_sheet() -> void:
 	var row := _row()
 	var art := TextureRect.new()
 	art.texture = hero.def.sprite
-	art.custom_minimum_size = Vector2(200, 340) if Device.phone else Vector2(300, 520)
+	art.custom_minimum_size = Vector2(200, 340) if Device.phone else Vector2(220, 460)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(art)
@@ -518,23 +618,72 @@ func _build_hero_sheet() -> void:
 		perks.append("+%d speed" % roundi(hero.next_mission[&"speed"]))
 	if not perks.is_empty():
 		info.add_child(_label("Next mission, from the Tavern: " + ", ".join(perks), 18, UiStyle.GOLD))
-	info.add_child(_label("Max HP %d   Speed %d" % [hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank),
-			hero.def.speed + Growth.weapon_speed_bonus(hero.weapon_rank)], 20))
+	# As the hero would fight now: gear, level, trinkets and Tavern perks.
+	var unit := Growth.hero_combatant(hero)
+	info.add_child(_label("Max HP %d   Speed %d" % [unit.max_hp, unit.speed()], 20))
 	info.add_child(_label("Weapon rank %d: %s" % [hero.weapon_rank, _weapon_text(hero.weapon_rank)], 18))
 	info.add_child(_label("Armour rank %d" % hero.armor_rank, 18))
 	var resists: Array[String] = []
 	for kind: StringName in Rules.LEVELED_RESISTS:
-		resists.append("%s %s" % [String(kind).capitalize(),
-				UiStyle.percent(hero.def.base_resist(kind) + CampaignRules.LEVEL_RESIST_BONUS * level)])
-	info.add_child(_label("Resist: " + ", ".join(resists), 16, UiStyle.TEXT_DIM))
+		resists.append("%s %s" % [String(kind).capitalize(), UiStyle.percent(unit.resist(kind))])
+	var resist_line := _label("Resist: " + ", ".join(resists), 16, UiStyle.TEXT_DIM)
+	resist_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(resist_line)
 	info.add_child(_label("Bonds", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
 	for line in _bond_lines(hero):
 		info.add_child(_label(line, 18))
 	info.add_child(_label("Skills   %d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 24,
 			UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	# All of a class's skills don't fit the desktop window, which doesn't scroll.
+	var skills := VBoxContainer.new()
+	skills.add_theme_constant_override("separation", 8)
+	skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if Device.phone:
+		info.add_child(skills)
+	else:
+		var scroll := ScrollContainer.new()
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.custom_minimum_size = Vector2(0, 360)
+		scroll.add_child(skills)
+		info.add_child(scroll)
 	for skill in hero.def.skills:
-		info.add_child(_skill_row(hero, skill, false))
-	info.add_child(_label("Learn and train skills at the Guild.", 16, UiStyle.TEXT_DIM))
+		skills.add_child(_skill_row(hero, skill, false))
+	info.add_child(_label("Learn and train skills at the Guild. Hover a skill for what it does.", 16, UiStyle.TEXT_DIM))
+	if Device.phone:
+		_hero_trinkets(hero, info)
+		return
+	info.custom_minimum_size = Vector2(640, 0)
+	var trinkets := VBoxContainer.new()
+	trinkets.add_theme_constant_override("separation", 8)
+	trinkets.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(trinkets)
+	_hero_trinkets(hero, trinkets)
+
+
+## The hero's trinket slots, and the estate's unworn trinkets their class can wear.
+func _hero_trinkets(hero: HeroRecord, parent: VBoxContainer) -> void:
+	var campaign := _campaign()
+	parent.add_child(_label("Trinkets   %d / %d" % [hero.trinkets.size(), CampaignRules.TRINKET_SLOTS], 24,
+			UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	for trinket in hero.trinkets:
+		var off := _action("Take off", func() -> void: _after(campaign.take_off(hero, trinket)))
+		parent.add_child(_trinket_row(trinket, [off]))
+	for i in CampaignRules.TRINKET_SLOTS - hero.trinkets.size():
+		parent.add_child(_label("Empty slot", 16, UiStyle.TEXT_DIM))
+	var wearable := campaign.trinkets.filter(func(t: TrinketDef) -> bool: return t.hero == null or t.hero == hero.def)
+	if wearable.is_empty():
+		var none := _label("No unworn trinket fits. They come from caches, elites, completed missions and the "
+				+ "Nomad Wagon.", 16, UiStyle.TEXT_DIM)
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		parent.add_child(none)
+		return
+	var rows := _trinket_list(parent, "The estate's trinkets", 0.0, 400.0)
+	for trinket: TrinketDef in wearable:
+		var reason := campaign.can_wear(hero, trinket)
+		var put_on := _action("Wear", func() -> void: _after(campaign.wear(hero, trinket)))
+		put_on.disabled = reason != ""
+		put_on.tooltip_text = reason
+		rows.add_child(_trinket_row(trinket, [put_on]))
 
 
 ## "Mender: Friendly, 7 / 12" for each hero this one has bonded with, closest first.

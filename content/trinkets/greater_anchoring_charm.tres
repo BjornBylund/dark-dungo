@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_bpa1k"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_ytejf"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ossx7"]
+
+[resource]
+script = ExtResource("2_ytejf")
+id = &"greater_anchoring_charm"
+display_name = "Greater Anchoring Charm"
+rarity = 2
+price = 5000
+stats = Dictionary[StringName, float]({
+&"resist_move": 0.5,
+&"resist_stun": 0.25
+})

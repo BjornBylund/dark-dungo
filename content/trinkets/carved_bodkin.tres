@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TrinketDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vydou"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_def.gd" id="2_1nu04"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_q858w"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_pcvoc"]
+
+[sub_resource type="Resource" id="Resource_2t075"]
+script = ExtResource("4_pcvoc")
+kind = 10
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_m2wep"]
+script = ExtResource("3_q858w")
+effects = Array[ExtResource("4_pcvoc")]([SubResource("Resource_2t075")])
+if_token = &"bleed"
+
+[resource]
+script = ExtResource("2_1nu04")
+id = &"carved_bodkin"
+display_name = "Carved Bodkin"
+rarity = 2
+boss_only = true
+stats = Dictionary[StringName, float]({
+&"dot_received_bleed": -2.0
+})
+triggers = Array[ExtResource("3_q858w")]([SubResource("Resource_m2wep")])

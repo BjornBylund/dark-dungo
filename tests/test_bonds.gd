@@ -2,7 +2,7 @@
 ## other, the levels they reach, the bonuses partners get, and level-up boosts.
 extends TestCase
 
-const HEROES := ["vanguard", "cutthroat", "marksman", "mender"]
+const HEROES := ["vanguard", "cutthroat", "plaguebearer", "mender"]
 
 
 func _campaign(seed_value: int = 1) -> Campaign:
@@ -137,7 +137,7 @@ func test_partners_turn_resolute_more_often() -> void:
 		var hero := Combatant.new(Fixtures.unit("Hero", 40), true)
 		hero.stress = Rules.STRESS_MAX
 		hero.add_buff(&"resolute", CampaignRules.BOND_RESOLUTE, Combatant.BuffExpiry.BOND)
-		meltdowns += int(hero.overstress(rng))
+		meltdowns += int(hero.overstress(rng) == &"meltdown")
 	assert_between(meltdowns / 1000.0, Rules.MELTDOWN_CHANCE - CampaignRules.BOND_RESOLUTE - 0.04,
 			Rules.MELTDOWN_CHANCE - CampaignRules.BOND_RESOLUTE + 0.04)
 

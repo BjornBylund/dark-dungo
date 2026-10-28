@@ -29,6 +29,15 @@ var visited: Array[int] = []
 var room_done := true
 var gold_earned := 0
 var heirlooms_earned: Dictionary[StringName, int] = {}
+## Trinkets found in caches and elite fights. Lost if the party falls.
+var trinkets_found: Array[TrinketDef] = []
+## The trinket the last cache or elite fight gave, for the screens to show
+## once; null after they have. Not saved.
+var just_found: TrinketDef
+## Every trinket that can drop, and those the estate already owns (none drop
+## twice), set by the campaign.
+var trinket_pool: Array[TrinketDef] = []
+var trinkets_owned: Array[TrinketDef] = []
 var defeated: Array[HeroRecord] = []
 ## The campaign's bonds between heroes; points earned on the way go straight in.
 var bonds := Bonds.new()
@@ -131,8 +140,8 @@ func start_fight() -> Battle:
 
 
 ## Call once the current battle has ended. A win pays the fight share (twice
-## that and heirlooms for an elite) and finishes the room; winning the finale
-## completes the mission. Losing any fight fails it.
+## that, heirlooms and maybe a trinket for an elite) and finishes the room;
+## winning the finale completes the mission. Losing any fight fails it.
 func finish_fight() -> void:
 	for i in party.size():
 		if combatants[i].dead and party[i] not in defeated:
@@ -144,6 +153,7 @@ func finish_fight() -> void:
 			FightKind.ELITE:
 				gold_earned += 2 * mission.fight_gold()
 				_add_heirlooms(mission.heirloom, CampaignRules.ELITE_HEIRLOOMS[mission.tier])
+				_maybe_find_trinket(CampaignRules.ELITE_TRINKET_CHANCE)
 			_:
 				gold_earned += mission.fight_gold()
 		room_done = true
@@ -191,11 +201,20 @@ func _open_cache(room: MapRoom) -> void:
 		gold_earned += cache_gold()
 	else:
 		_add_heirlooms(room.cache_heirloom, cache_heirlooms())
+	_maybe_find_trinket(CampaignRules.CACHE_TRINKET_CHANCE)
 	room_done = true
 
 
 func _add_heirlooms(type: StringName, amount: int) -> void:
 	heirlooms_earned[type] = maxi(0, heirlooms_earned.get(type, 0) + amount)
+
+
+func _maybe_find_trinket(chance: float) -> void:
+	just_found = null
+	if rng.randf() < chance:
+		just_found = Trinkets.roll(trinket_pool, mission.tier, rng, trinkets_owned + trinkets_found)
+		if just_found:
+			trinkets_found.append(just_found)
 
 
 # --- Events ---
@@ -413,17 +432,20 @@ func _boost(unit: Combatant) -> void:
 	unit.add_buff(&"damage", CampaignRules.BOND_BOOST_DAMAGE, Combatant.BuffExpiry.RUN)
 
 
-## Heroes at max stress outside a fight melt down or turn resolute there and
-## then, as they would in one. Returns a line for each, for the screen.
+## Heroes at max stress outside a fight melt down, turn resolute or go Toxic
+## there and then, as they would in one. Returns a line for each, for the screen.
 func resolve_max_stress() -> Array[String]:
 	var lines: Array[String] = []
 	for unit in formation:
 		if unit.stress < Rules.STRESS_MAX:
 			continue
-		if unit.overstress(rng):
-			lines.append("%s melts down! HP drops to %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
-		else:
-			lines.append("%s is resolute! Stress clears, HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+		match unit.overstress(rng):
+			&"meltdown":
+				lines.append("%s melts down! HP drops to %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+			&"toxic":
+				lines.append("%s turns Toxic! HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
+			_:
+				lines.append("%s is resolute! Stress clears, HP %d/%d." % [unit.display_name, unit.hp, unit.max_hp])
 	return lines
 
 
@@ -439,7 +461,7 @@ func to_dict() -> Dictionary:
 				token_turns = unit.token_turns})
 	return {
 		mission = mission.to_dict(), map = map.to_dict(), room_id = room_id, visited = visited, room_done = room_done,
-		gold_earned = gold_earned, heirlooms_earned = heirlooms_earned,
+		gold_earned = gold_earned, heirlooms_earned = heirlooms_earned, trinkets_found = Trinkets.to_paths(trinkets_found),
 		pending = pending.resource_path if pending else "", pending_kind = pending_kind,
 		states = states, formation = formation.map(func(u: Combatant) -> int: return combatants.find(u)),
 		defeated = defeated.map(func(r: HeroRecord) -> int: return party.find(r)),
@@ -455,6 +477,7 @@ static func from_dict(data: Dictionary, members: Array[HeroRecord], random: Rand
 	run.gold_earned = int(data.gold_earned)
 	for type: String in data.heirlooms_earned:
 		run.heirlooms_earned[StringName(type)] = int(data.heirlooms_earned[type])
+	run.trinkets_found = Trinkets.from_paths(data.get("trinkets_found", []))
 	if data.pending != "":
 		run.pending = load(data.pending)
 	run.pending_kind = int(data.pending_kind) as FightKind
