@@ -15,7 +15,7 @@ Open the folder in Godot 4.7 and press Play, or from a terminal:
 godot --path .
 ```
 
-The title screen offers Continue, New Campaign and Combat Sandbox. The campaign autosaves after every town action and every fight of a mission.
+The title screen offers Continue, New Campaign and Combat Sandbox, and when running from the project folder the Balance Tool. The campaign autosaves after every town action and every fight of a mission.
 
 - **Town:** click a building to open it (Blacksmith, Guild, Abbey, and from the first weeks the Nomad Wagon, Tavern and Heirloom Exchange), or a hero in the roster for their sheet, where they put on and take off trinkets. Each building window has a Services tab and an Upgrades tab. `Esc` closes a window. **Embark** (or the noticeboard by the gate) opens the expedition map.
 - **Expedition map:** click a quest shield by a region to see its details. Click heroes in the roster to fill the lineup from rank 1, drag them between slots to reorder, and click a hero in a slot to take them out. **Embark** starts the mission; `Esc` goes back to town.
@@ -29,6 +29,7 @@ Launch options go after `--`:
 | `--continue` | Load the save and skip the title screen |
 | `--new-campaign` | Start a new campaign, replacing the save |
 | `--sandbox` | Open the combat sandbox |
+| `--balance` | Open the balance tool (not in exports) |
 | `--autoplay` | Play itself: the town hires, treats the wounded and embarks; the map picks rooms, rests and event choices; fights pick sensible moves |
 | `--speed=N` | Combat animation speed |
 | `--start-wave=N` | Sandbox: start at wave N |
@@ -102,6 +103,14 @@ Other art, all replaceable:
 
 ## Add content
 
+The **balance tool** edits heroes, enemies, encounters and trinkets with their numbers on paper beside them: `godot --path . -- --balance`, or Balance Tool on the title screen.
+- **Tables:** one per kind. Click a column title to sort. Green and red cells rank strong and weak within their group; hover one for its rank. A hero or enemy expands into its skills.
+- **Editing:** the form edits the selected row. Fields changed from their default are named in gold; hover a name for what it does.
+- **New content:** **Duplicate** makes a new one from a copy. **List in campaign** decides where the game uses it.
+- **Keys:** `Ctrl+S` saves the changed files, `Ctrl+Z` / `Ctrl+Y` undo and redo.
+
+The files can also be edited by hand or in the Godot inspector:
+
 - **Trinkets:** `content/trinkets/`, listed under **Trinkets** in `content/campaign.tres`. Each has a rarity, an optional class, a price, stats (fractions like 0.15 for +15%, speed in points, `max_hp` as a share of base HP), **Bonuses** (stats with a condition) and **Triggers** (effects fired by combat events, like Apply on Hit). An empty **Icon** draws a placeholder in the rarity's colour.
 - **Heroes and enemies:** `.tres` files in `content/heroes/` and `content/enemies/`. A hero joins the campaign by being listed in `content/campaign.tres`, either in **Starting Heroes** or in **Recruits** (one joins, chosen by the player, for each region boss beaten for the first time).
 - **Regions:** `content/regions/`, listed under **Regions** in `content/campaign.tres`. They open in that order: the first from the start, each next one when the boss before it is beaten for the first time. Each open region offers two missions a week (four while only the first is open).
@@ -128,6 +137,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `TrinketDef` (with `TrinketBonus` and `TrinketTrigger`), `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
 | `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, trinkets, saving), `trinkets.gd` (trinket drops), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
+| `src/balance/` | The balance tool: `balance_app.gd` (the screen), `balance_library.gd` (loading, undo, saving, duplicating, listing), `balance_stats.gd` (numbers on paper), `resource_form.gd` (forms built from exported fields), `balance_table.gd` (sortable, ranked tables) |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, trinkets, the campaign and the sandbox as `.tres` files |
 | `art/` | One folder per unit under `art/characters/` (sprite and close-up poses), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |

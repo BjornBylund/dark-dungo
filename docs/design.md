@@ -17,7 +17,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 
 - **Combat core** (`src/core/`) is pure logic: plain GDScript classes (no nodes), a seeded RNG so any fight replays exactly from its seed, and an event stream ("X used Y on Z, crit, 7 damage, Bleed applied") as its only output.
 - **Presentation** (`src/ui/`) renders those events and sends the player's choices back to the core. It never decides outcomes.
-- **Content** (`content/`) — heroes, enemies, skills, waves — is data, stored as Godot Resources (`.tres`), not code. Edit them in the Godot inspector.
+- **Content** (`content/`) — heroes, enemies, skills, waves — is data, stored as Godot Resources (`.tres`), not code. Edit them in the [balance tool](#balance-tool) or the Godot inspector.
 - Combat takes a party in and hands it back out (HP, stress, Death's Door, deaths, long-lasting buffs), so it plugs into whichever game loop is chosen later.
 
 ## Combat model
@@ -367,6 +367,30 @@ The kits brought these mechanics to the combat engine:
 A human should land between the two. Retune once it has been played.
 
 `scripts/balance.ps1` plays whole missions with random parties of the cast and the map auto-player. With level-1 heroes at Apprentice they finish about 46% of short missions, 28% of medium and 20% of long (heroes without trinkets). Veteran and Champion missions with unupgraded heroes are far lower, which is intended: they need levels and gear. The bot is a pessimistic stand-in for a human, who picks a party and a route on purpose.
+
+## Balance tool
+
+A dev app inside the game (`src/balance/`) for designing and balancing heroes, enemies, bosses and items. It opens with `-- --balance`, or from a title-screen button that only shows when running from the project folder, and is left out of exports. Desktop only.
+
+- **Why in the game, not an editor plugin:** the Godot editor isn't part of the workflow. All of it is GDScript on the real content and combat code.
+- **What it edits:** every field of the heroes, enemies (bosses included) and trinkets, and every encounter's lineup. Forms are built from each resource's exported fields, so new fields, and new kinds of equipment later, get an editor without extra work. `campaign_rules.gd`, events and regions are out of scope, except listing content in the campaign.
+- **Editing:** a table per kind (Heroes, Enemies, Encounters with a Fight / Elite / Finale / Boss filter, Trinkets) beside a form for the selected one. Units expand into their skills. Undo and redo cover the session; git is the long-term history. Save writes the changed `.tres` files only, and a file saved unchanged comes out byte-identical. Quitting or leaving with unsaved changes asks first.
+- **New content:** Duplicate copies a hero, enemy, encounter or trinket with its own skills and effects (art and listed units are shared) and a new id. List in campaign puts it in Starting Heroes or Recruits, a region's fights, elites, finales or boss, or the trinket list. Ids lock once saved, because saves refer to them. Deleting stays manual.
+- **Numbers on paper** (`BalanceStats`), live as you edit, sortable, tinted by rank within their group:
+  - **Heroes and enemies:** HP, speed, size, resistances, the most expected damage in one turn, damage, heal and stress per round, the best chance a stun or move sticks, and the ranks used and reached.
+  - **Skills:** the damage roll, crit, cooldown and uses, expected damage per use (crits, every target, DoTs after resistance), and the per-round numbers with its cooldown.
+  - **Encounters:** totals of HP, damage and stress per round, the best stun, and average speed.
+  - **Trinkets:** rarity, class, price, whether listed, and their effects in words.
+  - **Assumptions:** base heroes (level 0, rank-1 skills, the first 5 skills) against Apprentice enemies, over a 6-round fight. A unit uses its best ready skill each turn, so cooldowns and use limits count. Resisted effects are measured against the other side's average resistance. Effects that need a token or tier tokens (Stun vs Combo) don't count.
+- **Still to build:**
+  - **Measuring:** a value-based hero bot replacing `AutoPlayer.sensible` everywhere, scoring tokens, Guard, DoTs, Stun, buffs, Combo and moves. Then:
+    - Background sweeps of random parties with random loadouts against every encounter.
+    - Paired fights (same seed, with and without) to value each skill and trinket.
+    - Power presets: Base, Apprentice, Veteran and Champion levels, gear, skill ranks, and trinkets drawn by drop odds.
+    - Targets with flags, kept in `content/balance_targets.tres`.
+    - A pinned baseline, and margins of error.
+    - The same engine headless, replacing `tools/balance_probe.gd`.
+  - **Arena:** a focused fight of chosen heroes, loadouts, trinkets and encounter. It re-runs after each edit, has starting HP and stress sliders, and a Watch button that opens the real combat screen.
 
 ## Future features
 
