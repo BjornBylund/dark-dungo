@@ -21,3 +21,6 @@ extends Resource
 @export var expedition_background: Texture2D
 ## Behind every mission map.
 @export var map_background: Texture2D
+## The Ancestor's dialogue script: the opening scene and the lines that greet a
+## party home (see src/campaign/dialogue.gd).
+@export_file("*.txt") var dialogue: String

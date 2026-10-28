@@ -224,3 +224,4 @@ turn_start_tokens = Dictionary[StringName, int]({
 &"conviction": 1
 })
 sprite = ExtResource("9_sprite")
+dialogue = "res://content/dialogue/vestal.txt"

@@ -234,6 +234,26 @@ DD2's ([research/darkest-dungeon-2-trinkets.md](research/darkest-dungeon-2-trink
 - **Prices:** about 100 gold per DD2 Bauble: Vague 500, Distant 2,000–3,000, Indelible 5,000–6,500. The Wagon buys back for 25%; boss and Ancestral trinkets can't be sold.
 - **Nomad Wagon:** opens in week 2 and sells 4 trinkets a week, none already owned, at the best tier the roster can take on.
 
+### Dialogue scenes
+
+Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
+
+- **When:**
+  - a new campaign opens with one scene of the five starting heroes arriving;
+  - a recruit gets their own scene as they join;
+  - each level a hero gains brings a scene when the party is back in town.
+- **What they say:** a mix of each hero's backstory and what has just happened.
+  - Each hero's past comes a part at a time, levels 1 to 6. The recruits' join scene sets theirs up.
+  - Before the first part, the hero looks back on the mission just finished: the boss, the region, a long road, a comrade who fell, their own stress, a bonded partner, or a particular hero beside them, who may answer. The best-fitting line plays.
+  - The Ancestor greets the party home once, before the first of a mission's scenes.
+- **Writing:** original, not DD's script. The heroes go by their class names, and the backstories are new.
+- **Look:**
+  - The hamlet darkened behind, the cast standing tall, and the speaker lit from below while the others stand in shadow. Two heroes face each other.
+  - A framed text box with the speaker's name. Text types out.
+  - Click, tap, Enter or Space shows the line, then moves on. Skip or Esc ends the scene.
+- **Saving:** scenes waiting to play are saved, and a scene skipped part-way counts as seen. Quitting during one plays it again next time.
+- **Content:** plain-text scripts in `content/dialogue/`; the format is documented at the top of `src/campaign/dialogue.gd`.
+
 ### Town screen and saving
 
 - DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms, and **Embark**.

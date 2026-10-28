@@ -229,3 +229,4 @@ resist_move = 0.3
 resist_debuff = 0.2
 skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_ap6p3"), SubResource("Resource_0blai"), SubResource("Resource_xts1a"), SubResource("Resource_mh0n7"), SubResource("Resource_274wl"), SubResource("Resource_460ad"), SubResource("Resource_shn1e"), SubResource("Resource_v3upy"), SubResource("Resource_0dv46"), SubResource("Resource_fqrib"), SubResource("Resource_tyssd")])
 sprite = ExtResource("9_sprite")
+dialogue = "res://content/dialogue/crusader.txt"

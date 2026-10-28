@@ -1,0 +1,62 @@
+# The Man-at-Arms: an old soldier who came off a bridge his company didn't.
+# The format is explained at the top of src/campaign/dialogue.gd.
+
+== level 1
+Ancestor: The old soldier oils armour that has outlived three lords. It will likely outlive this one.
+Man-at-Arms: I took the king's shilling at fourteen. Not for glory. The levy fed you twice a day.
+Man-at-Arms: Forty years on I'm still eating soldier's bread. Tastes the same. Worse, maybe.
+
+== level 2
+Man-at-Arms: The Ninth Company. Two hundred of us at the start. Brewers' sons, thieves, one fellow who swore he was a prince.
+Man-at-Arms: I knew every name. I said them in order before every battle, so I'd know who to look for after.
+Ancestor: A roll call of the living, kept against the day it becomes one of the dead.
+
+== level 3
+Man-at-Arms: The bridge at Varrow. The captain was down, so the order was mine. Hold until the column crossed.
+Man-at-Arms: We held. The column crossed. Of the Ninth, eleven walked off that bridge. I was one.
+Ancestor: You did your duty, soldier. It is the cruellest thing anyone can say to you, and they all say it.
+
+== level 4
+Man-at-Arms: They gave me a medal for Varrow. Silver, with the king's face on it.
+Man-at-Arms: I threw it in the river where the Ninth went in. Seemed only fair they had something to show for it.
+Ancestor: The river kept the medal. Rivers are the only honest treasurers.
+
+== level 5
+Ancestor: The old soldier sleeps poorly at the best of times. Tonight there is no sleep at all.
+Man-at-Arms: In the dream I'm on the bridge again and I give a different order. Fall back. Run. Live.
+Man-at-Arms: They always shake their heads. Every one of them. Even in my sleep they won't let me spare them.
+Ancestor: The dead are stubborn that way. They prefer to have mattered.
+
+== level 6
+Man-at-Arms: I've stopped saying the names before a fight. I say yours instead.
+Man-at-Arms: Hold the line so the others go home. That's the whole of soldiering, in the end. Took me forty years to learn it.
+Ancestor: Then hold it, old soldier. I will try to send you fewer reasons to.
+
+== reflect
+Man-at-Arms: Everyone walked out. I counted. I always count.
+?
+Man-at-Arms: Another march, another bed. Not a bad trade at my age.
+? boss
+Man-at-Arms: The big one went down like any other. They all do, if you keep your shield up long enough.
+? long
+Man-at-Arms: Long march. Longer than Varrow. My feet have opinions about it.
+? fallen
+Man-at-Arms: The {fallen} fell on my watch. I'll carry that. I've the shoulders for it.
+? stressed
+Man-at-Arms: The bridge again. Every time I shut my eyes down there, the bridge.
+? calm
+Man-at-Arms: Steady as a wall tonight. Pour me a drink before it passes.
+? partner
+Man-at-Arms: The {partner} fights like the old Ninth did. Good soldier. Don't tell them I said so.
+? with Crusader
+Man-at-Arms: Knights. Always charging. Somebody has to stand still and take the hit.
+Crusader: And somebody has to be standing behind you when you do, old man.
+? with Jester
+Jester: Shall I compose a ballad of your valour, old soldier?
+Man-at-Arms: Compose one about the ones who aren't here. I'll listen to that one.
+? region graveyard
+Man-at-Arms: Some of the dead down there wore armour like mine. I tried not to look at the badges.
+? region burrows
+Man-at-Arms: Tunnels. You can't hold a line in a tunnel. You just hold.
+? region chapel
+Man-at-Arms: Never trusted priests. Today they gave me no reason to start.

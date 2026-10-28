@@ -1,0 +1,66 @@
+# The Crusader: a knight home from a long holy war, who finds the war
+# followed. The format is explained at the top of src/campaign/dialogue.gd.
+
+== level 1
+Ancestor: The knight kneels in the ruined chapel after the first descent, as if expecting an answer.
+Crusader: Twelve years I fought beneath foreign suns, for a city I never saw whole. I came home thinking the war was over.
+Crusader: It followed me. Or it was waiting here all along.
+Ancestor: Soldiers always believe the darkness lives somewhere else. It is a comfort, of a kind.
+
+== level 2
+Crusader: At Hesperon the walls held for a hundred days. On the hundred and first, we were told to make an example of the gate village.
+Crusader: I obeyed. I told myself the order was holy because it came from holy men.
+Ancestor: Obedience is fine armour, knight. It rusts from the inside.
+
+== level 3
+Crusader: My squire was a boy named Tobin. He carried my shield up the breach because I told him the light would keep him.
+Crusader: An arrow found him before the light did. I have prayed for him every night since. I have stopped asking why.
+Ancestor: First you learn the shape of grief. Then it learns yours.
+
+== level 4
+Crusader: A rider met me on the road home with a letter from the Order. Disbanded. Our lands seized, our names struck out.
+Crusader: The men who sent us to Hesperon kept their palaces. We were the debt they would not pay.
+Ancestor: Every crown is paid for by someone who never wears it. You were simply told the price late.
+
+== level 5
+Ancestor: Tonight the knight does not kneel. There is only the fire, and a long stare into it.
+Crusader: I called on the light down there, and nothing came. I struck anyway. The thing died all the same.
+Crusader: Perhaps the light was never mine to call. Perhaps it was only ever the swing of the sword.
+Ancestor: Doubt is a blade too. Hold it by the right end.
+
+== level 6
+Crusader: I have stopped fighting for heaven. Heaven has its own soldiers, if it wants them.
+Crusader: I fight for the ones on my left and my right, and for a hamlet that still lights its candles. That is crusade enough for one life.
+Ancestor: A holy man would call that heresy. I have known many holy men. I would rather have you.
+
+== reflect
+Crusader: Another descent, and the light held. Barely.
+?
+Crusader: We walked out together. In the old war that was rare. Here it must become a habit.
+? boss
+Crusader: The beast is down. I have felled kings' champions with less trouble, and less fear.
+? long
+Crusader: My arms ache to the shoulder. Good. Pain means I still have them.
+? fallen
+Crusader: The {fallen} fell beside me and I could not reach them in time. Not again. I swear it, not again.
+? stressed
+Crusader: The faces of Hesperon came up out of the dark today. I fought them twice. I will not sleep.
+? calm
+Crusader: Strange. For once, my hands are steady.
+? partner
+Crusader: With the {partner} at my side I fear the dark a little less. Tell no one I said it.
+? with Vestal
+Crusader: Sister, your prayers rang louder than the screams down there.
+Vestal: They were the same prayers, knight. You were listening, for once.
+? with Flagellant
+Crusader: You bleed for sins that are mine. I should put a stop to it. I do not know how.
+Flagellant: You cannot take my lash, knight. Find your own.
+? with Plague Doctor
+Crusader: You speak of the dead as if they were ledgers, doctor. I count them as men.
+Plague Doctor: We are both counting, knight. Only one of us keeps records.
+? region graveyard
+Crusader: I have buried better men than the ones who rose to meet us. They at least stayed buried.
+? region chapel
+Crusader: They have made a house of prayer into a slaughterhouse. I have seen it done before. I helped.
+? region burrows
+Crusader: Under the earth, without the sky, I could not tell which way heaven was. I swung anyway.

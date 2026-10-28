@@ -60,12 +60,31 @@ func _ready() -> void:
 	resized.connect(_center_stage)
 	_center_stage()
 	_refresh()
+	await _play_scenes()
 	if _campaign().recruits_waiting > 0 and not _campaign().recruit_choices().is_empty():
 		_open_recruits()
 	else:
 		_show_week_report()
-	if "--autoplay" in OS.get_cmdline_user_args():
+	if _autoplay():
 		_autoplay_embark()
+
+
+## Plays the campaign's waiting dialogue scenes, one after another, full screen.
+## Each is saved as seen when it ends, so quitting part-way shows it again.
+func _play_scenes() -> void:
+	var campaign := _campaign()
+	while not campaign.scenes.is_empty():
+		var view := DialogueView.new()
+		add_child(view)
+		view.play(campaign.scenes[0], campaign.def.town_background, _autoplay())
+		await view.finished
+		view.queue_free()
+		campaign.scenes.pop_front()
+		Game.save()
+
+
+func _autoplay() -> bool:
+	return "--autoplay" in OS.get_cmdline_user_args()
 
 
 ## After a week passed without a mission, what happened in town.
@@ -97,7 +116,18 @@ func _open_recruits() -> void:
 			skills.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(skills)
-			row.add_child(_action("Recruit", func() -> void: _after(campaign.recruit(hero)))))
+			row.add_child(_action("Recruit", _recruit.bind(hero))))
+
+
+## The new hero joins, and their scene plays before the window comes back.
+func _recruit(hero: HeroRecord) -> void:
+	_after(_campaign().recruit(hero))
+	if _campaign().scenes.is_empty():
+		return
+	_close_window()
+	await _play_scenes()
+	if _campaign().recruits_waiting > 0 and not _campaign().recruit_choices().is_empty():
+		_open_recruits()
 
 
 ## With `-- --autoplay` the town plays itself: take any recruit waiting, treat
@@ -108,6 +138,7 @@ func _autoplay_embark() -> void:
 	var campaign := _campaign()
 	while campaign.recruits_waiting > 0 and not campaign.recruit_choices().is_empty():
 		campaign.recruit(campaign.recruit_choices()[0])
+	await _play_scenes()
 	for hero in campaign.roster():
 		campaign.treat(hero)
 	if campaign.wait_week() == "":

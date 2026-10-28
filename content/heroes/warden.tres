@@ -290,3 +290,4 @@ skills = Array[ExtResource("2_cckrm")]([SubResource("Resource_o7kgr"), SubResour
 riposte_skill = SubResource("Resource_jc205")
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_1y2y3")
+dialogue = "res://content/dialogue/man_at_arms.txt"

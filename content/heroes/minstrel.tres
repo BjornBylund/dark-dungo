@@ -257,3 +257,4 @@ resist_debuff = 0.2
 skills = Array[ExtResource("2_tmaee")]([SubResource("Resource_qgntd"), SubResource("Resource_i454e"), SubResource("Resource_4enkl"), SubResource("Resource_ttmqv"), SubResource("Resource_kycys"), SubResource("Resource_pws1t"), SubResource("Resource_mh4lj"), SubResource("Resource_hggrd"), SubResource("Resource_w1ssr"), SubResource("Resource_r6abr"), SubResource("Resource_xeabb")])
 swap_offsets = Array[int]([-3, -2, -1, 1, 2, 3])
 sprite = ExtResource("9_gb7rb")
+dialogue = "res://content/dialogue/jester.txt"

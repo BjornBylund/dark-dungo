@@ -1,0 +1,65 @@
+# The Jester: eleven years a mad lord's fool, still keeping the tempo. A
+# recruit, so the story starts at the join and level 2. The format is
+# explained at the top of src/campaign/dialogue.gd.
+
+== join
+Ancestor: Word of the victory has travelled, and brought the worst sort of company with it. A musician.
+Jester: Good evening, good evening! I heard there was a war on, and that it lacked a soundtrack.
+Jester: I've played for kings and for corpses. The corpses applaud less, but they never heckle.
+Ancestor: Mind the blade under that lute, Jester. I expect it has a repertoire of its own.
+Jester: Oh, it knows only the one song. But everyone remembers it.
+
+== level 2
+Jester: I was court fool to Lord Halloran for eleven years. Lovely man. Collected heads, mostly other people's.
+Jester: The trick with a mad lord is to be madder, in a way that amuses him.
+Ancestor: You survived eleven years of it. That is a performance in itself.
+
+== level 3
+Jester: One winter Halloran held a feast for his enemies. He had me play while the axe went round the table.
+Jester: I kept the tempo. I've been keeping it ever since. If I stop, I'll hear the rest of that evening.
+Ancestor: So the music is a wall, and you are forever building it. I know something of walls.
+
+== level 4
+Jester: I had a troupe once. My sister sang, the twins threw knives. We fled Halloran's court together, at night.
+Jester: The road was not kind. I'm the last of us who still performs. The others perform for worms now.
+Ancestor: And you play for them still, I think. Every song has an audience you cannot see.
+
+== level 5
+Ancestor: Tonight the lute lies silent across the fool's knees, its strings untouched.
+Jester: There's a song I started the night we fled. I've never been able to finish the last verse.
+Jester: Down there in the dark I heard someone humming it. Not me. Something that had been listening.
+Ancestor: The dark collects what we leave unfinished. It has an excellent memory, and no taste at all.
+
+== level 6
+Jester: I finished it. The last verse. It's about a fool who walked into the dark with friends and came out again.
+Jester: Not much of a rhyme. Wonderful ending, though. Shall I play it? No? Later, then. There'll be a later.
+Ancestor: For once, fool, I hope you are right.
+
+== reflect
+Jester: Home again! The audience survived, which is more than I can say for most of my venues.
+?
+Jester: Another performance, another bow. My knees are less forgiving than the critics.
+? boss
+Jester: Did you hear the sound it made when it fell? I'm writing it into a chorus.
+? long
+Jester: An epic! Long, bloody, and everyone in the back row fell asleep. A classic.
+? fallen
+Jester: The {fallen} took a bow before the show was over. I'll hold their part until they're back.
+? stressed
+Jester: Ha. Ha ha. Do you ever laugh and not know how to stop? Asking for a friend. The friend is me.
+? calm
+Jester: In tune, for once. Inside and out.
+? partner
+Jester: The {partner} and I have a rhythm now. Lethal, really. We should tour.
+? with Man-at-Arms
+Jester: You hum marching songs in the dark, old soldier. Badly. I adore it.
+Man-at-Arms: Keep that to yourself, fool.
+? with Grave Robber
+Grave Robber: You played a dirge while I picked the lock. Nice touch.
+Jester: Every heist deserves a score, my dear.
+? region chapel
+Jester: The choir down there sang in a key that shouldn't exist. Professionally, I'm offended.
+? region graveyard
+Jester: Bones make excellent percussion. I'd rather they stayed in the drawer, mind.
+? region burrows
+Jester: Terrible acoustics in the burrows. Everything echoes back with teeth.

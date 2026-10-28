@@ -1,0 +1,62 @@
+# The Vestal: twenty years behind convent walls, out in the world for the
+# first time. The format is explained at the top of src/campaign/dialogue.gd.
+
+== level 1
+Ancestor: The Sister cleans the mace first, and the hands after. Practical, for a saint.
+Vestal: I took my vows at the convent of Saint Ilse when I was nine. I did not leave its walls for twenty years.
+Vestal: When word came of the darkness here, I was the only one who asked to go. The abbess seemed relieved.
+
+== level 2
+Vestal: The abbess sold blessings at the gate. A coin for a prayer, two for a miracle. The poor got prayers.
+Vestal: I said nothing. I told myself that silence was a kind of obedience.
+Ancestor: Silence is a kind of everything, Sister. That is what makes it so useful to the guilty.
+
+== level 3
+Vestal: There was a child with the sweating sickness. I prayed over her for three nights, and the light came, and it was not enough.
+Vestal: Her mother thanked me. I have never understood why.
+Ancestor: Because you stayed. It is the staying they remember, not the cure.
+
+== level 4
+Vestal: A man was brought before the abbess for heresy. He had said that God did not live in our gold.
+Vestal: I read the charges aloud. I watched him burn. I have since come to think he was right.
+Ancestor: Fire purifies, the priests say. It also simplifies. There is no arguing with ash.
+
+== level 5
+Ancestor: Tonight the Sister prays, and does not rise when the prayer is done.
+Vestal: I asked for a sign down there. Anything. A warmth, a word. There was only the dark, and my own voice in it.
+Vestal: And yet the wounds closed. The light came anyway. I no longer know whose it is.
+Ancestor: Perhaps it was always yours, and heaven took the credit. It would not be the first time.
+
+== level 6
+Vestal: I used to think mercy was something I carried for someone else, like water from a well.
+Vestal: It isn't. It's mine. I choose it each time, and each time it costs me. That is what makes it worth giving.
+Ancestor: Then give it, Sister. There will be no shortage of those who need it.
+
+== reflect
+Vestal: We are home. The light kept us, or we kept each other. I am no longer sure there is a difference.
+?
+Vestal: Every wound I closed today I will see again tonight, when I close my eyes.
+? boss
+Vestal: The abomination is dead. I prayed for its soul, out of habit. I am not sure it had one.
+? long
+Vestal: So many hours without sky. I had forgotten how heavy the dark is when you carry it that long.
+? fallen
+Vestal: I could not reach the {fallen} in time. My hands were full of someone else's blood.
+? stressed
+Vestal: I cannot pray tonight. Every time I close my eyes, something down there prays back.
+? calm
+Vestal: There is a stillness in me tonight. I will not question it.
+? partner
+Vestal: The {partner} stood between me and the worst of it. They will be in my prayers, whether they like it or not.
+? with Crusader
+Vestal: You fight as though the light were watching, knight. I wish I had the heart to tell you it isn't always.
+Crusader: I know it isn't, Sister. I fight as though it were anyway.
+? with Flagellant
+Vestal: You offer your pain to heaven as if it were a gift. Heaven never asked for it.
+Flagellant: Heaven never asks, Sister. That is why I give.
+? region chapel
+Vestal: They still pray in that chapel. Not to anything I would name.
+? region graveyard
+Vestal: I gave the last rites to the dead who rose. Some of them stopped. I choose to believe that was the prayer.
+? region burrows
+Vestal: Nothing down there had ever seen light. It screamed when I brought it.
