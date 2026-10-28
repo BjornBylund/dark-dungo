@@ -524,6 +524,30 @@ static func draw_portrait(canvas: CanvasItem, rect: Rect2, def: UnitDef) -> void
 	canvas.draw_rect(rect.grow(-1.5), Color("8a6a3e"), false, 1.5)
 
 
+## Height of the resistance row draw_resists draws.
+const RESIST_ROW_HEIGHT := 76.0
+
+
+## The six resistance columns (name, icon, percent) of `unit` from `at`, each
+## `column` wide; those in `tested` are lit up.
+static func draw_resists(canvas: CanvasItem, at: Vector2, unit: Combatant, tested: Array[StringName] = [],
+		column: float = 70.0) -> void:
+	for i in RESIST_COLUMNS.size():
+		var entry: Array = RESIST_COLUMNS[i]
+		var id: StringName = entry[0]
+		var x := at.x + i * column
+		if id in tested:
+			canvas.draw_rect(Rect2(x + 4, at.y, column - 8, RESIST_ROW_HEIGHT), Color(GOLD, 0.16))
+			canvas.draw_rect(Rect2(x + 4, at.y, column - 8, RESIST_ROW_HEIGHT), Color(GOLD, 0.6), false, 1.0)
+		canvas.draw_string(BODY_FONT, Vector2(x, at.y + 18), entry[1], HORIZONTAL_ALIGNMENT_CENTER, column, 14, entry[2])
+		var icon_id: StringName = &"immobilize" if id == &"move" else (&"weak" if id == &"debuff" else id)
+		var icon := token_icon(icon_id)
+		if icon:
+			canvas.draw_texture_rect(icon, Rect2(x + column / 2.0 - 11.0, at.y + 26, 22, 22), false)
+		canvas.draw_string(BODY_FONT, Vector2(x, at.y + 70), percent(unit.resist(id)), HORIZONTAL_ALIGNMENT_CENTER, column,
+				17, TEXT)
+
+
 ## A padlock for something closed: a bronze shackle over a dark iron body,
 ## `height` tall around `center`.
 static func draw_lock(canvas: CanvasItem, center: Vector2, height: float) -> void:

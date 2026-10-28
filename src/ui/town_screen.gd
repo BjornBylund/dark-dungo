@@ -53,6 +53,15 @@ var _window_body: VBoxContainer
 var _rebuild_window: Callable
 ## The hero picked in a building window.
 var _selected: HeroRecord
+## The skill whose details show on the open hero sheet.
+var _sheet_skill: SkillDef
+var _skill_title: Label
+var _skill_state: Label
+var _skill_pips: RankPips
+var _skill_info: RichTextLabel
+var _skill_hint: Label
+## Equip or Unequip, on touch screens where a tap only shows a skill.
+var _skill_toggle: Button
 ## Whether the open building window shows its Upgrades tab.
 var _showing_upgrades := false
 
@@ -307,6 +316,7 @@ func _open_building(id: StringName) -> void:
 
 func _open_hero(hero: HeroRecord) -> void:
 	_selected = hero
+	_sheet_skill = null
 	_open(hero.display_name, _build_hero_sheet)
 
 
@@ -350,12 +360,12 @@ func _build_guild() -> void:
 		right.add_child(intro)
 		right.add_child(_label("Equipped %d / %d" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 18, UiStyle.GOLD))
 		for skill in hero.def.skills:
-			right.add_child(_skill_row(hero, skill, true))
+			right.add_child(_skill_row(hero, skill))
 
 
-## A skill's icon, name and rank with the buttons that apply: learn it, train
-## it (at the Guild), and equip or unequip it.
-func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
+## A skill at the Guild: its icon, name and rank with the buttons that apply:
+## learn it, train it, and equip or unequip it.
+func _skill_row(hero: HeroRecord, skill: SkillDef) -> Control:
 	var campaign := _campaign()
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 12)
@@ -377,12 +387,11 @@ func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
 	title.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(title)
 	if not hero.knows(skill):
-		if at_guild:
-			var learn := _action("Learn  %s gold" % UiStyle.gold_text(campaign.learn_price(hero)),
-					func() -> void: _after(campaign.learn(hero, skill)))
-			learn.disabled = campaign.can_learn(hero, skill) != ""
-			learn.tooltip_text = campaign.can_learn(hero, skill)
-			row.add_child(learn)
+		var learn := _action("Learn  %s gold" % UiStyle.gold_text(campaign.learn_price(hero)),
+				func() -> void: _after(campaign.learn(hero, skill)))
+		learn.disabled = campaign.can_learn(hero, skill) != ""
+		learn.tooltip_text = campaign.can_learn(hero, skill)
+		row.add_child(learn)
 		return row
 	if hero.is_equipped(skill):
 		row.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill))))
@@ -391,7 +400,7 @@ func _skill_row(hero: HeroRecord, skill: SkillDef, at_guild: bool) -> Control:
 		equip.disabled = hero.equipped.size() >= CampaignRules.SKILL_SLOTS
 		row.add_child(equip)
 	var cost := campaign.skill_cost(hero, skill)
-	if at_guild and cost > 0:
+	if cost > 0:
 		var reason := campaign.can_upgrade_skill(hero, skill)
 		var train := _action("Train  %s gold" % UiStyle.gold_text(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
 		train.disabled = reason != ""
@@ -631,96 +640,310 @@ func _line_next(line: StringName, level: int) -> String:
 	return ACTIVITY_UPGRADES[level - 1].to_lower()
 
 
+## DD1's character sheet, in three parts side by side (stacked on phones): the
+## hero in a frame with level, XP, stress and bonds; stats, resistances and the
+## class's skills as an icon grid; and the trinket slots with the estate's
+## trinkets the hero could wear. Click a skill to equip or unequip it and hover
+## it for what it does; on touch screens a tap shows it, with a button to equip.
 func _build_hero_sheet() -> void:
 	var hero := _selected
-	var row := _row()
+	var parts: BoxContainer = VBoxContainer.new() if Device.phone else HBoxContainer.new()
+	parts.add_theme_constant_override("separation", 22 if Device.phone else 34)
+	_window_body.add_child(parts)
+	parts.add_child(_sheet_figure(hero))
+	# As the hero would fight now: gear, level, trinkets and Tavern perks.
+	parts.add_child(_sheet_details(hero, Growth.hero_combatant(hero)))
+	parts.add_child(_sheet_gear(hero))
+
+
+## The hero standing in a card frame, their level with a bar to the next,
+## stress pips, where they are this week, Tavern perks and bonds.
+func _sheet_figure(hero: HeroRecord) -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	column.custom_minimum_size = Vector2(0.0 if Device.phone else 290.0, 0)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 20)
+	column.add_child(top)
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", UiStyle.card())
 	var art := TextureRect.new()
 	art.texture = hero.def.sprite
-	art.custom_minimum_size = Vector2(200, 340) if Device.phone else Vector2(220, 460)
+	art.custom_minimum_size = Vector2(150, 200) if Device.phone else Vector2(276, 340)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	row.add_child(art)
-	var info := VBoxContainer.new()
-	info.add_theme_constant_override("separation", 8)
-	row.add_child(info)
+	frame.add_child(art)
+	top.add_child(frame)
+	var meters := VBoxContainer.new()
+	meters.add_theme_constant_override("separation", 6)
+	meters.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Beside the portrait on phones, under it on desktop.
+	if Device.phone:
+		top.add_child(meters)
+	else:
+		column.add_child(meters)
 	var level := hero.level()
-	var next_xp := "max level" if level >= CampaignRules.MAX_LEVEL else "%d / %d XP" % [hero.xp, CampaignRules.LEVEL_XP[level]]
-	info.add_child(_label("Level %d   (%s)" % [level, next_xp], 20, UiStyle.TEXT_DIM))
-	var status: String = UiStyle.hero_status(hero)[0]
-	info.add_child(_label("Stress %d / %d%s" % [hero.stress, Rules.STRESS_MAX, "   " + status if status != "" else ""], 20))
+	var maxed := level >= CampaignRules.MAX_LEVEL
+	var from: int = 0 if level == 0 else CampaignRules.LEVEL_XP[level - 1]
+	var to: int = CampaignRules.LEVEL_XP[mini(level, CampaignRules.MAX_LEVEL - 1)]
+	meters.add_child(_label("Level %d" % level, 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	meters.add_child(_meter(1.0 if maxed else float(hero.xp - from) / (to - from)))
+	meters.add_child(_label("Max level" if maxed else "%d / %d XP" % [hero.xp, to], 16, UiStyle.TEXT_DIM))
+	meters.add_child(_label("Stress %d / %d" % [hero.stress, Rules.STRESS_MAX], 18))
+	meters.add_child(_stress_pips(hero.stress))
+	var status := UiStyle.hero_status(hero)
+	if status[0] != "":
+		meters.add_child(_label(status[0], 16, status[1]))
 	var perks: Array[String] = []
 	if hero.next_mission.has(&"max_hp"):
 		perks.append("+%d%% max HP" % roundi(hero.next_mission[&"max_hp"] * 100))
 	if hero.next_mission.has(&"speed"):
 		perks.append("+%d speed" % roundi(hero.next_mission[&"speed"]))
 	if not perks.is_empty():
-		info.add_child(_label("Next mission, from the Tavern: " + ", ".join(perks), 18, UiStyle.GOLD))
-	# As the hero would fight now: gear, level, trinkets and Tavern perks.
-	var unit := Growth.hero_combatant(hero)
-	info.add_child(_label("Max HP %d   Speed %d" % [unit.max_hp, unit.speed()], 20))
-	info.add_child(_label("Weapon rank %d: %s" % [hero.weapon_rank, _weapon_text(hero.weapon_rank)], 18))
-	info.add_child(_label("Armour rank %d" % hero.armor_rank, 18))
-	var resists: Array[String] = []
-	for kind: StringName in Rules.LEVELED_RESISTS:
-		resists.append("%s %s" % [String(kind).capitalize(), UiStyle.percent(unit.resist(kind))])
-	var resist_line := _label("Resist: " + ", ".join(resists), 16, UiStyle.TEXT_DIM)
-	resist_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.add_child(resist_line)
-	info.add_child(_label("Bonds", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+		var perk_line := _label("Next mission, from the Tavern: " + ", ".join(perks), 16, UiStyle.GOLD)
+		perk_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		meters.add_child(perk_line)
+	column.add_child(_label("Bonds", 22, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	var bonded := _campaign().roster().any(func(other: HeroRecord) -> bool:
+		return other != hero and _campaign().bonds.points_of(hero, other) > 0)
 	for line in _bond_lines(hero):
-		info.add_child(_label(line, 18))
-	info.add_child(_label("Skills   %d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 24,
-			UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-	# All of a class's skills don't fit the desktop window, which doesn't scroll.
-	var skills := VBoxContainer.new()
-	skills.add_theme_constant_override("separation", 8)
-	skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if Device.phone:
-		info.add_child(skills)
-	else:
-		var scroll := ScrollContainer.new()
-		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.custom_minimum_size = Vector2(0, 360)
-		scroll.add_child(skills)
-		info.add_child(scroll)
+		var bond := _label(line, 16, UiStyle.TEXT if bonded else UiStyle.TEXT_DIM)
+		bond.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(bond)
+	return column
+
+
+## Stats, the resistance row, and the class's skills as an icon grid with the
+## hovered or chosen skill's details under it.
+func _sheet_details(hero: HeroRecord, unit: Combatant) -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	column.custom_minimum_size = Vector2(0.0 if Device.phone else 600.0, 0)
+	var stats := GridContainer.new()
+	stats.columns = 4
+	stats.add_theme_constant_override("h_separation", 14)
+	stats.add_theme_constant_override("v_separation", 4)
+	for pair: Array in [["Max HP", str(unit.max_hp)], ["Speed", str(unit.speed())],
+			["Weapon", "rank %d: %s" % [hero.weapon_rank, _weapon_text(hero.weapon_rank)]],
+			["Armour", "rank %d" % hero.armor_rank]]:
+		stats.add_child(_label(pair[0], 16, UiStyle.TEXT_DIM))
+		stats.add_child(_label(pair[1], 18))
+	column.add_child(stats)
+
+	var deathblow := clampf(unit.resist(&"deathblow"), Rules.DEATHBLOW_MIN, Rules.DEATHBLOW_MAX)
+	column.add_child(_heading("Resistances", "Deathblow %s" % UiStyle.percent(deathblow)))
+	var resists := Control.new()
+	resists.custom_minimum_size = Vector2(UiStyle.RESIST_COLUMNS.size() * 70.0, UiStyle.RESIST_ROW_HEIGHT)
+	resists.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	resists.draw.connect(func() -> void: UiStyle.draw_resists(resists, Vector2.ZERO, unit))
+	column.add_child(resists)
+
+	column.add_child(_heading("Skills", "%d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS]))
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
 	for skill in hero.def.skills:
-		skills.add_child(_skill_row(hero, skill, false))
-	info.add_child(_label("Learn and train skills at the Guild. Hover a skill for what it does.", 16, UiStyle.TEXT_DIM))
-	if Device.phone:
-		_hero_trinkets(hero, info)
+		var slot := SkillSlot.new()
+		slot.setup(skill, hero.knows(skill), hero.is_equipped(skill), hero.skill_rank(skill), skill == _sheet_skill)
+		slot.pressed.connect(_press_skill.bind(hero, skill))
+		if not Device.touch:
+			slot.mouse_entered.connect(func() -> void: _show_skill(hero, skill))
+			slot.mouse_exited.connect(func() -> void: _show_skill(hero, _sheet_skill))
+		grid.add_child(slot)
+	column.add_child(grid)
+	column.add_child(_skill_details())
+	_show_skill(hero, _sheet_skill)
+	return column
+
+
+## The panel under the skill grid that _show_skill fills.
+func _skill_details() -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UiStyle.card())
+	panel.custom_minimum_size = Vector2(0, 200)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	panel.add_child(box)
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 14)
+	box.add_child(title_row)
+	_skill_title = _label("", 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT)
+	title_row.add_child(_skill_title)
+	_skill_state = _label("", 16, UiStyle.TEXT_DIM)
+	_skill_state.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skill_state.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_row.add_child(_skill_state)
+	_skill_pips = RankPips.new()
+	_skill_pips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_row.add_child(_skill_pips)
+	_skill_info = RichTextLabel.new()
+	_skill_info.bbcode_enabled = true
+	_skill_info.fit_content = true
+	_skill_info.scroll_active = false
+	_skill_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_skill_info.add_theme_font_size_override("normal_font_size", 17)
+	_skill_info.add_theme_font_size_override("italics_font_size", 16)
+	box.add_child(_skill_info)
+	var hint_row := HBoxContainer.new()
+	hint_row.add_theme_constant_override("separation", 14)
+	box.add_child(hint_row)
+	_skill_hint = _label("", 16, UiStyle.TEXT_DIM)
+	_skill_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skill_hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hint_row.add_child(_skill_hint)
+	_skill_toggle = _action("", func() -> void: _toggle_skill(_selected, _sheet_skill))
+	hint_row.add_child(_skill_toggle)
+	return panel
+
+
+## Fills the details panel with what `skill` does and how to equip it, or a
+## hint when no skill is chosen.
+func _show_skill(hero: HeroRecord, skill: SkillDef) -> void:
+	if not is_instance_valid(_skill_info):
 		return
-	info.custom_minimum_size = Vector2(640, 0)
-	var trinkets := VBoxContainer.new()
-	trinkets.add_theme_constant_override("separation", 8)
-	trinkets.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(trinkets)
-	_hero_trinkets(hero, trinkets)
+	_skill_toggle.hide()
+	if skill == null:
+		_skill_title.text = "Skills"
+		_skill_state.text = ""
+		_skill_pips.set_skill(null)
+		_skill_info.text = "Tap a skill to see what it does." if Device.touch \
+				else "Hover a skill to see what it does, and click one to equip or unequip it."
+		_skill_hint.text = "Gold frames are the %d taken into fights. Learn and train skills at the Guild." \
+				% CampaignRules.SKILL_SLOTS
+		return
+	_skill_title.text = skill.display_name
+	_skill_state.text = ("rank %d / %d%s" % [hero.skill_rank(skill), CampaignRules.MAX_RANK,
+			"   equipped" if hero.is_equipped(skill) else ""]) if hero.knows(skill) else "not learned"
+	_skill_pips.set_skill(skill)
+	var usage := UiStyle.usage_text(skill)
+	_skill_info.text = UiStyle.skill_bbcode(skill) + ("\n[color=#%s]%s[/color]" % [UiStyle.TEXT_DIM.to_html(false),
+			usage] if usage != "" else "")
+	var full := not hero.is_equipped(skill) and hero.equipped.size() >= CampaignRules.SKILL_SLOTS
+	if not hero.knows(skill):
+		_skill_hint.text = "Learn it at the Guild."
+	elif full:
+		_skill_hint.text = "All %d slots are taken: unequip a skill first." % CampaignRules.SKILL_SLOTS
+	elif Device.touch:
+		_skill_hint.text = ""
+	else:
+		_skill_hint.text = "Click to unequip." if hero.is_equipped(skill) else "Click to equip."
+	if Device.touch and hero.knows(skill) and not full:
+		_skill_toggle.text = "Unequip" if hero.is_equipped(skill) else "Equip"
+		_skill_toggle.show()
 
 
-## The hero's trinket slots, and the estate's unworn trinkets their class can wear.
-func _hero_trinkets(hero: HeroRecord, parent: VBoxContainer) -> void:
+## Chooses `skill` for the details panel; with a mouse, also equips or unequips it.
+func _press_skill(hero: HeroRecord, skill: SkillDef) -> void:
+	_sheet_skill = skill
+	if Device.touch or not hero.knows(skill):
+		_after("")
+		return
+	_toggle_skill(hero, skill)
+
+
+func _toggle_skill(hero: HeroRecord, skill: SkillDef) -> void:
 	var campaign := _campaign()
-	parent.add_child(_label("Trinkets   %d / %d" % [hero.trinkets.size(), CampaignRules.TRINKET_SLOTS], 24,
-			UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-	for trinket in hero.trinkets:
-		var off := _action("Take off", func() -> void: _after(campaign.take_off(hero, trinket)))
-		parent.add_child(_trinket_row(trinket, [off]))
-	for i in CampaignRules.TRINKET_SLOTS - hero.trinkets.size():
-		parent.add_child(_label("Empty slot", 16, UiStyle.TEXT_DIM))
+	var reason := campaign.unequip(hero, skill) if hero.is_equipped(skill) else campaign.equip(hero, skill)
+	_after(reason)
+	if reason != "":
+		_rebuild_window.call()
+
+
+## The trinket slots (press a filled one to take its trinket off) with what the
+## worn trinkets do, and the estate's unworn trinkets the hero could wear.
+func _sheet_gear(hero: HeroRecord) -> Control:
+	var campaign := _campaign()
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(_heading("Trinkets", "%d / %d worn" % [hero.trinkets.size(), CampaignRules.TRINKET_SLOTS]))
+	var slots := HBoxContainer.new()
+	slots.add_theme_constant_override("separation", 18)
+	column.add_child(slots)
+	for i in CampaignRules.TRINKET_SLOTS:
+		var worn: TrinketDef = hero.trinkets[i] if i < hero.trinkets.size() else null
+		var slot := VBoxContainer.new()
+		slot.add_theme_constant_override("separation", 4)
+		slot.custom_minimum_size = Vector2(200, 0)
+		slots.add_child(slot)
+		var socket := TrinketSocket.new()
+		socket.setup(worn)
+		socket.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		slot.add_child(socket)
+		if worn == null:
+			slot.add_child(_label("Empty", 16, UiStyle.TEXT_DIM))
+			continue
+		socket.pressed.connect(func() -> void: _after(campaign.take_off(hero, worn)))
+		var name := _label(worn.display_name, 17, UiStyle.RARITY_COLORS[worn.rarity])
+		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		slot.add_child(name)
+		var effects := RichTextLabel.new()
+		effects.bbcode_enabled = true
+		effects.fit_content = true
+		effects.scroll_active = false
+		effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		effects.add_theme_font_size_override("normal_font_size", 15)
+		effects.text = UiStyle.trinket_bbcode(worn, "\n")
+		slot.add_child(effects)
+	if not hero.trinkets.is_empty():
+		column.add_child(_label("Click a worn trinket to take it off.", 15, UiStyle.TEXT_DIM))
 	var wearable := campaign.trinkets.filter(func(t: TrinketDef) -> bool: return t.hero == null or t.hero == hero.def)
 	if wearable.is_empty():
 		var none := _label("No unworn trinket fits. They come from caches, elites, completed missions and the "
 				+ "Nomad Wagon.", 16, UiStyle.TEXT_DIM)
 		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		parent.add_child(none)
-		return
-	var rows := _trinket_list(parent, "The estate's trinkets", 0.0, 400.0)
+		column.add_child(none)
+		return column
+	var rows := _trinket_list(column, "The estate's trinkets", 0.0, 330.0)
 	for trinket: TrinketDef in wearable:
 		var reason := campaign.can_wear(hero, trinket)
 		var put_on := _action("Wear", func() -> void: _after(campaign.wear(hero, trinket)))
 		put_on.disabled = reason != ""
 		put_on.tooltip_text = reason
 		rows.add_child(_trinket_row(trinket, [put_on]))
+	return column
+
+
+## A section title in gold with a dim note beside it.
+func _heading(title: String, note: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.add_child(_label(title, 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	var aside := _label(note, 16, UiStyle.TEXT_DIM)
+	aside.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(aside)
+	return row
+
+
+## A thin bar filled to `fraction`, for XP.
+func _meter(fraction: float) -> Control:
+	var bar := Control.new()
+	bar.custom_minimum_size = Vector2(200, 12)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.draw.connect(func() -> void:
+		var rect := Rect2(Vector2.ZERO, bar.size)
+		bar.draw_rect(rect, UiStyle.HP_EMPTY)
+		bar.draw_rect(Rect2(rect.position, Vector2(rect.size.x * clampf(fraction, 0.0, 1.0), rect.size.y)),
+				UiStyle.GOLD.darkened(0.25))
+		bar.draw_rect(rect, UiStyle.HP_FRAME, false, 1.5))
+	return bar
+
+
+## Stress as the combat screen shows it: 3 small pips then 7 large, lit up to `stress`.
+func _stress_pips(stress: int) -> Control:
+	var pips := Control.new()
+	pips.custom_minimum_size = Vector2(0, 16)
+	pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pips.draw.connect(func() -> void:
+		var x := 0.0
+		for i in Rules.STRESS_MAX:
+			var side := 9.0 if i < 3 else 14.0
+			pips.draw_rect(Rect2(x, (pips.size.y - side) / 2.0, side, side),
+					UiStyle.STRESS_ON if i < stress else UiStyle.STRESS_OFF)
+			x += side + 4.0)
+	return pips
 
 
 ## "Mender: Friendly, 7 / 12" for each hero this one has bonded with, closest first.
