@@ -257,6 +257,12 @@ Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
 ### Town screen and saving
 
 - DD1 layout: a placeholder hamlet panorama with clickable buildings, a roster panel on the right, and a window per building. Top bar: week, gold and heirlooms, and **Embark**.
+- **Building windows** open on a banner: the building's corner of the hamlet picture, what it is for, and the Services and Upgrades tabs.
+  - Upgrades: each line is a card with its level, what it does now, the Upgrade button with its heirloom cost as icons (red where the estate is short), and its levels as a track of steps saying what each brings.
+  - Blacksmith: the hero picker and the chosen hero's weapon and armour as cards, their ranks as the same steps, those past what the smiths can make locked.
+  - Guild: the hero sheet's skill grid; choose a skill to learn it, train it or equip it.
+  - Abbey and Tavern: each activity as a card with its relief, price and a seat per slot holding the hero there (click to bring them back), and Send for the hero picked; at the Abbey, the wounded with Treat.
+  - Exchange: each trade as a card of heirloom icons with Trade.
 - **Hero sheet**, DD1's character sheet, opened from the roster:
   - left: the hero standing in a card frame, their level with an XP bar to the next, stress pips, where they are this week, Tavern perks, and their bonds;
   - middle: max HP, speed, weapon and armour, the resistance row as the combat target panel shows it, and the class's 11 skills as an icon grid: equipped ones lit in gold, learned ones dimmed, unlearned ones dark with a padlock, the rank as diamonds. Click one to equip or unequip it; hover it to see what it does in the panel under the grid;

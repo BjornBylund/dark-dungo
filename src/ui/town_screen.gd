@@ -26,8 +26,9 @@ const LAMPS: Array[Vector3] = [
 	Vector3(468, 660, 100), Vector3(1170, 540, 90), Vector3(786, 540, 55), Vector3(932, 540, 55),
 	Vector3(404, 984, 70), Vector3(636, 984, 70), Vector3(1090, 990, 55), Vector3(1320, 210, 35),
 ]
-## Height of a scrolling trinket list in a window, which doesn't scroll on desktop.
-const TRINKET_LIST_HEIGHT := 560.0
+## Height of a scrolling trinket list in a window, so the Wagon's lists fit
+## under its banner without the window scrolling.
+const TRINKET_LIST_HEIGHT := 440.0
 ## What each level of an Abbey or Tavern activity's upgrade line brings.
 const ACTIVITY_UPGRADES := ["More stress relief", "Prices -15%", "One more slot", "More stress relief",
 		"Prices -15% more", "One more slot"]
@@ -286,32 +287,125 @@ func _close_window() -> void:
 	_rebuild_window = Callable()
 
 
+## A building's window: its banner, then its services, or the Upgrades tab
+## with its upgrade lines. A building not open yet shows only when it opens.
 func _open_building(id: StringName) -> void:
 	if id == &"board":
 		Game.go_to_expedition()
 		return
 	_showing_upgrades = false
+	_sheet_skill = null
 	var title: String = CampaignRules.BUILDINGS[id].name
 	if not _campaign().building_open(id):
 		_open(title, func() -> void:
-			_text("Opens in week %d." % CampaignRules.BUILDINGS[id].opens, 20, UiStyle.TEXT_DIM))
+			_window_body.add_child(_banner(id, "Opens in week %d." % CampaignRules.BUILDINGS[id].opens)))
 		return
+	var services: Callable
 	match id:
 		&"blacksmith":
-			_open(title, _build_blacksmith)
+			services = _build_blacksmith
 		&"guild":
-			_open(title, _build_guild)
-		&"abbey":
-			_open(title, _build_relief.bind(&"abbey",
-					"Safe and steady: no surprises. Heroes sent here miss this week's mission; the stress comes off when the week ends."))
-		&"tavern":
-			_open(title, _build_relief.bind(&"tavern",
-					"More of a gamble: about 1 visit in 4 has a side effect, good or bad. Heroes at the Bar together bond (+%d each pair)."
-					% CampaignRules.BAR_BOND_POINTS))
+			services = _build_guild
+		&"abbey", &"tavern":
+			services = _build_relief.bind(id)
 		&"exchange":
-			_open(title, _build_exchange)
+			services = _build_exchange
 		&"wagon":
-			_open(title, _build_wagon)
+			services = _build_wagon
+	_open(title, func() -> void:
+		_window_body.add_child(_banner(id, _blurb(id), not CampaignRules.BUILDINGS[id].lines.is_empty()))
+		if _showing_upgrades:
+			for line: StringName in CampaignRules.BUILDINGS[id].lines:
+				_upgrade_card(line)
+		else:
+			services.call())
+
+
+## What a building is for, on its banner.
+func _blurb(id: StringName) -> String:
+	match id:
+		&"blacksmith":
+			return "Better steel and stouter armour: each hero's weapon and armour ranks, as far as the smiths' skill allows."
+		&"guild":
+			return ("Learn new skills and train them (each rank: +10%% damage or healing, +1%% crit, +10%% resistance"
+					+ " pierce). Each hero takes %d into fights.") % CampaignRules.SKILL_SLOTS
+		&"abbey":
+			return "Safe and steady: no surprises. Heroes sent here miss this week's mission; the stress comes off when the week ends."
+		&"tavern":
+			return ("More of a gamble: about 1 visit in 4 has a side effect, good or bad. Heroes at the Bar together"
+					+ " bond (+%d each pair).") % CampaignRules.BAR_BOND_POINTS
+		&"exchange":
+			return "Trade one kind of heirloom for another, at a loss. As often as you like."
+		&"wagon":
+			return "New wares every week. Sell what nobody wears; boss and Ancestral trinkets can't be sold."
+	return ""
+
+
+## The top of a building's window: its corner of the hamlet picture, darkened
+## on the left behind what the building is for, and the Services and Upgrades
+## tabs when it has upgrade lines.
+func _banner(id: StringName, blurb: String, tabs: bool = false) -> Control:
+	var banner := MarginContainer.new()
+	banner.custom_minimum_size = Vector2(0, 110 if Device.phone else 150)
+	for side: String in ["left", "right", "top", "bottom"]:
+		banner.add_theme_constant_override("margin_" + side, 18)
+	var picture: Texture2D = _campaign().def.town_background
+	var border := UiStyle.card()
+	border.draw_center = false
+	banner.draw.connect(func() -> void:
+		var rect := Rect2(Vector2.ZERO, banner.size)
+		var shade := Color("0c0807")
+		banner.draw_rect(rect, shade)
+		# The picture fills the right part, fading into the dark behind the words.
+		var view := Rect2(rect.size.x * 0.4, 0, rect.size.x * 0.6, rect.size.y)
+		if picture:
+			banner.draw_texture_rect_region(picture, view, _banner_region(id, view.size, picture), Color(0.85, 0.8, 0.8))
+		var clear := Color(shade, 0.0)
+		var fade := Vector2(view.position.x, rect.size.x * 0.62)
+		banner.draw_polygon(PackedVector2Array([Vector2(fade.x, 0), Vector2(fade.y, 0), Vector2(fade.y, rect.size.y),
+				Vector2(fade.x, rect.size.y)]), PackedColorArray([shade, clear, clear, shade]))
+		banner.draw_style_box(border, rect))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	banner.add_child(row)
+	var words := _label(blurb, 16 if Device.phone else 19)
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_stretch_ratio = 3.0
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(words)
+	var room := Control.new()
+	room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	room.size_flags_stretch_ratio = 2.0
+	row.add_child(room)
+	if tabs:
+		var tab_row := HBoxContainer.new()
+		tab_row.size_flags_vertical = Control.SIZE_SHRINK_END
+		row.add_child(tab_row)
+		for tab: Array in [[false, "Services"], [true, "Upgrades"]]:
+			var button := _action(tab[1], func() -> void:
+				_showing_upgrades = tab[0]
+				_rebuild_window.call())
+			button.toggle_mode = true
+			button.button_pressed = _showing_upgrades == tab[0]
+			tab_row.add_child(button)
+	return banner
+
+
+## The part of the hamlet picture a building's banner shows, `size_now`'s
+## shape, with the building in the middle where the picture's edges allow.
+func _banner_region(id: StringName, size_now: Vector2, picture: Texture2D) -> Rect2:
+	var to_picture := picture.get_size() / STAGE_SIZE
+	var spot: Rect2 = SPOTS[id]
+	var height := minf(spot.size.y * 0.75 * to_picture.y, picture.get_height())
+	var width := height * size_now.x / size_now.y
+	if width > picture.get_width():
+		width = picture.get_width()
+		height = width * size_now.y / size_now.x
+	var center := spot.get_center() * to_picture
+	var corner := Vector2(center.x - width * 0.5, center.y - height * 0.55)
+	corner = corner.clamp(Vector2.ZERO, picture.get_size() - Vector2(width, height))
+	return Rect2(corner, Vector2(width, height))
 
 
 func _open_hero(hero: HeroRecord) -> void:
@@ -320,168 +414,250 @@ func _open_hero(hero: HeroRecord) -> void:
 	_open(hero.display_name, _build_hero_sheet)
 
 
+## The hero picker, and the chosen hero's weapon and armour as cards with their
+## ranks as steps (those past what the smiths can make locked).
 func _build_blacksmith() -> void:
-	if _upgrades_tab(&"blacksmith"):
-		return
 	var campaign := _campaign()
 	var columns := _columns()
 	_hero_picker(columns[0], func(hero: HeroRecord) -> String:
-		return "W%d  A%d" % [hero.weapon_rank, hero.armor_rank])
+		return "Wpn %d   Arm %d" % [hero.weapon_rank, hero.armor_rank])
 	var right: VBoxContainer = columns[1]
 	if _selected == null:
 		right.add_child(_label("Choose a hero.", 18, UiStyle.TEXT_DIM))
-	else:
-		var hero := _selected
-		right.add_child(_label("Weapon, rank %d" % hero.weapon_rank, 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-		right.add_child(_label(_weapon_text(hero.weapon_rank), 17))
-		_rank_button(right, hero.weapon_rank, campaign.gear_cost(hero.weapon_rank), campaign.can_upgrade_weapon(hero),
-				_weapon_text(hero.weapon_rank + 1), func() -> void: _after(campaign.upgrade_weapon(hero)))
-		right.add_child(_label("Armour, rank %d" % hero.armor_rank, 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-		right.add_child(_label("Max HP %d" % (hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank)), 17))
-		_rank_button(right, hero.armor_rank, campaign.gear_cost(hero.armor_rank), campaign.can_upgrade_armor(hero),
-				"Max HP %d" % (hero.def.max_hp + Growth.armor_hp_bonus(hero.def, hero.armor_rank + 1)),
-				func() -> void: _after(campaign.upgrade_armor(hero)))
-
-
-func _build_guild() -> void:
-	if _upgrades_tab(&"guild"):
 		return
-	var campaign := _campaign()
+	var hero := _selected
+	right.add_child(_hero_header(hero))
+	var hp := func(rank: int) -> int: return hero.def.max_hp + Growth.armor_hp_bonus(hero.def, rank)
+	var gear := [
+		["Weapon", hero.weapon_rank, &"weaponsmith", campaign.can_upgrade_weapon(hero), campaign.upgrade_weapon,
+				_weapon_text(hero.weapon_rank), func(rank: int) -> String: return _weapon_text(rank).replace(", ", "\n")],
+		["Armour", hero.armor_rank, &"armorsmith", campaign.can_upgrade_armor(hero), campaign.upgrade_armor,
+				"Max HP %d" % hp.call(hero.armor_rank), func(rank: int) -> String: return "Max HP %d" % hp.call(rank)],
+	]
+	for piece: Array in gear:
+		var rank: int = piece[1]
+		var reason: String = piece[3]
+		var box := _card(right)
+		var header := _card_header(box, piece[0], "rank %d / %d" % [rank, CampaignRules.MAX_RANK], piece[5])
+		if rank >= CampaignRules.MAX_RANK:
+			header.add_child(_label("Fully upgraded", 16, UiStyle.TEXT_DIM))
+		else:
+			header.add_child(_cost_chips({}, campaign.gear_cost(rank)))
+			var upgrade: Callable = piece[4]
+			var button := _action("Rank %d" % (rank + 1), func() -> void: _after(upgrade.call(hero)))
+			button.disabled = reason != ""
+			header.add_child(button)
+		var labels: Array[String] = []
+		for step in CampaignRules.MAX_RANK:
+			labels.append((piece[6] as Callable).call(step + 1))
+		box.add_child(_steps(labels, rank, campaign.upgrades[piece[2]] + 1))
+		if reason != "" and rank < CampaignRules.MAX_RANK:
+			box.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
+
+
+## The hero picker, and the chosen hero's skills as the hero sheet's icon grid:
+## pick one to learn it, train it, or equip or unequip it.
+func _build_guild() -> void:
 	var columns := _columns()
-	_hero_picker(columns[0], func(_hero: HeroRecord) -> String: return "")
+	_hero_picker(columns[0], func(hero: HeroRecord) -> String:
+		return "%d / %d learned" % [hero.known.size(), hero.def.skills.size()])
 	var right: VBoxContainer = columns[1]
 	if _selected == null:
 		right.add_child(_label("Choose a hero.", 18, UiStyle.TEXT_DIM))
-	else:
-		var hero := _selected
-		var intro := _label("Learn new skills, train them (each rank: +10% damage or healing, +1% crit, +10% resistance"
-				+ " pierce), and choose the %d a hero takes into fights." % CampaignRules.SKILL_SLOTS, 16, UiStyle.TEXT_DIM)
-		intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		right.add_child(intro)
-		right.add_child(_label("Equipped %d / %d" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS], 18, UiStyle.GOLD))
-		for skill in hero.def.skills:
-			right.add_child(_skill_row(hero, skill))
+		return
+	var hero := _selected
+	right.add_child(_hero_header(hero))
+	right.add_child(_heading("Skills", "%d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS]))
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	right.add_child(grid)
+	for skill in hero.def.skills:
+		var slot := SkillSlot.new()
+		slot.setup(skill, hero.knows(skill), hero.is_equipped(skill), hero.skill_rank(skill), skill == _sheet_skill)
+		slot.pressed.connect(func() -> void:
+			_sheet_skill = skill
+			_after(""))
+		grid.add_child(slot)
+	var box := _card(right)
+	var skill: SkillDef = _sheet_skill if _sheet_skill in hero.def.skills else null
+	if skill == null:
+		box.add_child(_label("Choose a skill to learn, train or equip it.", 17, UiStyle.TEXT_DIM))
+		return
+	_guild_skill(box, hero, skill)
 
 
-## A skill at the Guild: its icon, name and rank with the buttons that apply:
-## learn it, train it, and equip or unequip it.
-func _skill_row(hero: HeroRecord, skill: SkillDef) -> Control:
+## A skill at the Guild: what it does, and the buttons that apply: learn it,
+## train it to the next rank, and equip or unequip it.
+func _guild_skill(box: VBoxContainer, hero: HeroRecord, skill: SkillDef) -> void:
 	var campaign := _campaign()
-	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 12)
-	var icon := TextureRect.new()
-	icon.texture = UiStyle.skill_icon(skill)
-	icon.custom_minimum_size = Vector2(48, 48)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	var details := "%s\n%s" % [skill.display_name, UiStyle.plain(UiStyle.skill_bbcode(skill))]
-	icon.tooltip_text = details
-	if not hero.knows(skill):
-		icon.modulate = Color(0.45, 0.45, 0.45)
-	row.add_child(icon)
-	var state := "rank %d/5" % hero.skill_rank(skill) if hero.knows(skill) else "not learned"
-	var title := _label("%s   %s%s" % [skill.display_name, state, "   EQUIPPED" if hero.is_equipped(skill) else ""], 18,
-			UiStyle.GOLD if hero.is_equipped(skill) else (UiStyle.TEXT if hero.knows(skill) else UiStyle.TEXT_DIM))
-	title.custom_minimum_size = Vector2(340, 0)
-	title.tooltip_text = details
-	title.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.add_child(title)
+	var state := "rank %d / %d%s" % [hero.skill_rank(skill), CampaignRules.MAX_RANK,
+			"   equipped" if hero.is_equipped(skill) else ""] if hero.knows(skill) else "not learned"
+	var header := _card_header(box, skill.display_name, state, "")
+	var pips := RankPips.new()
+	pips.set_skill(skill)
+	pips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(pips)
+	var info := RichTextLabel.new()
+	info.bbcode_enabled = true
+	info.fit_content = true
+	info.scroll_active = false
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_theme_font_size_override("normal_font_size", 17)
+	var usage := UiStyle.usage_text(skill)
+	info.text = UiStyle.skill_bbcode(skill) + ("\n[color=#%s]%s[/color]" % [UiStyle.TEXT_DIM.to_html(false), usage]
+			if usage != "" else "")
+	box.add_child(info)
+	var buttons := HFlowContainer.new()
+	buttons.add_theme_constant_override("h_separation", 14)
+	buttons.add_theme_constant_override("v_separation", 8)
+	box.add_child(buttons)
+	var reasons: Array[String] = []
 	if not hero.knows(skill):
 		var learn := _action("Learn  %s gold" % UiStyle.gold_text(campaign.learn_price(hero)),
 				func() -> void: _after(campaign.learn(hero, skill)))
 		learn.disabled = campaign.can_learn(hero, skill) != ""
-		learn.tooltip_text = campaign.can_learn(hero, skill)
-		row.add_child(learn)
-		return row
-	if hero.is_equipped(skill):
-		row.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill))))
+		reasons.append(campaign.can_learn(hero, skill))
+		buttons.add_child(learn)
 	else:
-		var equip := _action("Equip", func() -> void: _after(campaign.equip(hero, skill)))
-		equip.disabled = hero.equipped.size() >= CampaignRules.SKILL_SLOTS
-		row.add_child(equip)
-	var cost := campaign.skill_cost(hero, skill)
-	if cost > 0:
-		var reason := campaign.can_upgrade_skill(hero, skill)
-		var train := _action("Train  %s gold" % UiStyle.gold_text(cost), func() -> void: _after(campaign.upgrade_skill(hero, skill)))
-		train.disabled = reason != ""
-		row.add_child(train)
+		if hero.is_equipped(skill):
+			buttons.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill))))
+		else:
+			var equip := _action("Equip", func() -> void: _after(campaign.equip(hero, skill)))
+			equip.disabled = hero.equipped.size() >= CampaignRules.SKILL_SLOTS
+			if equip.disabled:
+				reasons.append("All %d slots are taken: unequip a skill first." % CampaignRules.SKILL_SLOTS)
+			buttons.add_child(equip)
+		var cost := campaign.skill_cost(hero, skill)
+		if cost > 0:
+			var train := _action("Train to rank %d  %s gold" % [hero.skill_rank(skill) + 1, UiStyle.gold_text(cost)],
+					func() -> void: _after(campaign.upgrade_skill(hero, skill)))
+			train.disabled = campaign.can_upgrade_skill(hero, skill) != ""
+			reasons.append(campaign.can_upgrade_skill(hero, skill))
+			buttons.add_child(train)
+	for reason in reasons:
 		if reason != "":
-			row.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
-	return row
+			var why := _label(reason, 15, UiStyle.TEXT_DIM)
+			why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(why)
 
 
-## The Abbey or the Tavern: its activities with who is there, a Send button
-## for the hero picked on the left, and (at the Abbey) wound treatment.
-func _build_relief(building: StringName, blurb: String) -> void:
-	if _upgrades_tab(building):
-		return
+## The Abbey or the Tavern: the hero picker, each activity as a card with its
+## seats (the heroes there, click one to bring them back) and a Send button for
+## the hero picked, and at the Abbey the wounded with Treat buttons.
+func _build_relief(building: StringName) -> void:
 	var campaign := _campaign()
 	var columns := _columns()
-	_hero_picker(columns[0], func(hero: HeroRecord) -> String: return "%d / %d" % [hero.stress, Rules.STRESS_MAX])
+	_hero_picker(columns[0], func(hero: HeroRecord) -> String: return UiStyle.hero_status(hero)[0])
 	var right: VBoxContainer = columns[1]
-	var intro := _label(blurb, 16, UiStyle.TEXT_DIM)
-	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	right.add_child(intro)
+	var cards := GridContainer.new()
+	cards.columns = 1 if Device.phone else 3
+	cards.add_theme_constant_override("h_separation", 14)
+	cards.add_theme_constant_override("v_separation", 14)
+	right.add_child(cards)
 	for activity: StringName in CampaignRules.ACTIVITIES:
-		if CampaignRules.ACTIVITIES[activity].building != building:
-			continue
-		var occupants := campaign.activity_occupants(activity)
-		var title := "%s   -%d stress   %d/%d" % [CampaignRules.ACTIVITIES[activity].name,
-				campaign.activity_relief(activity), occupants.size(), campaign.activity_slots(activity)]
-		right.add_child(_label(title, 22, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 12)
-		for hero in occupants:
-			row.add_child(_action("%s  (cancel)" % hero.display_name, func() -> void:
-				campaign.cancel_activity(hero)
-				_after("")))
-		if _selected:
-			var hero := _selected
-			var button := _action("Send %s  %s gold" % [hero.display_name,
-					UiStyle.gold_text(campaign.activity_price(hero, activity))],
-					func() -> void: _after(campaign.send(hero, activity)))
-			var reason := campaign.can_send(hero, activity)
-			button.disabled = reason != ""
-			button.tooltip_text = reason
-			row.add_child(button)
-		right.add_child(row)
+		if CampaignRules.ACTIVITIES[activity].building == building:
+			_activity_card(cards, activity)
 	if building != &"abbey":
 		return
 	var wounded := campaign.roster().filter(func(h: HeroRecord) -> bool: return h.wounded)
-	if not wounded.is_empty():
-		_section("Wounded")
-		_text("Wounded heroes sit out this week, or can be treated now.", 16, UiStyle.TEXT_DIM)
-		for hero: HeroRecord in wounded:
-			_window_body.add_child(_action("Treat %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.treatment_price(hero))],
-					func() -> void: _after(campaign.treat(hero))))
+	if wounded.is_empty():
+		return
+	right.add_child(_heading("Wounded", "They sit out this week, or can be treated now."))
+	for hero: HeroRecord in wounded:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		right.add_child(row)
+		var badge := HeroBadge.new()
+		badge.setup(hero, "WOUNDED", UiStyle.DAMAGE)
+		badge.disabled = true
+		row.add_child(badge)
+		var treat := _action("Treat  %s gold" % UiStyle.gold_text(campaign.treatment_price(hero)),
+				func() -> void: _after(campaign.treat(hero)))
+		treat.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(treat)
 
 
+## One Abbey or Tavern activity: its relief and price, a seat per slot holding
+## the hero there (click to bring them back) or empty, and Send for the hero picked.
+func _activity_card(parent: Control, activity: StringName) -> void:
+	var campaign := _campaign()
+	var box := _card(parent, true)
+	box.add_child(_label(CampaignRules.ACTIVITIES[activity].name, 24, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	box.add_child(_label("-%d stress   %s gold" % [campaign.activity_relief(activity),
+			UiStyle.gold_text(roundi(campaign.activity_base_price(activity)))], 17))
+	var seats := HBoxContainer.new()
+	seats.add_theme_constant_override("separation", 10)
+	box.add_child(seats)
+	var occupants := campaign.activity_occupants(activity)
+	for i in campaign.activity_slots(activity):
+		var hero: HeroRecord = occupants[i] if i < occupants.size() else null
+		var seat := Button.new()
+		seat.custom_minimum_size = Vector2(64, 64)
+		seat.focus_mode = Control.FOCUS_NONE
+		seat.disabled = hero == null
+		seat.draw.connect(func() -> void:
+			var rect := Rect2(Vector2.ZERO, seat.size)
+			if hero:
+				UiStyle.draw_portrait(seat, rect, hero.def)
+				if seat.is_hovered():
+					seat.draw_rect(rect, UiStyle.GOLD, false, 2.0)
+			else:
+				seat.draw_rect(rect, Color("0c0807"))
+				seat.draw_rect(rect.grow(-1.5), Color("3a2a1c"), false, 2.0))
+		if hero:
+			seat.tooltip_text = "%s is here. Click to bring them back." % hero.display_name
+			seat.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			seat.pressed.connect(func() -> void:
+				campaign.cancel_activity(hero)
+				_after(""))
+		seats.add_child(seat)
+	if _selected == null:
+		box.add_child(_label("Choose a hero to send.", 15, UiStyle.TEXT_DIM))
+		return
+	var hero := _selected
+	var reason := campaign.can_send(hero, activity)
+	var send := _action("Send %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.activity_price(hero, activity))],
+			func() -> void: _after(campaign.send(hero, activity)))
+	send.disabled = reason != ""
+	box.add_child(send)
+	if reason != "":
+		var why := _label(reason, 15, UiStyle.TEXT_DIM)
+		why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(why)
+
+
+## Each trade as a card: the heirlooms given, those got, and Trade.
 func _build_exchange() -> void:
 	var campaign := _campaign()
-	_text("Trade one kind of heirloom for another, at a loss. As often as you like.", 18, UiStyle.TEXT_DIM)
 	var grid := GridContainer.new()
-	grid.columns = 1 if Device.phone else 2
-	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", 10)
+	grid.columns = 2 if Device.phone else 4
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 14)
 	_window_body.add_child(grid)
 	for index in CampaignRules.EXCHANGE_TRADES.size():
 		var trade: Array = CampaignRules.EXCHANGE_TRADES[index]
-		var button := _action("%s  for  %s" % [_cost_text(trade[0]), _cost_text(trade[1])],
-				func() -> void: _after(campaign.exchange(index)))
+		var box := _card(grid, true)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		box.add_child(row)
+		row.add_child(_cost_chips(trade[0]))
+		row.add_child(_label("for", 16, UiStyle.TEXT_DIM))
+		row.add_child(_cost_chips(trade[1], 0, false))
 		var reason := campaign.can_exchange(index)
+		var button := _action("Trade", func() -> void: _after(campaign.exchange(index)))
 		button.disabled = reason != ""
 		button.tooltip_text = reason
-		grid.add_child(button)
+		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		box.add_child(button)
 
 
 ## DD1's Nomad Wagon: this week's trinkets for sale, and the estate's unworn
 ## ones to sell.
 func _build_wagon() -> void:
-	if _upgrades_tab(&"wagon"):
-		return
 	var campaign := _campaign()
-	_text("New wares every week. Sell what nobody wears; boss and Ancestral trinkets can't be sold.", 18,
-			UiStyle.TEXT_DIM)
 	var grid := GridContainer.new()
 	grid.columns = 1 if Device.phone else 2
 	grid.add_theme_constant_override("h_separation", 40)
@@ -564,42 +740,144 @@ func _trinket_row(trinket: TrinketDef, actions: Array) -> Control:
 
 # --- Upgrades ---
 
-## Services and Upgrades tabs at the top of a building window. Draws the
-## Upgrades tab and returns true when it is the one showing.
-func _upgrades_tab(building: StringName) -> bool:
-	var row := _row()
-	for tab: Array in [[false, "Services"], [true, "Upgrades"]]:
-		var button := _action(tab[1], func() -> void:
-			_showing_upgrades = tab[0]
-			_rebuild_window.call())
-		button.toggle_mode = true
-		button.button_pressed = _showing_upgrades == tab[0]
-		row.add_child(button)
-	if not _showing_upgrades:
-		return false
-	for line: StringName in CampaignRules.BUILDINGS[building].lines:
-		_upgrade_line(line)
-	return true
-
-
-## One upgrade line: its name and level pips, what it does now, and a button
-## for the next level with what that brings.
-func _upgrade_line(line: StringName) -> void:
+## One upgrade line as a card: its name, level and what it does now, the
+## Upgrade button with its heirloom cost, and its levels as steps saying what
+## each brings.
+func _upgrade_card(line: StringName) -> void:
 	var campaign := _campaign()
-	var level := campaign.upgrades[line]
+	var level: int = campaign.upgrades[line]
 	var top: int = CampaignRules.UPGRADES[line].size()
-	_section("%s   level %d/%d" % [CampaignRules.UPGRADE_NAMES[line], level, top])
-	_text(_line_now(line), 17, UiStyle.TEXT_DIM)
-	var row := _row()
+	var box := _card(_window_body)
+	var header := _card_header(box, CampaignRules.UPGRADE_NAMES[line], "level %d / %d" % [level, top], _line_now(line))
+	var reason := campaign.can_upgrade(line) if level < top else ""
 	if level >= top:
-		row.add_child(_label("Fully upgraded.", 16, UiStyle.TEXT_DIM))
-		return
-	var reason := campaign.can_upgrade(line)
-	var button := _action("Upgrade  " + _cost_text(campaign.upgrade_cost(line)),
-			func() -> void: _after(campaign.upgrade(line)))
-	button.disabled = reason != ""
-	row.add_child(button)
-	row.add_child(_label("Next: " + _line_next(line, level + 1) + ("   (%s)" % reason if reason != "" else ""), 16))
+		header.add_child(_label("Fully upgraded", 16, UiStyle.TEXT_DIM))
+	else:
+		header.add_child(_cost_chips(campaign.upgrade_cost(line)))
+		var button := _action("Upgrade", func() -> void: _after(campaign.upgrade(line)))
+		button.disabled = reason != ""
+		header.add_child(button)
+	var labels: Array[String] = []
+	for step in top:
+		labels.append(_line_next(line, step + 1))
+	box.add_child(_steps(labels, level))
+	if reason != "":
+		box.add_child(_label(reason, 15, UiStyle.TEXT_DIM))
+
+
+# --- Window pieces for buildings ---
+
+## A card in `parent` (a framed panel) and the box to fill it with. With
+## `expand`, cards in a grid share its width.
+func _card(parent: Control, expand: bool = false) -> VBoxContainer:
+	var panel := PanelContainer.new()
+	var style := UiStyle.card()
+	style.set_content_margin_all(14)
+	panel.add_theme_stylebox_override("panel", style)
+	if expand:
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	return box
+
+
+## A card's top row, which wraps on narrow screens: a gold title, a dim note,
+## and `now` (what it is or does now). Returns the row, for buttons at its end.
+func _card_header(box: VBoxContainer, title: String, note: String, now: String) -> Container:
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 16)
+	row.add_theme_constant_override("v_separation", 6)
+	box.add_child(row)
+	row.add_child(_label(title, 26, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	var aside := _label(note, 16, UiStyle.TEXT_DIM)
+	aside.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(aside)
+	var current := _label(now, 17)
+	current.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	current.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(current)
+	return row
+
+
+## A price as heirloom icons with their amounts, then gold. Amounts the estate
+## can't pay show red, unless `check` is false (what a trade gives).
+func _cost_chips(heirlooms: Dictionary, gold: int = 0, check: bool = true) -> Control:
+	var campaign := _campaign()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	for heirloom: StringName in heirlooms:
+		var icon := TextureRect.new()
+		icon.texture = UiStyle.heirloom_icon(heirloom)
+		icon.custom_minimum_size = Vector2(26, 26)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.tooltip_text = CampaignRules.HEIRLOOM_NAMES[heirloom]
+		row.add_child(icon)
+		var short: bool = check and campaign.heirlooms[heirloom] < heirlooms[heirloom]
+		row.add_child(_label(str(heirlooms[heirloom]), 18, UiStyle.DAMAGE.lightened(0.2) if short else UiStyle.TEXT))
+	if gold > 0:
+		var short := check and campaign.gold < gold
+		row.add_child(_label("%s gold" % UiStyle.gold_text(gold), 18, UiStyle.DAMAGE.lightened(0.2) if short else UiStyle.GOLD))
+	return row
+
+
+## Levels or ranks as a track of steps, each saying what it brings: the first
+## `done` filled gold with a check, the next one ringed gold, steps from
+## `locked_from` (1-based) on locked, and the rest dim.
+func _steps(labels: Array[String], done: int, locked_from: int = 0) -> Control:
+	var track := Control.new()
+	var pitch := 120.0 if Device.phone else 150.0
+	track.custom_minimum_size = Vector2(pitch * labels.size(), 96)
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	track.draw.connect(func() -> void:
+		var y := 16.0
+		var font := UiStyle.BODY_FONT
+		track.draw_line(Vector2(pitch / 2.0, y), Vector2(pitch * (labels.size() - 0.5), y), Color("3a2a1c"), 3.0)
+		if done > 0:
+			track.draw_line(Vector2(pitch / 2.0, y), Vector2(pitch * (mini(done, labels.size()) - 0.5), y), UiStyle.GOLD, 3.0)
+		for i in labels.size():
+			var center := Vector2(pitch * (i + 0.5), y)
+			var locked := locked_from > 0 and i + 1 > locked_from
+			var color := UiStyle.TEXT_DIM
+			track.draw_circle(center, 12.0, Color("0c0807"))
+			if i < done:
+				track.draw_circle(center, 11.0, UiStyle.GOLD)
+				track.draw_polyline(PackedVector2Array([center + Vector2(-5, 0), center + Vector2(-1, 4),
+						center + Vector2(6, -4)]), Color("1a1416"), 2.5, true)
+				color = UiStyle.TEXT
+			elif i == done and not locked:
+				track.draw_arc(center, 11.0, 0.0, TAU, 32, UiStyle.GOLD, 3.0, true)
+				color = UiStyle.GOLD
+			else:
+				track.draw_arc(center, 11.0, 0.0, TAU, 32, Color("4a3a2a"), 2.0, true)
+			if locked:
+				UiStyle.draw_lock(track, center + Vector2(0, 1), 15.0)
+			track.draw_multiline_string(font, Vector2(i * pitch + 4.0, y + 34.0), labels[i], HORIZONTAL_ALIGNMENT_CENTER,
+					pitch - 8.0, 14, 3, color))
+	return track
+
+
+## The hero a building window is serving: their portrait, name and level.
+func _hero_header(hero: HeroRecord) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	var portrait := Control.new()
+	portrait.custom_minimum_size = Vector2(56, 56)
+	portrait.draw.connect(func() -> void:
+		var rect := Rect2(Vector2.ZERO, portrait.size)
+		UiStyle.draw_portrait(portrait, rect, hero.def)
+		UiStyle.draw_level_badge(portrait, Vector2(6, rect.size.y - 6), hero.level(), 12.0))
+	row.add_child(portrait)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.add_child(_label(hero.display_name, 28, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
+	words.add_child(_label("Level %d   Stress %d / %d" % [hero.level(), hero.stress, Rules.STRESS_MAX], 15, UiStyle.TEXT_DIM))
+	row.add_child(words)
+	return row
 
 
 ## What an upgrade line gives at its current level.
@@ -970,13 +1248,6 @@ func _text(text: String, font_size: int, color: Color = UiStyle.TEXT) -> void:
 	_window_body.add_child(_label(text, font_size, color))
 
 
-func _section(title: String) -> void:
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 8)
-	_window_body.add_child(gap)
-	_window_body.add_child(_label(title, 26, UiStyle.GOLD, UiStyle.DISPLAY_FONT))
-
-
 func _row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
@@ -992,7 +1263,8 @@ func _columns() -> Array[VBoxContainer]:
 	for width: float in [300.0, 0.0 if Device.phone else 860.0]:
 		var column := VBoxContainer.new()
 		column.custom_minimum_size = Vector2(width, 0)
-		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL if width == 0.0 else Control.SIZE_FILL
+		# The hero list keeps its width; the detail column takes the rest.
+		column.size_flags_horizontal = Control.SIZE_FILL if width == 300.0 else Control.SIZE_EXPAND_FILL
 		column.add_theme_constant_override("separation", 8)
 		row.add_child(column)
 		result.append(column)
@@ -1010,34 +1282,12 @@ func _hero_picker(parent: VBoxContainer, tag_for: Callable) -> void:
 		parent.add_child(badge)
 
 
-func _rank_button(parent: VBoxContainer, rank: int, cost: int, reason: String, next_text: String,
-		action: Callable) -> void:
-	if rank >= CampaignRules.MAX_RANK:
-		parent.add_child(_label("Fully upgraded.", 16, UiStyle.TEXT_DIM))
-		return
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var button := _action("Rank %d  %s gold" % [rank + 1, UiStyle.gold_text(cost)], action)
-	button.disabled = reason != ""
-	row.add_child(button)
-	row.add_child(_label(reason if reason != "" else next_text, 16, UiStyle.TEXT_DIM))
-	parent.add_child(row)
-
-
 func _weapon_text(rank: int) -> String:
 	var steps := rank - 1
 	var text := "+%d%% damage, +%d%% crit" % [roundi(steps * CampaignRules.WEAPON_DAMAGE_PER_RANK * 100),
 			roundi(steps * CampaignRules.WEAPON_CRIT_PER_RANK * 100)]
 	var speed := Growth.weapon_speed_bonus(rank)
 	return text + (", +%d speed" % speed if speed > 0 else "")
-
-
-func _cost_text(cost: Dictionary) -> String:
-	var parts: Array[String] = []
-	for heirloom: StringName in cost:
-		var name: String = CampaignRules.HEIRLOOM_NAMES[heirloom]
-		parts.append("%d %s" % [cost[heirloom], name.trim_suffix("s") if cost[heirloom] == 1 else name])
-	return ", ".join(parts)
 
 
 func _label(text: String, font_size: int, color: Color = UiStyle.TEXT, font: Font = null) -> Label:
@@ -1164,4 +1414,10 @@ func _build() -> void:
 	frame.add_child(_window_message)
 	_window_body = VBoxContainer.new()
 	_window_body.add_theme_constant_override("separation", 10)
-	frame.add_child(UiStyle.scroll_on_phone(_window_body))
+	_window_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The window scrolls when its content runs long, like a building with many wounded.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_window_body)
+	frame.add_child(scroll)

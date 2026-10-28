@@ -197,6 +197,11 @@ static func skill_icon(skill: SkillDef) -> Texture2D:
 	return skill.icon if skill.icon else BASIC_SKILL_ICONS.get(skill.id)
 
 
+## An heirloom's icon, art/heirlooms/<bust|portrait|deed|crest>.svg.
+static func heirloom_icon(heirloom: StringName) -> Texture2D:
+	return load("res://art/heirlooms/%s.svg" % heirloom)
+
+
 ## Icon for a token, DoT type (&"bleed", &"blight", &"burn") or &"death_armor",
 ## loaded from art/tokens/<id>.svg. Null when there is no file.
 static func token_icon(id: StringName) -> Texture2D:
