@@ -408,7 +408,11 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
     - a hero more than 5 points from the cast's average win rate
     - a skill or trinket whose win difference strays more than 8 points, or whose HP-lost difference strays more than 4, from its group's middle and beyond its margin of error
 - **From the terminal:** `tools/balance_probe.gd` runs the same sweep and prints the encounters, heroes, and the skills and trinkets that stand out.
-- **Still to build — Arena:** a focused fight of chosen heroes, loadouts, trinkets and encounter. It re-runs after each edit, has starting HP and stress sliders, and a Watch button that opens the real combat screen.
+- **Arena** (`BalanceArena`, the Arena tab): one hand-picked fight, played over and over by the bot.
+  - **Setup:** up to four heroes in rank order, each with the skills they take (five at most) and two trinkets, against an encounter at a preset. Sliders set the party's starting HP and stress. The setup is kept in `user://balance_arena.json` between sessions.
+  - **Live:** 200 fights (about 5 s) play on the main thread, a few each frame, and start again 0.4 s after any change, to the setup or to the content in the form. The fights use the content as it stands, so they need no copy.
+  - **Results:** win rate with its margin, HP lost, deaths, rounds and stress, each hero's HP lost and deaths, and how often the bot used each skill. A line compares with the last run that finished before the latest change. More plays 1,000 fights.
+  - **Watch** opens the fight in the real combat screen, played by the bot; **Play it** lets you play it yourself. The screen opens over the tool rather than replacing it, so unsaved edits and the undo history stay. It plays the fight with new dice each time (R again), and Esc or the end panel goes back. The combat screen knows the Arena only as an object with `title`, `bot_plays` and `battle(seed)`, so the game doesn't depend on the tool, which isn't exported.
 
 ## Future features
 

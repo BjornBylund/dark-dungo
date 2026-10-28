@@ -344,13 +344,25 @@ func fight(job: Dictionary) -> Dictionary:
 	var setup := _setup(job)
 	var heroes: Array[Combatant] = []
 	for i in setup.party.size():
-		heroes.append(Growth.hero_combatant(_record(setup.party[i], setup.loadouts[i], setup.trinkets[i])))
+		heroes.append(Growth.hero_combatant(record(setup.party[i], setup.loadouts[i], setup.trinkets[i], preset)))
 	var enemies: Array[Combatant] = []
 	for enemy: UnitDef in setup.encounter.enemies:
 		enemies.append(Growth.enemy_combatant(enemy, preset.tier))
 	var dice := RandomNumberGenerator.new()
 	dice.seed = hash([job.seed, "battle"])
-	var battle := Battle.new(heroes, enemies, dice)
+	var outcome := play(Battle.new(heroes, enemies, dice), heroes)
+	outcome.party = setup.party
+	outcome.loadouts = setup.loadouts
+	outcome.encounter = setup.encounter
+	return outcome
+
+
+## Plays a battle out with AutoPlayer.best, up to MAX_ROUNDS. `party` is the
+## heroes it started with (the dead may leave the battle's own list). Returns
+## {win, stalled, lost (the party's average share of HP lost), stress
+## (average), deaths, rounds, hero_lost and hero_died (by hero def), uses
+## (skill -> times used, enemies' too), turns (hero def -> turns taken)}.
+static func play(battle: Battle, party: Array[Combatant]) -> Dictionary:
 	var uses := {}
 	var turns := {}
 	while battle.state != Battle.State.VICTORY and battle.state != Battle.State.DEFEAT and battle.round_number <= MAX_ROUNDS:
@@ -365,20 +377,20 @@ func fight(job: Dictionary) -> Dictionary:
 	var lost := {}
 	var died := {}
 	var stress := 0.0
-	for hero in heroes:
+	for hero in party:
 		lost[hero.def] = 1.0 if hero.dead else 1.0 - hero.hp_fraction()
 		died[hero.def] = hero.dead
 		stress += hero.stress
 	var party_lost := 0.0
 	for share: float in lost.values():
 		party_lost += share
+	var count := maxi(1, lost.size())
 	return {
 		win = battle.state == Battle.State.VICTORY, stalled = battle.state == Battle.State.RUNNING \
 				or battle.state == Battle.State.AWAITING_INPUT,
-		lost = party_lost / heroes.size(), stress = stress / heroes.size(),
+		lost = party_lost / count, stress = stress / count,
 		deaths = died.values().count(true), rounds = battle.round_number,
 		hero_lost = lost, hero_died = died, uses = uses, turns = turns,
-		party = setup.party, loadouts = setup.loadouts, encounter = setup.encounter,
 	}
 
 
@@ -478,18 +490,19 @@ func _order(party: Array[UnitDef], loadouts: Array, trinkets: Array) -> void:
 		trinkets[i] = sorted[2][slots[i]]
 
 
-func _record(hero: UnitDef, loadout: Array[SkillDef], worn: Array[TrinketDef]) -> HeroRecord:
-	var record := HeroRecord.new(hero)
-	record.xp = CampaignRules.LEVEL_XP[preset.level - 1] if preset.level > 0 else 0
-	record.weapon_rank = preset.gear_rank
-	record.armor_rank = preset.gear_rank
-	if preset.skill_rank > 1:
+## A hero at `at`'s level, gear and skill ranks, taking `loadout` and wearing `worn`.
+static func record(hero: UnitDef, loadout: Array[SkillDef], worn: Array[TrinketDef], at: BalancePreset) -> HeroRecord:
+	var result := HeroRecord.new(hero)
+	result.xp = CampaignRules.LEVEL_XP[at.level - 1] if at.level > 0 else 0
+	result.weapon_rank = at.gear_rank
+	result.armor_rank = at.gear_rank
+	if at.skill_rank > 1:
 		for skill in hero.skills:
-			record.skill_ranks[skill.id] = preset.skill_rank
-	record.known.assign(loadout.map(func(skill: SkillDef) -> StringName: return skill.id))
-	record.equipped = record.known.duplicate()
-	record.trinkets = worn
-	return record
+			result.skill_ranks[skill.id] = at.skill_rank
+	result.known.assign(loadout.map(func(skill: SkillDef) -> StringName: return skill.id))
+	result.equipped = result.known.duplicate()
+	result.trinkets = worn
+	return result
 
 
 static func _shuffle(items: Array, rng: RandomNumberGenerator) -> void:

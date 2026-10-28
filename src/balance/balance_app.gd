@@ -5,9 +5,9 @@
 ## Ctrl+Y undo and redo.
 extends Control
 
-enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS }
+enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS, ARENA }
 
-const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets"]
+const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets", "Arena"]
 const TAB_KINDS := [BalanceLibrary.Kind.HERO, BalanceLibrary.Kind.ENEMY, BalanceLibrary.Kind.ENCOUNTER,
 		BalanceLibrary.Kind.TRINKET]
 const KIND_NAMES := {
@@ -34,6 +34,8 @@ const POLL_EVERY := 0.25
 var library := BalanceLibrary.new()
 var _tab := Tab.HEROES
 var _table: BalanceTable
+var _filters: Control
+var _arena: BalanceArenaPanel
 var _search: LineEdit
 var _role_filter: OptionButton
 var _form_scroll: ScrollContainer
@@ -231,9 +233,15 @@ func _make_table_side() -> Control:
 	_role_filter.item_selected.connect(func(_index: int) -> void: _refresh())
 	filters.add_child(_role_filter)
 	side.add_child(filters)
+	_filters = filters
 	_table = BalanceTable.new()
 	_table.row_selected.connect(_show)
 	side.add_child(_table)
+	_arena = BalanceArenaPanel.new(library)
+	_arena.show_resource.connect(_show)
+	_arena.watch.connect(_open_watch)
+	_arena.hide()
+	side.add_child(_arena)
 	return side
 
 
@@ -277,6 +285,15 @@ func _make_detail_side() -> Control:
 
 func _switch_tab(tab: Tab) -> void:
 	_tab = tab
+	_filters.visible = tab != Tab.ARENA
+	_table.visible = tab != Tab.ARENA
+	_arena.visible = tab == Tab.ARENA
+	if tab == Tab.ARENA:
+		_refresh()
+		var first := _arena.arena.slots.filter(func(slot: Dictionary) -> bool: return slot.hero != null)
+		if _current == null and not first.is_empty():
+			_show(first[0].hero)
+		return
 	_role_filter.visible = tab == Tab.ENCOUNTERS
 	_table.set_column_defs(_columns())
 	_refresh()
@@ -679,6 +696,18 @@ func _process(delta: float) -> void:
 	_refresh()
 
 
+## Opens the Arena's fight in the real combat screen over the tool, which stays
+## as it is (unsaved edits and all) until the screen closes.
+func _open_watch(bot_plays: bool) -> void:
+	get_viewport().gui_release_focus()
+	_arena.arena.bot_plays = bot_plays
+	_arena.paused = true
+	var screen: Control = load(Game.BATTLE).instantiate()
+	screen.arena = _arena.arena
+	screen.closed.connect(func() -> void: _arena.paused = false)
+	add_child(screen)
+
+
 func _pin_results() -> void:
 	_pinned = _results
 	_status_note = "Pinned. Later runs show their change against it in the vs pin columns."
@@ -696,7 +725,7 @@ func _on_edited(roots: Array[Resource], from_history: bool) -> void:
 	if _current and _current not in library.roots():
 		_current = null
 	if _current == null:
-		var list := library.list_of(TAB_KINDS[_tab])
+		var list := library.list_of(TAB_KINDS[_tab]) if _tab != Tab.ARENA else library.heroes
 		_show(list[0] if not list.is_empty() else null)
 	elif _current in roots and _form:
 		_form.rebuild()

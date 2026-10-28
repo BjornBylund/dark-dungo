@@ -115,6 +115,11 @@ The **balance tool** edits heroes, enemies, encounters and trinkets with their n
   - **Out of date:** results grey out after an edit.
   - **Pin:** keeps a run to compare later ones with, in the **vs pin** column.
   - **Targets:** opens the presets and targets (`content/balance_targets.tres`).
+- **Arena tab:** one fight of your choosing, played 200 times again after every change.
+  - **Setup:** pick four heroes in rank order, the skills they take (click to toggle, five at most) and their trinkets, an encounter, a preset, and the party's starting HP and stress.
+  - **Results:** the win rate, HP lost, deaths and rounds, each hero's HP lost and deaths, and how often each skill was used, with a comparison to before your last change.
+  - **Edit** beside a hero or the encounter opens it in the form; changes there re-run the fight.
+  - **▶ Watch** plays the fight in the real combat screen with the bot, and **Play it** lets you play it. R plays it again; Esc goes back.
 - **Keys:** `Ctrl+S` saves the changed files, `Ctrl+Z` / `Ctrl+Y` undo and redo.
 
 The files can also be edited by hand or in the Godot inspector:
@@ -145,7 +150,7 @@ Runs every `tests/test_*.gd` headless in about 6 seconds. It re-imports the proj
 | `src/core/defs/` | Resource types for content: `UnitDef`, `SkillDef`, `EffectDef`, `TrinketDef` (with `TrinketBonus` and `TrinketTrigger`), `EncounterDef`, `RegionDef`, `EventDef` (with `EventChoiceDef` and `EventOutcomeDef`), `SandboxDef`, `CampaignDef` |
 | `src/campaign/` | The town loop, pure logic like the combat core: `campaign.gd` (estate, weeks, buildings, trinkets, saving), `trinkets.gd` (trinket drops), `mission.gd`, `mission_map.gd` and `map_room.gd` (building a map), `mission_run.gd` (walking it room by room), `bonds.gd` (bonds between heroes), `map_auto_player.gd`, `hero_record.gd`, `growth.gd` (levels and gear into combat stats), `campaign_rules.gd` (DD1 numbers) |
 | `src/game.gd` | Autoload holding the running campaign and switching screens |
-| `src/balance/` | The balance tool: `balance_app.gd` (the screen), `balance_library.gd` (loading, undo, saving, duplicating, listing), `balance_stats.gd` (numbers on paper), `balance_sweep.gd` (simulated fights in worker processes), `balance_flags.gd` and `balance_result_columns.gd` (what a run found, flagged against `content/balance_targets.tres`), `resource_form.gd` (forms built from exported fields), `balance_table.gd` (sortable, ranked tables) |
+| `src/balance/` | The balance tool: `balance_app.gd` (the screen), `balance_library.gd` (loading, undo, saving, duplicating, listing), `balance_stats.gd` (numbers on paper), `balance_sweep.gd` (simulated fights in worker processes), `balance_arena.gd` and `balance_arena_panel.gd` (the Arena), `balance_flags.gd` and `balance_result_columns.gd` (what a run found, flagged against `content/balance_targets.tres`), `resource_form.gd` (forms built from exported fields), `balance_table.gd` (sortable, ranked tables) |
 | `src/ui/` | Title, town, expedition, mission map and combat screens; `device.gd` and the `mobile.gd` autoload handle phones, tablets and touch |
 | `content/` | Heroes, enemies, encounters, regions, events, trinkets, the campaign and the sandbox as `.tres` files |
 | `art/` | One folder per unit under `art/characters/` (sprite and close-up poses), skill and token icons, UI frames, backgrounds, heirlooms, and the fonts (Gelasio and Grenze Gotisch, SIL Open Font License) |
