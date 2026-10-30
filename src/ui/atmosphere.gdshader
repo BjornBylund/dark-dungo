@@ -1,11 +1,10 @@
 // The mood over a screen's picture, under its UI: lamps that glow and gutter,
-// dark corners that breathe with a flicker, and film grain.
+// and dark corners that breathe with a flicker.
 shader_type canvas_item;
 
-// The rect's size in pixels, for lamp positions and a grain of one pixel.
+// The rect's size in pixels, for lamp positions.
 uniform vec2 size = vec2(1920.0, 1080.0);
 uniform float vignette = 0.8;
-uniform float grain = 0.05;
 uniform float flicker = 0.0;
 uniform vec4 lamp_color : source_color = vec4(1.0, 0.62, 0.25, 1.0);
 // Each lamp: x, y and radius in pixels of the rect.
@@ -34,12 +33,9 @@ void fragment() {
 	}
 	float shimmer = 1.0 + flicker * (noise(vec2(TIME * 9.0, 0.0)) - 0.5);
 	float vig = clamp(smoothstep(0.55, 1.4, length((UV - 0.5) * 2.0)) * vignette * shimmer, 0.0, 1.0);
-	// A fresh pattern 24 times a second.
-	float speck = hash(floor(pixel) + floor(TIME * 24.0) * vec2(17.0, 31.0)) - 0.5;
-	float grain_a = abs(speck) * grain * 2.0;
-	// Layered as if painted in turn: lamps, dark corners, grain.
-	float keep = (1.0 - lamp) * (1.0 - vig) * (1.0 - grain_a);
-	vec3 painted = lamp_color.rgb * lamp * (1.0 - vig) * (1.0 - grain_a) + vec3(step(0.0, speck)) * grain_a;
+	// Layered as if painted in turn: lamps, then dark corners.
+	float keep = (1.0 - lamp) * (1.0 - vig);
+	vec3 painted = lamp_color.rgb * lamp * (1.0 - vig);
 	float alpha = 1.0 - keep;
 	COLOR = vec4(alpha > 0.0 ? painted / alpha : vec3(0.0), alpha);
 }

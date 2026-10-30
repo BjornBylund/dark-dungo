@@ -1,6 +1,5 @@
 ## The mood over a screen's picture, under its UI (atmosphere.gdshader): dark
-## corners, film grain, and if asked a flicker in the light and lamps that glow
-## and gutter. Fills its parent; screens add it just above what they draw
+## corners, and if asked a flicker in the light and lamps that glow and gutter. Fills its parent; screens add it just above what they draw
 ## behind everything.
 class_name Atmosphere
 extends ColorRect
