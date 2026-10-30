@@ -79,7 +79,7 @@ func test_the_board_fills_the_open_regions_at_both_ends_of_the_tiers() -> void:
 	var expected := [[4, 0, 0], [2, 2, 0], [2, 2, 2]]
 	for seed_value in 30:
 		var campaign := _campaign(seed_value)
-		campaign.roster()[0].xp = CampaignRules.LEVEL_XP[3]
+		campaign.roster()[0].xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_UNLOCK_LEVEL[CampaignRules.Tier.CHAMPION] - 1]
 		var regions := campaign.def.regions
 		for opened in regions.size():
 			if opened > 0:
@@ -94,9 +94,10 @@ func test_the_board_fills_the_open_regions_at_both_ends_of_the_tiers() -> void:
 			assert_true(CampaignRules.Tier.APPRENTICE in tiers, label + " has an Apprentice mission")
 
 
-func test_levels_follow_the_dd1_xp_table() -> void:
-	for pair: Array in [[0, 0], [1, 0], [2, 1], [7, 1], [8, 2], [24, 4], [48, 6], [100, 6]]:
+func test_levels_follow_the_xp_table_up_to_ten() -> void:
+	for pair: Array in [[0, 0], [1, 0], [2, 1], [4, 1], [5, 2], [24, 6], [47, 9], [48, 10], [100, 10]]:
 		assert_eq(CampaignRules.level_for_xp(pair[0]), pair[1], "xp %d" % pair[0])
+	assert_eq(CampaignRules.LEVEL_XP.size(), CampaignRules.MAX_LEVEL)
 
 
 func test_mission_rewards_follow_the_tables() -> void:
@@ -228,13 +229,16 @@ func test_will_not_go_and_underlevel_stress() -> void:
 	var veteran := _mission(campaign, CampaignRules.Tier.VETERAN, CampaignRules.Length.SHORT)
 	var apprentice := _mission(campaign, CampaignRules.Tier.APPRENTICE, CampaignRules.Length.SHORT)
 	var heroes := campaign.roster()
-	heroes[0].xp = CampaignRules.LEVEL_XP[2]
-	assert_eq(campaign.eligibility(heroes[0], apprentice), Campaign.Eligibility.WILL_NOT_GO)
+	heroes[0].xp = CampaignRules.LEVEL_XP[CampaignRules.WILL_NOT_GO_GAP]
+	assert_eq(campaign.eligibility(heroes[0], apprentice), Campaign.Eligibility.WILL_NOT_GO, "level 4 is past Apprentice")
 	assert_ne(campaign.can_embark(apprentice, heroes.slice(0, 1)), "")
 	assert_eq(campaign.eligibility(heroes[1], apprentice), Campaign.Eligibility.OK, "level 0 suits Apprentice")
 	assert_eq(campaign.eligibility(heroes[1], veteran), Campaign.Eligibility.UNDERLEVELED)
 	campaign.embark(veteran, heroes.slice(1, 2))
-	assert_eq(heroes[1].stress, 2 * CampaignRules.UNDERLEVEL_STRESS, "two levels below Veteran's 2")
+	assert_eq(heroes[1].stress, 3 * CampaignRules.UNDERLEVEL_STRESS, "three levels below Veteran's 3")
+	var champion := _mission(campaign, CampaignRules.Tier.CHAMPION, CampaignRules.Length.SHORT)
+	heroes[2].xp = CampaignRules.LEVEL_XP.back()
+	assert_eq(campaign.eligibility(heroes[2], champion), Campaign.Eligibility.OK, "level 10 still takes Champion missions")
 
 
 func test_blacksmith_needs_building_level_hero_level_and_gold() -> void:
@@ -284,9 +288,9 @@ func test_activity_prices_follow_hero_level_and_upgrades() -> void:
 	var campaign := _campaign()
 	var hero := campaign.roster()[0]
 	assert_eq(campaign.activity_price(hero, &"meditation"), 1000)
-	hero.xp = CampaignRules.LEVEL_XP[2]
+	hero.xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_LEVELS[CampaignRules.Tier.VETERAN] - 1]
 	assert_eq(campaign.activity_price(hero, &"meditation"), 1400)
-	hero.xp = CampaignRules.LEVEL_XP[4]
+	hero.xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_LEVELS[CampaignRules.Tier.CHAMPION] - 1]
 	assert_eq(campaign.activity_price(hero, &"meditation"), 1800)
 	campaign.upgrades[&"meditation"] = 3
 	assert_eq(campaign.activity_price(hero, &"meditation"), roundi(1800 * 0.85))
@@ -308,9 +312,9 @@ func test_heroes_who_havent_joined_stay_out_of_the_roster() -> void:
 func test_mission_tiers_unlock_with_hero_levels() -> void:
 	var campaign := _campaign()
 	assert_eq(campaign.available_tiers(), [0] as Array[int])
-	campaign.roster()[0].xp = CampaignRules.LEVEL_XP[1]
+	campaign.roster()[0].xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_UNLOCK_LEVEL[CampaignRules.Tier.VETERAN] - 1]
 	assert_eq(campaign.available_tiers().size(), 2)
-	campaign.roster()[0].xp = CampaignRules.LEVEL_XP[3]
+	campaign.roster()[0].xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_UNLOCK_LEVEL[CampaignRules.Tier.CHAMPION] - 1]
 	assert_eq(campaign.available_tiers().size(), 3)
 
 
@@ -410,12 +414,13 @@ func test_hero_growth_reaches_the_combatant() -> void:
 	assert_between(unit.damage_bonus, 0.199, 0.201)
 	assert_between(unit.crit_bonus, 0.0199, 0.0201)
 	assert_eq(unit.speed(), record.def.speed + 1)
-	assert_between(unit.resist(&"stun"), record.def.resist_stun + 0.199, record.def.resist_stun + 0.201)
+	var bonus := CampaignRules.LEVEL_RESIST_BONUS * 2
+	assert_between(unit.resist(&"stun"), record.def.resist_stun + bonus - 0.001, record.def.resist_stun + bonus + 0.001)
 	assert_eq(unit.resist(&"deathblow"), record.def.resist_deathblow)
 
 
 func test_enemy_tiers_scale_hp_damage_and_crit() -> void:
 	var unit := Growth.enemy_combatant(load("res://content/enemies/ghoul.tres"), CampaignRules.Tier.CHAMPION)
-	assert_eq(unit.max_hp, 26 + 13)
-	assert_eq(unit.damage_bonus, 0.5)
+	assert_eq(unit.max_hp, 26 + roundi(26 * CampaignRules.ENEMY_HP_BONUS[CampaignRules.Tier.CHAMPION]))
+	assert_eq(unit.damage_bonus, CampaignRules.ENEMY_DAMAGE_BONUS[CampaignRules.Tier.CHAMPION])
 	assert_eq(unit.crit_bonus, 0.05)

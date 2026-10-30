@@ -28,6 +28,26 @@ Man-at-Arms: They always shake their heads. Every one of them. Even in my sleep 
 Ancestor: The dead are stubborn that way. They prefer to have mattered.
 
 == level 6
+Man-at-Arms: Pell came through the hamlet today. One of the eleven from Varrow. Lost an arm and the habit of smiling.
+Man-at-Arms: We drank. We didn't talk about the bridge. We talked about everyone who was on it.
+Ancestor: That is the only way such a bridge can be spoken of. Around the edges, like a wound.
+
+== level 7
+Man-at-Arms: Pell told me something tonight I never knew. The column we held for wasn't soldiers. It was a town, getting out.
+Man-at-Arms: Old folk, mothers, children on carts. Four thousand of them. Nobody ever told the Ninth what we were holding for.
+Ancestor: Now you know the price and the purchase both. I cannot say whether that makes it lighter.
+
+== level 8
+Man-at-Arms: There's a lad from the hamlet who wants to take up a spear. Fifteen, maybe. Same age I was.
+Man-at-Arms: I told him no. Then I taught him to hold a shield properly, because he'll go anyway.
+Ancestor: You cannot save them from the war, old soldier. Only from dying stupidly in it. That is something.
+
+== level 9
+Man-at-Arms: The bridge dream came again. This time I gave no order at all. I just stood with them.
+Man-at-Arms: They didn't shake their heads. Pell was right. They knew what they were holding for. They'd have held without me.
+Ancestor: Then the order was never the burden you thought. You carried it anyway. That was your choice, not theirs.
+
+== level 10
 Man-at-Arms: I've stopped saying the names before a fight. I say yours instead.
 Man-at-Arms: Hold the line so the others go home. That's the whole of soldiering, in the end. Took me forty years to learn it.
 Ancestor: Then hold it, old soldier. I will try to send you fewer reasons to.

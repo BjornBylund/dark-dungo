@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_ihems"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_7b48d"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_y0f06"]
+
+[sub_resource type="Resource" id="Resource_dxbgu"]
+script = ExtResource("1_ihems")
+stat = &"damage"
+amount = 0.3
+if_skills = Array[StringName]([&"finale"])
+
+[resource]
+script = ExtResource("2_7b48d")
+id = &"grand_finale"
+display_name = "Grand Finale"
+bonuses = Array[ExtResource("1_ihems")]([SubResource("Resource_dxbgu")])

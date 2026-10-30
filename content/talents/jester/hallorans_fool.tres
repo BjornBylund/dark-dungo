@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_turhk"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_sex2o"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_dp5gk"]
+
+[resource]
+script = ExtResource("2_sex2o")
+id = &"hallorans_fool"
+display_name = "Halloran's Fool"
+flavour = "Eleven years of being madder, in a way that amused."
+stats = Dictionary[StringName, float]({
+&"crit": 0.05,
+&"damage": 0.15
+})

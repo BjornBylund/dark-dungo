@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_e770i"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_2uw7x"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_olabh"]
+
+[resource]
+script = ExtResource("2_2uw7x")
+id = &"old_campaigner"
+display_name = "Old Campaigner"
+flavour = "Forty years of soldier's bread."
+stats = Dictionary[StringName, float]({
+&"max_hp": 0.12
+})

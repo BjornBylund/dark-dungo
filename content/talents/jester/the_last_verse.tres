@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_e7mg6"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ykkqw"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ca8qg"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_3yqp6"]
+
+[sub_resource type="Resource" id="Resource_gd1ct"]
+script = ExtResource("4_3yqp6")
+kind = 13
+amount = -1
+
+[sub_resource type="Resource" id="Resource_t2fop"]
+script = ExtResource("3_ca8qg")
+when = 10
+to = 2
+effects = Array[ExtResource("4_3yqp6")]([SubResource("Resource_gd1ct")])
+
+[resource]
+script = ExtResource("2_ykkqw")
+id = &"the_last_verse"
+display_name = "The Last Verse"
+flavour = "A fool who walked into the dark with friends, and came out again."
+stats = Dictionary[StringName, float]({
+&"resist_deathblow": 0.1
+})
+triggers = Array[ExtResource("3_ca8qg")]([SubResource("Resource_t2fop")])

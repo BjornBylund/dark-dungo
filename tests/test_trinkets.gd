@@ -312,7 +312,7 @@ func test_the_campaigns_trinkets_are_well_formed() -> void:
 		assert_true(trinket.hero == null or trinket.hero in cast, label + " for a hero in the cast")
 		assert_true(trinket.boss_only or trinket.rarity == TrinketDef.Rarity.ANCESTRAL or trinket.price > 0,
 				label + " has a price")
-		assert_false(UiStyle.trinket_effects(trinket).is_empty(), label + " does something")
+		assert_false(UiStyle.perk_effects(trinket).is_empty(), label + " does something")
 		var named: Array[StringName] = []
 		for trigger in trinket.triggers:
 			named.append_array(trigger.if_skills)

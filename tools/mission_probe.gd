@@ -2,7 +2,8 @@
 ## map auto-player, and the probe prints how often they finish and how far they
 ## get. scripts/balance.ps1 runs many of these in parallel and adds them up.
 ## Run: godot --headless --path . --script res://tools/mission_probe.gd --
-##     [--length=0|1|2] [--tier=0|1|2] [--level=N] [--runs=N] [--first-seed=N]
+##     [--length=0|1|2] [--tier=0|1|2] [--level=N] [--runs=N] [--first-seed=N] [--no-talents]
+## Heroes spend their talent points at random unless --no-talents.
 ## Prints one line per length: RESULT length=.. runs=.. completed=.. depth=.. fights=.. clear_shares=..
 ## and one per hero class: CLASS<tab>length<tab>name<tab>completed<tab>runs
 ## depth adds up how far each party got, in percent of the way to the finale;
@@ -13,6 +14,8 @@ extends SceneTree
 const MAX_ROUNDS := 60
 ## A script error stops a headless script without quitting; this makes sure it ends.
 const TIME_LIMIT := 300.0
+
+var _talents := true
 
 
 func _initialize() -> void:
@@ -27,6 +30,8 @@ func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		var value := arg.get_slice("=", 1)
 		match arg.get_slice("=", 0):
+			"--no-talents":
+				_talents = false
 			"--length":
 				lengths = [int(value)]
 			"--tier":
@@ -37,7 +42,7 @@ func _initialize() -> void:
 				runs = int(value)
 			"--first-seed":
 				first_seed = int(value)
-	if level >= CampaignRules.TIER_LEVELS[tier] + CampaignRules.WILL_NOT_GO_GAP:
+	if tier != CampaignRules.Tier.CHAMPION and level >= CampaignRules.TIER_LEVELS[tier] + CampaignRules.WILL_NOT_GO_GAP:
 		printerr("mission_probe: level %d heroes refuse %s missions" % [level, CampaignRules.TIER_NAMES[tier]])
 		quit(1)
 		return
@@ -58,6 +63,10 @@ func _probe(length: int, tier: CampaignRules.Tier, level: int, runs: int, first_
 		for hero in campaign.heroes:
 			hero.recruited = true
 			hero.xp = CampaignRules.LEVEL_XP[level - 1] if level > 0 else 0
+			if _talents:
+				for row in hero.talent_rows_open():
+					var choices := hero.talent_row(row)
+					campaign.choose_talent(hero, choices[campaign.rng.randi_range(0, choices.size() - 1)])
 		var pool := campaign.roster()
 		var party: Array[HeroRecord] = []
 		while party.size() < 4:

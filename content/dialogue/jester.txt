@@ -31,6 +31,26 @@ Jester: Down there in the dark I heard someone humming it. Not me. Something tha
 Ancestor: The dark collects what we leave unfinished. It has an excellent memory, and no taste at all.
 
 == level 6
+Jester: News from the old court. Lord Halloran is dead. Choked on a fishbone at dinner, if you can believe it.
+Jester: Eleven years I planned his death in a hundred ballads, and a fish did it. I've never been so jealous of a fish.
+Ancestor: Tyrants rarely die as they deserve. It is the one thing they cannot command.
+
+== level 7
+Jester: Found a throwing knife in the market today. The twins' mark on the handle. I'd know it anywhere.
+Jester: The seller took it off a body on the north road, years ago. I paid twice what was asked.
+Ancestor: Keep it close, fool. Every troupe needs its knife-thrower.
+
+== level 8
+Ancestor: There was singing in the tavern tonight. A voice no one in the hamlet had heard before.
+Jester: My sister's part. I never sang it. It was hers. Tonight there was no one else to sing it, so.
+Jester: Not as good as hers. Nobody cried, which is how I know. She always made them cry.
+
+== level 9
+Jester: Down there today the dark hummed again. A different tune this time. One I'd played for the party at the fire.
+Jester: It's learning. Or it's listening. Either way, I mean to give it a better ending than it expects.
+Ancestor: Careful. An audience that never leaves is still an audience that never leaves.
+
+== level 10
 Jester: I finished it. The last verse. It's about a fool who walked into the dark with friends and came out again.
 Jester: Not much of a rhyme. Wonderful ending, though. Shall I play it? No? Later, then. There'll be a later.
 Ancestor: For once, fool, I hope you are right.

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_hx6u1"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_17d5x"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_8ifln"]
+
+[resource]
+script = ExtResource("2_17d5x")
+id = &"mercy_freely_given"
+display_name = "Mercy, Freely Given"
+flavour = "Not lent from heaven. Given anyway."
+stats = Dictionary[StringName, float]({
+&"resist_stress": 0.3,
+&"resolute": 0.15
+})

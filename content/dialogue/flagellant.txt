@@ -30,6 +30,26 @@ Flagellant: Every stroke I paid for him, he spent somewhere warm. I have been bl
 Ancestor: So the faith was false and the pain was real. Which will you keep?
 
 == level 6
+Ancestor: The rider from the marsh country came back through, and stayed to talk. The penitent listened to every word.
+Flagellant: Anselm lives. A fat house in Coldwater, two days' walk. He preaches still. People still give.
+Flagellant: I have thought of that walk every night since. I have not decided what I would do at the end of it.
+
+== level 7
+Flagellant: I walked half the road to Coldwater today. Then I turned back.
+Flagellant: If I go to him, I go with the lash. And the lash was always his. I will not give him that too.
+Ancestor: You have learned what took me a lifetime. Some debts are only paid by refusing to collect them.
+
+== level 8
+Flagellant: A girl came up the road with a lash today, as I once did. She asked me to teach her.
+Flagellant: I told her the truth about Morrow and about Anselm. She wept. Then she gave me the lash. It is in the fire.
+Ancestor: One fewer in the world. That is a kind of healing, penitent, even with your own wounds still open.
+
+== level 9
+Flagellant: I went back to Morrow. The marsh has taken most of it. I dug graves for the ones the bells could not save.
+Flagellant: It took eleven days. My back opened again from the work, not the lash. That pain I did not mind.
+Ancestor: Honest pain. You had forgotten there was such a thing.
+
+== level 10
 Flagellant: I still bleed. I will always bleed. But not for Anselm, and not for heaven.
 Flagellant: I bleed so that the ones beside me do not. That is a debt I chose. It is the only kind worth paying.
 Ancestor: Then take the front, penitent. Morrow could not be saved. These, perhaps, can.

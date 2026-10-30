@@ -29,6 +29,26 @@ Crusader: Perhaps the light was never mine to call. Perhaps it was only ever the
 Ancestor: Doubt is a blade too. Hold it by the right end.
 
 == level 6
+Crusader: Down there, among the risen, one wore a pilgrim's badge from Hesperon. The gate village sold them to travellers.
+Crusader: It did not attack me. It only stood there, as if waiting for me to say something. I had nothing to say.
+Ancestor: The dead are patient creditors. They will wait for an answer as long as it takes.
+
+== level 7
+Crusader: I wrote to Tobin's mother tonight. Twelve years late. I told her he was brave. That was true.
+Crusader: I did not tell her I sent him up the breach. That is also true. The letter is still on the table.
+Ancestor: Some truths are kept from mercy, knight, and some from cowardice. Only you know which this is.
+
+== level 8
+Ancestor: The knight burned something in the courtyard fire tonight. White cloth, a red cross. It burned quickly.
+Crusader: The Order's colours. I wore them to Hesperon and home again. They meant something once. I can no longer remember what.
+Crusader: The armour stays. It still turns a blade. That is honest work, at least.
+
+== level 9
+Crusader: A child in the hamlet asked me for a blessing for a sick brother. I said I had none to give.
+Crusader: Then promise to come back, the child said. That, I could give.
+Ancestor: Smaller vows are easier to keep, and harder to break. Choose them well.
+
+== level 10
 Crusader: I have stopped fighting for heaven. Heaven has its own soldiers, if it wants them.
 Crusader: I fight for the ones on my left and my right, and for a hamlet that still lights its candles. That is crusade enough for one life.
 Ancestor: A holy man would call that heresy. I have known many holy men. I would rather have you.

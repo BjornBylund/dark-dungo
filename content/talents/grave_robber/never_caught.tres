@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_45gxw"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_rphj6"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_u1f8g"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_beou5"]
+
+[sub_resource type="Resource" id="Resource_mci6u"]
+script = ExtResource("4_beou5")
+token = &"stealth"
+
+[sub_resource type="Resource" id="Resource_1wfp6"]
+script = ExtResource("3_u1f8g")
+when = 9
+effects = Array[ExtResource("4_beou5")]([SubResource("Resource_mci6u")])
+
+[resource]
+script = ExtResource("2_rphj6")
+id = &"never_caught"
+display_name = "Never Caught"
+stats = Dictionary[StringName, float]({
+&"resist_stress": 0.1
+})
+triggers = Array[ExtResource("3_u1f8g")]([SubResource("Resource_1wfp6")])

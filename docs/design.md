@@ -62,9 +62,9 @@ DD1's town loop ([research/darkest-dungeon-town.md](research/darkest-dungeon-tow
 - **One mission is one week.** The week advances when the party returns, whether it won, retreated or wiped. Then: Abbey and Tavern visits and wound treatments finish, idle heroes lose stress, and the mission board refreshes.
 - **Regions**, like DD1's Ruins, Weald, Warrens and Cove: three placeholder places, each with its own enemy groups and finale. **The Graveyard** has skeletons and cultists, **the Burrows** ghouls and spitters, and **the Chapel** cultists and the Brute (`content/regions/`).
 - **Regions open one at a time,** in that order. Only the Graveyard is open at the start; beating a region's boss for the first time opens the next one, and the mission results say so. On the expedition map a closed region shows dimmed, with the boss that opens it ("Opens when The Gravelord falls").
-- **Missions:** 2 per open region each week, or 4 while only the first is open, so 4 to 6 to choose from. Each has a **tier** (Apprentice level 1, Veteran level 3, Champion level 5) and a **length** (short, medium, long). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 2, Champion once a hero reaches level 4.
+- **Missions:** 2 per open region each week, or 4 while only the first is open, so 4 to 6 to choose from. Each has a **tier** (Apprentice level 1, Veteran level 4, Champion level 7: the tiers spread over hero levels 1–10) and a **length** (short, medium, long). At least one is at the highest unlocked tier and, once Veteran is unlocked, at least one is still Apprentice. Veteran missions appear once a hero reaches level 3, Champion once a hero reaches level 6.
 - **A mission is a map** of rooms to pick a route through, like a Slay the Spire act or DD2's roads, longer for longer missions. Its goal is to reach the end and win the region's finale, or its boss on a boss mission. See [Mission maps](#mission-maps). DD1's other quest goals (Explore, Gather, Activate) stay deferred.
-- **Party selection:** up to 4 heroes, rank 1 first in the order picked. Heroes who are Wounded or busy at the Abbey can't go. Heroes at least 2 levels above the mission level refuse it ("will not go"). Heroes more than one level below it start the mission with +2 stress per level short: level 0 is fine for Apprentice, level 2 for Veteran, level 4 for Champion.
+- **Party selection:** up to 4 heroes, rank 1 first in the order picked. Heroes who are Wounded or busy at the Abbey can't go. Heroes at least 3 levels above the mission level refuse it ("will not go"), except Champion missions, which any hero takes. Heroes more than one level below it start the mission with +2 stress per level short: level 0 is fine for Apprentice, level 3 for Veteran, level 6 for Champion.
 - **Nobody fit to go:** when every hero is Wounded or busy in town and no recruit is waiting to join, the board offers **Wait out the week**, which ends the week without a mission. It keeps a wiped party that can't afford treatment from locking the campaign; DD1 never needs it because its Stagecoach always has recruits.
 
 ### Region bosses
@@ -83,7 +83,7 @@ After DD1's region progress and bosses:
 | Graveyard | **The Gravelord** (2 ranks), with a Bone Spearman and a Cultist | Bone Storm on every rank, Grasp of the Grave (heavy, Weak), Raise the Dead (Strength for all), Death Knell (stress to all) |
 | Burrows | **The Maw** (2 ranks), with two Spitters | Gorge (heavy, Bleed), Swallow (Stun), Retch (Blight on the back ranks), Ravenous Howl (stress to all) |
 | Chapel | **The Hollow Saint** (rank 4, acts twice), behind the Brute and a Cultist | Sermon of Despair (+2 stress to all), Smite (heavy, Vulnerable), Wailing Choir (every rank), Hallowed Ward (Block for all), Saint's Mercy (heals) |
-- **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +50% HP and damage and +5% crit.
+- **Enemy tiers:** Veteran enemies have +25% HP and damage; Champion enemies +90% HP, +75% damage and +5% crit (up from +50% and +50% when talents came in, so missions stay about as hard: at the same XP, heroes with their talents finish about 10 points more often than before talents, at either tier).
 
 ### Rewards
 
@@ -157,12 +157,16 @@ Tuned so that a fresh level-0 party lost about 50–60% of its HP to an elite, a
 
 ### Hero growth
 
-- **Levels 1–6** at 2 / 8 / 14 / 24 / 36 / 48 total XP. Each level gives +10% to stun, bleed, blight, burn, move and debuff resistance, and raises the gear and skill caps.
-- **Blacksmith:** weapon and armour ranks 2–5 for 750 / 1,750 / 3,000 / 6,000 gold, needing hero level 1 / 2 / 3 / 5 and the matching Blacksmith upgrade.
+- **Levels 1–10** at 2 / 5 / 8 / 12 / 17 / 22 / 28 / 34 / 41 / 48 total XP: level 10 takes the XP level 6 took when that was the most, so the campaign keeps its length. Each level gives +6% to stun, bleed, blight, burn, move and debuff resistance (+60% at 10, as at the old 6), and raises the gear and skill caps.
+- **Talents:** a point at levels 2, 4, 6, 8 and 10, each spent on one of that row's three talents. Each class has its own 15 (`content/talents/<class>/`): row 1 sets a style (damage, health or healing), rows 2 and 4 work with the class's skills, row 3 is staying power, row 5 a capstone. They are made like trinkets (stats, stats with a condition, triggers), so they need no combat rules of their own, and work like trinkets that can't come off.
+  - Chosen on the hero sheet's **Talents** tab, which opens by itself while a point waits; the roster shows a gold diamond on the portrait, and the mission results say so. Rows can be chosen in any order. A click picks a talent and **Choose** confirms it.
+  - Choosing is for good, except at the **Guild**, which clears all of a hero's talents for 1,000 gold (×1.4 at levels 4–6, ×1.8 at 7–10) so the points can go elsewhere.
+  - In a fight, a hero's details list their trinkets and talents.
+- **Blacksmith:** weapon and armour ranks 2–5 for 750 / 1,750 / 3,000 / 6,000 gold, needing hero level 1 / 3 / 5 / 8 and the matching Blacksmith upgrade.
   - Each weapon rank above 1: +10% damage, +1% crit, and +1 speed at ranks 3 and 5.
   - Each armour rank above 1: +20% of base HP.
 - **Guild:** skill ranks 2–5 for 250 / 750 / 1,250 / 2,500 gold, same level gates, needing the matching Guild upgrade. Each rank above 1: +10% damage or healing, +1% crit, +10% resistance pierce on its effects.
-- **Skill loadouts**: each class has more skills than a hero takes into a fight. A hero takes **5**, DD2's number, chosen from the skills they've learned. Every hero knows their class's 5 DD2 starting skills from the start, and learns the other 6 at the Guild for 500 gold each (×1.4 at levels 3–4, ×1.8 at 5–6); a new skill is equipped straight away while a slot is free. Only learned skills can be trained. The 5 are chosen in town (the hero's sheet or the Guild) or on the mission map between rooms (the Skills button), and apply from the next fight.
+- **Skill loadouts**: each class has more skills than a hero takes into a fight. A hero takes **5**, DD2's number, chosen from the skills they've learned. Every hero knows their class's 5 DD2 starting skills from the start, and learns the other 6 at the Guild for 500 gold each (×1.4 at levels 4–6, ×1.8 at 7–10); a new skill is equipped straight away while a slot is free. Only learned skills can be trained. The 5 are chosen in town (the hero's sheet or the Guild) or on the mission map between rooms (the Skills button), and apply from the next fight.
 
 ### Bonds
 
@@ -243,7 +247,7 @@ Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
   - a recruit gets their own scene as they join;
   - each level a hero gains brings a scene when the party is back in town.
 - **What they say:** a mix of each hero's backstory and what has just happened.
-  - Each hero's past comes a part at a time, levels 1 to 6. The recruits' join scene sets theirs up.
+  - Each hero's past comes a part at a time, levels 1 to 10. The recruits' join scene sets theirs up.
   - Before the first part, the hero looks back on the mission just finished: the boss, the region, a long road, a comrade who fell, their own stress, a bonded partner, or a particular hero beside them, who may answer. The best-fitting line plays.
   - The Ancestor greets the party home once, before the first of a mission's scenes.
 - **Writing:** original, not DD's script. The heroes go by their class names, and the backstories are new.

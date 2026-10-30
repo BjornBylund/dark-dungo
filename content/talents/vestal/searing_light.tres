@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_0sbv2"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_r72r6"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_kpp7c"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_krcb5"]
+
+[sub_resource type="Resource" id="Resource_rrij8"]
+script = ExtResource("4_krcb5")
+token = &"blind"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_jswgy"]
+script = ExtResource("3_kpp7c")
+when = 5
+to = 1
+effects = Array[ExtResource("4_krcb5")]([SubResource("Resource_rrij8")])
+if_skills = Array[StringName]([&"judgement", &"illumination"])
+
+[resource]
+script = ExtResource("2_r72r6")
+id = &"searing_light"
+display_name = "Searing Light"
+triggers = Array[ExtResource("3_kpp7c")]([SubResource("Resource_jswgy")])

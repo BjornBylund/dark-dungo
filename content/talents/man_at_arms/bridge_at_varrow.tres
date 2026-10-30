@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_tvtql"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_6msry"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_n1ipv"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_37o5p"]
+
+[sub_resource type="Resource" id="Resource_muslw"]
+script = ExtResource("4_37o5p")
+token = &"weak"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_ndk1b"]
+script = ExtResource("3_n1ipv")
+when = 8
+to = 1
+effects = Array[ExtResource("4_37o5p")]([SubResource("Resource_muslw")])
+
+[resource]
+script = ExtResource("2_6msry")
+id = &"bridge_at_varrow"
+display_name = "The Bridge at Varrow"
+flavour = "Hold until the column crosses."
+triggers = Array[ExtResource("3_n1ipv")]([SubResource("Resource_ndk1b")])

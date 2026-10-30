@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_xncdx"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_le5a5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_o2l4e"]
+
+[resource]
+script = ExtResource("2_le5a5")
+id = &"alchemist"
+display_name = "Alchemist"
+flavour = "Four thousand dead taught the doses."
+stats = Dictionary[StringName, float]({
+&"dot_dealt_blight": 1.0
+})

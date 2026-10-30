@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_73dsp"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_dp83p"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_svq8h"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_kswko"]
+
+[sub_resource type="Resource" id="Resource_xgr7a"]
+script = ExtResource("4_kswko")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_pwcse"]
+script = ExtResource("3_svq8h")
+when = 15
+to = 1
+effects = Array[ExtResource("4_kswko")]([SubResource("Resource_xgr7a")])
+if_skills = Array[StringName]([&"emboldening_vapours"])
+
+[resource]
+script = ExtResource("2_dp83p")
+id = &"emboldening_mixture"
+display_name = "Emboldening Mixture"
+triggers = Array[ExtResource("3_svq8h")]([SubResource("Resource_pwcse")])

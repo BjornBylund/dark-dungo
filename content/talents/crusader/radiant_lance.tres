@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_0kuqj"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_7a7ma"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_pp40w"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_kj0x3"]
+
+[sub_resource type="Resource" id="Resource_n3m4h"]
+script = ExtResource("4_kj0x3")
+kind = 1
+dot = &"burn"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_m5b11"]
+script = ExtResource("3_pp40w")
+when = 5
+to = 1
+effects = Array[ExtResource("4_kj0x3")]([SubResource("Resource_n3m4h")])
+if_skills = Array[StringName]([&"holy_lance", &"radiance"])
+
+[resource]
+script = ExtResource("2_7a7ma")
+id = &"radiant_lance"
+display_name = "Radiant Lance"
+triggers = Array[ExtResource("3_pp40w")]([SubResource("Resource_m5b11")])

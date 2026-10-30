@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_wy0j6"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_2ldwx"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_mbne5"]
+
+[resource]
+script = ExtResource("2_2ldwx")
+id = &"thick_hide"
+display_name = "Thick Hide"
+stats = Dictionary[StringName, float]({
+&"resist_bleed": 0.3,
+&"resist_blight": 0.2
+})

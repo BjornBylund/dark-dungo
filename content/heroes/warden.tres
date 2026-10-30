@@ -15,6 +15,22 @@
 [ext_resource type="Texture2D" path="res://art/skills/stand_fast.svg" id="10_x7q5s"]
 [ext_resource type="Texture2D" path="res://art/skills/courageous_abandon.svg" id="12_dkk6a"]
 [ext_resource type="Texture2D" path="res://art/skills/strategic_withdrawal.svg" id="14_0noi2"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="16_7vmel"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/old_campaigner.tres" id="17_g6dr4"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/drillmaster.tres" id="18_1v05k"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/heavy_hand.tres" id="19_j4nj4"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/shield_wall.tres" id="20_la1uj"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/counterman.tres" id="21_jj6cc"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/crushing_weight.tres" id="22_m4bpl"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/discipline_of_the_ninth.tres" id="23_5p2i0"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/hold_fast.tres" id="24_qdu1h"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/watchful.tres" id="25_1t0ib"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/bridge_at_varrow.tres" id="26_usl18"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/commander.tres" id="27_u01be"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/steady_the_line.tres" id="28_4da5r"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/eleven_walked_off.tres" id="29_ooryv"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/iron_wall.tres" id="30_0nour"]
+[ext_resource type="Resource" path="res://content/talents/man_at_arms/standard_bearer.tres" id="31_0qf0c"]
 
 [sub_resource type="Resource" id="Resource_jc205"]
 script = ExtResource("2_cckrm")
@@ -290,4 +306,5 @@ skills = Array[ExtResource("2_cckrm")]([SubResource("Resource_o7kgr"), SubResour
 riposte_skill = SubResource("Resource_jc205")
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_1y2y3")
+talents = Array[ExtResource("16_7vmel")]([ExtResource("17_g6dr4"), ExtResource("18_1v05k"), ExtResource("19_j4nj4"), ExtResource("20_la1uj"), ExtResource("21_jj6cc"), ExtResource("22_m4bpl"), ExtResource("23_5p2i0"), ExtResource("24_qdu1h"), ExtResource("25_1t0ib"), ExtResource("26_usl18"), ExtResource("27_u01be"), ExtResource("28_4da5r"), ExtResource("29_ooryv"), ExtResource("30_0nour"), ExtResource("31_0qf0c")])
 dialogue = "res://content/dialogue/man_at_arms.txt"

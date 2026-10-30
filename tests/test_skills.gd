@@ -58,7 +58,7 @@ func test_a_hero_keeps_at_least_one_skill() -> void:
 func test_learning_is_dearer_for_higher_levels() -> void:
 	var campaign := _campaign()
 	var hero := _hero(campaign)
-	hero.xp = CampaignRules.LEVEL_XP[4]
+	hero.xp = CampaignRules.LEVEL_XP[CampaignRules.TIER_LEVELS[CampaignRules.Tier.CHAMPION] - 1]
 	assert_eq(campaign.learn_price(hero), roundi(CampaignRules.SKILL_LEARN_PRICE * 1.8))
 
 

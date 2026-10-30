@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_h8w6g"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_g1wap"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_6wk8n"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_hnlkw"]
+
+[sub_resource type="Resource" id="Resource_y56jd"]
+script = ExtResource("4_hnlkw")
+token = &"conviction"
+
+[sub_resource type="Resource" id="Resource_8o4dk"]
+script = ExtResource("3_6wk8n")
+when = 0
+effects = Array[ExtResource("4_hnlkw")]([SubResource("Resource_y56jd")])
+
+[resource]
+script = ExtResource("2_g1wap")
+id = &"vigil"
+display_name = "Vigil"
+triggers = Array[ExtResource("3_6wk8n")]([SubResource("Resource_8o4dk")])

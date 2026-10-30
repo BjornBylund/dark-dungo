@@ -1,5 +1,6 @@
 ## A hero in a town list, DD1's roster card: a framed portrait with the level
-## badge on its corner, the name, stress pips and an optional status tag.
+## badge on its corner (and a gold diamond while a talent point waits), the
+## name, stress pips and an optional status tag.
 ## Toggles to show selection.
 class_name HeroBadge
 extends BaseButton
@@ -40,6 +41,11 @@ func _draw() -> void:
 	var portrait := Rect2(7, 7, 52, 52)
 	UiStyle.draw_portrait(self, portrait, hero.def)
 	UiStyle.draw_level_badge(self, portrait.position + Vector2(6, portrait.size.y - 6), hero.level(), 12.0)
+	if hero.talent_points() > 0:
+		# A talent point waits: a gold diamond on the portrait's corner.
+		var corner := portrait.position + Vector2(portrait.size.x - 5, 5)
+		draw_colored_polygon(UiStyle.diamond(corner, 8.0), Color("140d0b"))
+		draw_colored_polygon(UiStyle.diamond(corner, 6.0), UiStyle.GOLD)
 	var display := UiStyle.DISPLAY_FONT
 	var body := UiStyle.BODY_FONT
 	draw_string(display, Vector2(70, 28), hero.display_name, HORIZONTAL_ALIGNMENT_LEFT, size.x - 150, 24,

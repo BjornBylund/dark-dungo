@@ -15,6 +15,22 @@
 [ext_resource type="Texture2D" path="res://art/skills/repartee.svg" id="10_u8ukv"]
 [ext_resource type="Texture2D" path="res://art/skills/pirouette.svg" id="13_6w5a8"]
 [ext_resource type="Texture2D" path="res://art/skills/glint_in_the_dark.svg" id="14_hy35a"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="16_tvdsc"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/light_fingers.tres" id="17_cg4ma"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/graverobbers_eye.tres" id="18_cwgky"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/sextons_constitution.tres" id="19_a6nya"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/thrown_steel.tres" id="20_5iqdp"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/poisoner.tres" id="21_55lpv"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/opportunist.tres" id="22_rt7lb"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/shadow_step.tres" id="23_7qa8o"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/slippery.tres" id="24_rhjvq"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/three_days_in_the_dark.tres" id="25_4h8c0"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/corwins_lesson.tres" id="26_wecvy"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/dead_of_night.tres" id="27_k0wwn"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/reapers_toll.tres" id="28_4ylww"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/master_thief.tres" id="29_2qp6h"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/never_caught.tres" id="30_l4hur"]
+[ext_resource type="Resource" path="res://content/talents/grave_robber/a_fathers_ring.tres" id="31_rq76t"]
 
 [sub_resource type="Resource" id="Resource_sam3a"]
 script = ExtResource("2_phsca")
@@ -235,4 +251,5 @@ resist_debuff = 0.3
 skills = Array[ExtResource("2_phsca")]([SubResource("Resource_sam3a"), SubResource("Resource_d34c1"), SubResource("Resource_lhmfi"), SubResource("Resource_nl0im"), SubResource("Resource_uti4w"), SubResource("Resource_xe5su"), SubResource("Resource_cwgky"), SubResource("Resource_5iqdp"), SubResource("Resource_rt7lb"), SubResource("Resource_4h8c0"), SubResource("Resource_k0wwn")])
 swap_offsets = Array[int]([-2, -1, 1, 2])
 sprite = ExtResource("9_sprite")
+talents = Array[ExtResource("16_tvdsc")]([ExtResource("17_cg4ma"), ExtResource("18_cwgky"), ExtResource("19_a6nya"), ExtResource("20_5iqdp"), ExtResource("21_55lpv"), ExtResource("22_rt7lb"), ExtResource("23_7qa8o"), ExtResource("24_rhjvq"), ExtResource("25_4h8c0"), ExtResource("26_wecvy"), ExtResource("27_k0wwn"), ExtResource("28_4ylww"), ExtResource("29_2qp6h"), ExtResource("30_l4hur"), ExtResource("31_rq76t")])
 dialogue = "res://content/dialogue/grave_robber.txt"

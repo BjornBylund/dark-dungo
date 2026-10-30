@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_2rkc6"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_gdb60"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_4dyio"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_qqfr0"]
+
+[sub_resource type="Resource" id="Resource_4hxc4"]
+script = ExtResource("4_qqfr0")
+token = &"vulnerable"
+
+[sub_resource type="Resource" id="Resource_p0tw1"]
+script = ExtResource("3_4dyio")
+when = 7
+to = 1
+effects = Array[ExtResource("4_qqfr0")]([SubResource("Resource_4hxc4")])
+
+[resource]
+script = ExtResource("2_gdb60")
+id = &"vivisection"
+display_name = "Vivisection"
+flavour = "Some lived longer. It is all written down."
+triggers = Array[ExtResource("3_4dyio")]([SubResource("Resource_p0tw1")])

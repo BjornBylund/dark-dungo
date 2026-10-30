@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_0dyun"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ky113"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_nwy56"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_bp2ro"]
+
+[sub_resource type="Resource" id="Resource_n4b3s"]
+script = ExtResource("4_bp2ro")
+token = &"crit"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_etcdd"]
+script = ExtResource("3_nwy56")
+when = 15
+to = 2
+effects = Array[ExtResource("4_bp2ro")]([SubResource("Resource_n4b3s")])
+if_skills = Array[StringName]([&"battle_ballad"])
+
+[resource]
+script = ExtResource("2_ky113")
+id = &"battle_hymn"
+display_name = "Battle Hymn"
+triggers = Array[ExtResource("3_nwy56")]([SubResource("Resource_etcdd")])

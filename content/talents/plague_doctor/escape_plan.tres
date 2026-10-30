@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_p55ss"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_murc0"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_3g6qr"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_pxycu"]
+
+[sub_resource type="Resource" id="Resource_2pqu5"]
+script = ExtResource("4_pxycu")
+token = &"dodge"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_01gn7"]
+script = ExtResource("3_3g6qr")
+when = 8
+effects = Array[ExtResource("4_pxycu")]([SubResource("Resource_2pqu5")])
+
+[resource]
+script = ExtResource("2_murc0")
+id = &"escape_plan"
+display_name = "Escape Plan"
+triggers = Array[ExtResource("3_3g6qr")]([SubResource("Resource_01gn7")])

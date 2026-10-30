@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_lef8y"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_3nirk"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_s8p88"]
+
+[resource]
+script = ExtResource("2_3nirk")
+id = &"abundant_light"
+display_name = "Abundant Light"
+stats = Dictionary[StringName, float]({
+&"regen_dealt": 1.0
+})

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_psf0i"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_kf582"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_8to2a"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_doe56"]
+
+[sub_resource type="Resource" id="Resource_b0k2i"]
+script = ExtResource("4_doe56")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_13e03"]
+script = ExtResource("3_8to2a")
+when = 15
+to = 1
+effects = Array[ExtResource("4_doe56")]([SubResource("Resource_b0k2i")])
+if_skills = Array[StringName]([&"inspiring_cry"])
+
+[resource]
+script = ExtResource("2_kf582")
+id = &"litany"
+display_name = "Litany"
+triggers = Array[ExtResource("3_8to2a")]([SubResource("Resource_13e03")])

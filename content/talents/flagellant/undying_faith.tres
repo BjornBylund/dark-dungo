@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_074al"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_tvp1x"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_5o4v3"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_2hct7"]
+
+[sub_resource type="Resource" id="Resource_aj5do"]
+script = ExtResource("4_2hct7")
+token = &"block_plus"
+
+[sub_resource type="Resource" id="Resource_avmfv"]
+script = ExtResource("3_5o4v3")
+when = 10
+effects = Array[ExtResource("4_2hct7")]([SubResource("Resource_aj5do")])
+
+[resource]
+script = ExtResource("2_tvp1x")
+id = &"undying_faith"
+display_name = "Undying Faith"
+triggers = Array[ExtResource("3_5o4v3")]([SubResource("Resource_avmfv")])

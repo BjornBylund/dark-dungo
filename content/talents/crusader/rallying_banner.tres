@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_2nxjy"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_4572c"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_w2nw3"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_m2of4"]
+
+[sub_resource type="Resource" id="Resource_mt87d"]
+script = ExtResource("4_m2of4")
+kind = 13
+amount = -1
+
+[sub_resource type="Resource" id="Resource_ks045"]
+script = ExtResource("3_w2nw3")
+when = 15
+to = 2
+effects = Array[ExtResource("4_m2of4")]([SubResource("Resource_mt87d")])
+if_skills = Array[StringName]([&"rallying_cry"])
+
+[resource]
+script = ExtResource("2_4572c")
+id = &"rallying_banner"
+display_name = "Rallying Banner"
+triggers = Array[ExtResource("3_w2nw3")]([SubResource("Resource_ks045")])

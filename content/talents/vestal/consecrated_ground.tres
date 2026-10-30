@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_owxbp"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_bg1s7"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_6yfed"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_gxa55"]
+
+[sub_resource type="Resource" id="Resource_mkx0a"]
+script = ExtResource("4_gxa55")
+kind = 13
+amount = -1
+
+[sub_resource type="Resource" id="Resource_urajb"]
+script = ExtResource("3_6yfed")
+when = 15
+to = 2
+effects = Array[ExtResource("4_gxa55")]([SubResource("Resource_mkx0a")])
+if_skills = Array[StringName]([&"consecration_of_fortitude", &"consecration_of_light"])
+
+[resource]
+script = ExtResource("2_bg1s7")
+id = &"consecrated_ground"
+display_name = "Consecrated Ground"
+triggers = Array[ExtResource("3_6yfed")]([SubResource("Resource_urajb")])

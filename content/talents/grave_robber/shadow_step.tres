@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_su8j4"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_lxd5r"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_j44h0"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_x6pl6"]
+
+[sub_resource type="Resource" id="Resource_ptg66"]
+script = ExtResource("4_x6pl6")
+token = &"stealth"
+
+[sub_resource type="Resource" id="Resource_2ksax"]
+script = ExtResource("3_j44h0")
+when = 0
+effects = Array[ExtResource("4_x6pl6")]([SubResource("Resource_ptg66")])
+
+[resource]
+script = ExtResource("2_lxd5r")
+id = &"shadow_step"
+display_name = "Shadow Step"
+triggers = Array[ExtResource("3_j44h0")]([SubResource("Resource_2ksax")])

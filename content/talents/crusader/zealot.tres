@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_2hlgn"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_phtol"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_cs7iy"]
+
+[resource]
+script = ExtResource("2_phtol")
+id = &"zealot"
+display_name = "Zealot"
+flavour = "The light is quicker to answer a swinging sword."
+stats = Dictionary[StringName, float]({
+&"damage": 0.1
+})

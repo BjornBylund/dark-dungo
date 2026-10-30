@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vcmvb"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_g1spx"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_6dlin"]
+
+[resource]
+script = ExtResource("2_g1spx")
+id = &"unbowed"
+display_name = "Unbowed"
+stats = Dictionary[StringName, float]({
+&"resist_move": 0.2,
+&"resist_stun": 0.2
+})

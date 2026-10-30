@@ -54,6 +54,7 @@ func refresh() -> void:
 		return
 	_resistances()
 	_status()
+	_perks()
 	_skills()
 
 
@@ -153,7 +154,7 @@ func _status() -> void:
 	for regen: Dictionary in unit.regens:
 		lines.append([null, "Regen %d" % regen.amount, "heals each turn, %d more" % regen.turns])
 	for buff: Dictionary in unit.buffs:
-		if buff.expiry in [Combatant.BuffExpiry.TRINKET, Combatant.BuffExpiry.BOND]:
+		if buff.expiry in [Combatant.BuffExpiry.TRINKET, Combatant.BuffExpiry.TALENT, Combatant.BuffExpiry.BOND]:
 			continue
 		var lasts := "for %d more rounds" % buff.rounds if buff.expiry == Combatant.BuffExpiry.ROUNDS else ""
 		lines.append([null, UiStyle.buff_text(buff.stat, buff.amount), lasts])
@@ -177,6 +178,23 @@ func _status() -> void:
 		row.add_child(help)
 	if bonds != "":
 		_box.add_child(_label(bonds, 16, UiStyle.PALE_GREEN, true))
+
+
+## A hero's trinkets and talents by name; hover one for what it does.
+func _perks() -> void:
+	if unit.perks.is_empty():
+		return
+	_box.add_child(_heading("Trinkets and talents", ""))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 18)
+	flow.add_theme_constant_override("v_separation", 4)
+	_box.add_child(flow)
+	for perk in unit.perks:
+		var trinket := perk as TrinketDef
+		var name: String = trinket.display_name if trinket else (perk as TalentDef).display_name
+		var label := _label(name, 17, UiStyle.RARITY_COLORS[trinket.rarity] if trinket else UiStyle.GOLD)
+		label.tooltip_text = "%s\n%s" % [name, UiStyle.plain(UiStyle.perk_bbcode(perk, "\n", unit.def))]
+		flow.add_child(label)
 
 
 ## The unit's skills as icon rows with their rank pips; hover one for what it does.

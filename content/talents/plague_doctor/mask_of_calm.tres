@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_0meno"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ilr8l"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_p0fh8"]
+
+[resource]
+script = ExtResource("2_ilr8l")
+id = &"mask_of_calm"
+display_name = "Mask of Calm"
+stats = Dictionary[StringName, float]({
+&"resist_debuff": 0.1,
+&"resist_stress": 0.15
+})

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_y8fr1"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_tabjq"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_w0xck"]
+
+[resource]
+script = ExtResource("2_tabjq")
+id = &"lashs_reach"
+display_name = "Lash's Reach"
+stats = Dictionary[StringName, float]({
+&"dot_dealt_bleed": 1.0
+})

@@ -28,6 +28,26 @@ Vestal: And yet the wounds closed. The light came anyway. I no longer know whose
 Ancestor: Perhaps it was always yours, and heaven took the credit. It would not be the first time.
 
 == level 6
+Ancestor: A letter came for the Sister today, sealed in the wax of Saint Ilse.
+Vestal: The abbess wants me home. The convent has heard I heal without its blessing, and does not like it.
+Vestal: I have not answered. Twenty years I obeyed that seal. I am finding it hard to remember why.
+
+== level 7
+Vestal: The man I watched burn had a daughter. I found her today, selling bread in the hamlet.
+Vestal: I told her who I was. I expected her to spit. She asked whether he was afraid at the end. I said no. I lied.
+Ancestor: A merciful lie, Sister. You are learning the trade of the world. It is not all sin.
+
+== level 8
+Vestal: I wrote back to the abbess tonight. I said I would come home when the dark here is gone, and not before.
+Vestal: Then I told her to stop selling miracles at the gate. I have never written anything so frightening.
+Ancestor: Defiance looks well on you, Sister. Wear it often; it will fit better with time.
+
+== level 9
+Vestal: Today I held a dying soldier's hand, and the light came before I had finished asking.
+Vestal: As if it had been waiting. As if it had always been waiting, and I had always been the one who was late.
+Ancestor: Then do not keep it waiting any longer.
+
+== level 10
 Vestal: I used to think mercy was something I carried for someone else, like water from a well.
 Vestal: It isn't. It's mine. I choose it each time, and each time it costs me. That is what makes it worth giving.
 Ancestor: Then give it, Sister. There will be no shortage of those who need it.

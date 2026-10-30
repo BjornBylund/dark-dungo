@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_d4ukb"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_sl2ml"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_501y2"]
+
+[resource]
+script = ExtResource("2_sl2ml")
+id = &"troupe_stamina"
+display_name = "Troupe Stamina"
+flavour = "The road was not kind. The fool is still on it."
+stats = Dictionary[StringName, float]({
+&"max_hp": 0.1
+})

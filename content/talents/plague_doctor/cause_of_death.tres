@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_8mdai"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_g6ubg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_b7odg"]
+
+[sub_resource type="Resource" id="Resource_s5qkc"]
+script = ExtResource("1_8mdai")
+stat = &"damage"
+amount = 0.3
+if_target = &"blight"
+
+[resource]
+script = ExtResource("2_g6ubg")
+id = &"cause_of_death"
+display_name = "Diagnosis"
+bonuses = Array[ExtResource("1_8mdai")]([SubResource("Resource_s5qkc")])

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_pvtcv"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ejxxb"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_ckc0q"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_kjyv7"]
+
+[sub_resource type="Resource" id="Resource_7xry7"]
+script = ExtResource("4_kjyv7")
+kind = 7
+stat = &"resist_blight"
+stat_amount = 0.25
+
+[sub_resource type="Resource" id="Resource_28vev"]
+script = ExtResource("4_kjyv7")
+kind = 7
+stat = &"resist_bleed"
+stat_amount = 0.25
+
+[sub_resource type="Resource" id="Resource_d4dbn"]
+script = ExtResource("3_ckc0q")
+when = 0
+to = 2
+effects = Array[ExtResource("4_kjyv7")]([SubResource("Resource_7xry7"), SubResource("Resource_28vev")])
+
+[resource]
+script = ExtResource("2_ejxxb")
+id = &"quarantine"
+display_name = "Quarantine"
+triggers = Array[ExtResource("3_ckc0q")]([SubResource("Resource_d4dbn")])

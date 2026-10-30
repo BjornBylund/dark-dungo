@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_j0v07"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_rt03n"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_7wba0"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_xosra"]
+
+[sub_resource type="Resource" id="Resource_4qbe7"]
+script = ExtResource("4_xosra")
+token = &"dodge"
+
+[sub_resource type="Resource" id="Resource_64bwb"]
+script = ExtResource("3_7wba0")
+when = 15
+to = 1
+effects = Array[ExtResource("4_xosra")]([SubResource("Resource_4qbe7")])
+if_skills = Array[StringName]([&"inspiring_tune"])
+
+[resource]
+script = ExtResource("2_rt03n")
+id = &"rousing_tune"
+display_name = "Rousing Tune"
+triggers = Array[ExtResource("3_7wba0")]([SubResource("Resource_64bwb")])

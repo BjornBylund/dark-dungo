@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_wg8kc"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_41yh1"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_xx2ju"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_kjekw"]
+
+[sub_resource type="Resource" id="Resource_uk44d"]
+script = ExtResource("4_kjekw")
+token = &"vulnerable"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_cn2yv"]
+script = ExtResource("3_xx2ju")
+when = 5
+to = 1
+effects = Array[ExtResource("4_kjekw")]([SubResource("Resource_uk44d")])
+
+[resource]
+script = ExtResource("2_41yh1")
+id = &"lesson_of_hesperon"
+display_name = "Lesson of Hesperon"
+flavour = "Make an example, the bishops said."
+triggers = Array[ExtResource("3_xx2ju")]([SubResource("Resource_cn2yv")])

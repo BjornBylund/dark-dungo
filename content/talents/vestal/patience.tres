@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_iw6gc"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_3t8mf"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_lo112"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_odboq"]
+
+[sub_resource type="Resource" id="Resource_gp2wh"]
+script = ExtResource("4_odboq")
+token = &"block"
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_u1s8b"]
+script = ExtResource("3_lo112")
+when = 8
+effects = Array[ExtResource("4_odboq")]([SubResource("Resource_gp2wh")])
+
+[resource]
+script = ExtResource("2_3t8mf")
+id = &"patience"
+display_name = "Patience"
+triggers = Array[ExtResource("3_lo112")]([SubResource("Resource_u1s8b")])

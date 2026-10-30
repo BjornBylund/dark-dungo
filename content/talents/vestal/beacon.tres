@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_n1713"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ddd8f"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_48gbo"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_xwrk3"]
+
+[sub_resource type="Resource" id="Resource_ja2pl"]
+script = ExtResource("4_xwrk3")
+kind = 8
+amount = 1
+
+[sub_resource type="Resource" id="Resource_o5v1q"]
+script = ExtResource("3_48gbo")
+when = 1
+to = 2
+effects = Array[ExtResource("4_xwrk3")]([SubResource("Resource_ja2pl")])
+if_first = true
+
+[resource]
+script = ExtResource("2_ddd8f")
+id = &"beacon"
+display_name = "Beacon"
+triggers = Array[ExtResource("3_48gbo")]([SubResource("Resource_o5v1q")])

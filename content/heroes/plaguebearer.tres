@@ -15,6 +15,22 @@
 [ext_resource type="Texture2D" path="res://art/skills/indiscriminate_science.svg" id="11_0vc0v"]
 [ext_resource type="Texture2D" path="res://art/skills/cause_of_death.svg" id="12_ge6by"]
 [ext_resource type="Texture2D" path="res://art/skills/magnesium_rain.svg" id="14_7g73p"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="16_giu2i"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/field_surgeon.tres" id="17_ktf00"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/alchemist.tres" id="18_6ry14"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/steady_hands.tres" id="19_scrl2"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/concentrated_gas.tres" id="20_rrapi"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/blinding_powder.tres" id="21_80p6n"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/bedside_manner.tres" id="22_ecwnx"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/inoculated.tres" id="23_relso"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/mask_of_calm.tres" id="24_7aqd0"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/escape_plan.tres" id="25_80ifp"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/cause_of_death.tres" id="26_j5o6p"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/vivisection.tres" id="27_jwxeh"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/emboldening_mixture.tres" id="28_ltpse"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/plague_lord.tres" id="29_w88m2"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/orrells_method.tres" id="30_m0gk2"]
+[ext_resource type="Resource" path="res://content/talents/plague_doctor/quarantine.tres" id="31_ebg1w"]
 
 [sub_resource type="Resource" id="Resource_vpa55"]
 script = ExtResource("3_y0m3y")
@@ -262,4 +278,5 @@ resist_move = 0.2
 resist_debuff = 0.2
 skills = Array[ExtResource("2_gryt8")]([SubResource("Resource_0qw0v"), SubResource("Resource_5wh2p"), SubResource("Resource_ma84s"), SubResource("Resource_32hau"), SubResource("Resource_6ry14"), SubResource("Resource_80p6n"), SubResource("Resource_relso"), SubResource("Resource_80ifp"), SubResource("Resource_jwxeh"), SubResource("Resource_ebg1w"), SubResource("Resource_fayqc")])
 sprite = ExtResource("9_0vc0v")
+talents = Array[ExtResource("16_giu2i")]([ExtResource("17_ktf00"), ExtResource("18_6ry14"), ExtResource("19_scrl2"), ExtResource("20_rrapi"), ExtResource("21_80p6n"), ExtResource("22_ecwnx"), ExtResource("23_relso"), ExtResource("24_7aqd0"), ExtResource("25_80ifp"), ExtResource("26_j5o6p"), ExtResource("27_jwxeh"), ExtResource("28_ltpse"), ExtResource("29_w88m2"), ExtResource("30_m0gk2"), ExtResource("31_ebg1w")])
 dialogue = "res://content/dialogue/plague_doctor.txt"

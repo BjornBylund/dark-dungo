@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_pc17s"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_gomci"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_a60j4"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_4b8e4"]
+
+[sub_resource type="Resource" id="Resource_unxhc"]
+script = ExtResource("4_4b8e4")
+token = &"weak"
+chance = 0.3
+
+[sub_resource type="Resource" id="Resource_kgkft"]
+script = ExtResource("3_a60j4")
+when = 5
+to = 1
+effects = Array[ExtResource("4_4b8e4")]([SubResource("Resource_unxhc")])
+if_skills = Array[StringName]([&"blinding_gas", &"disorienting_blast"])
+
+[resource]
+script = ExtResource("2_gomci")
+id = &"blinding_powder"
+display_name = "Blinding Powder"
+triggers = Array[ExtResource("3_a60j4")]([SubResource("Resource_kgkft")])

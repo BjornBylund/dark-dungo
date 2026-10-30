@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_u7ctq"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_iqn4c"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_2lvfh"]
+
+[resource]
+script = ExtResource("2_iqn4c")
+id = &"sextons_constitution"
+display_name = "Sexton's Constitution"
+flavour = "Raised among the dead, and none the worse for it."
+stats = Dictionary[StringName, float]({
+&"max_hp": 0.1,
+&"resist_blight": 0.15
+})

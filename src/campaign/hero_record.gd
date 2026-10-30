@@ -28,6 +28,8 @@ var away_weeks := 0
 var next_mission: Dictionary[StringName, float] = {}
 ## Trinkets worn, at most CampaignRules.TRINKET_SLOTS.
 var trinkets: Array[TrinketDef] = []
+## The talent chosen on each row, by row: its id, or &"" for none yet.
+var talents: Array[StringName] = []
 
 var display_name: String:
 	get:
@@ -41,6 +43,54 @@ func _init(unit_def: UnitDef) -> void:
 
 func level() -> int:
 	return CampaignRules.level_for_xp(xp)
+
+
+# --- Talents ---
+
+## Talent rows the hero's level has opened.
+func talent_rows_open() -> int:
+	return CampaignRules.TALENT_LEVELS.filter(func(at: int) -> bool: return level() >= at).size()
+
+
+## The class's three talents on `row`.
+func talent_row(row: int) -> Array[TalentDef]:
+	var result: Array[TalentDef] = []
+	result.assign(def.talents.slice(row * CampaignRules.TALENTS_PER_ROW, (row + 1) * CampaignRules.TALENTS_PER_ROW))
+	return result
+
+
+## Which row `talent` is on, or -1 if it isn't the class's.
+func row_of(talent: TalentDef) -> int:
+	var index := def.talents.find(talent)
+	return -1 if index < 0 else index / CampaignRules.TALENTS_PER_ROW
+
+
+## The talent chosen on `row`, or null.
+func talent_on(row: int) -> TalentDef:
+	if row >= talents.size() or talents[row] == &"":
+		return null
+	for talent in talent_row(row):
+		if talent.id == talents[row]:
+			return talent
+	return null
+
+
+func chosen_talents() -> Array[TalentDef]:
+	var result: Array[TalentDef] = []
+	for row in talents.size():
+		var talent := talent_on(row)
+		if talent:
+			result.append(talent)
+	return result
+
+
+## Rows open with no talent chosen yet: the points waiting to be spent.
+func talent_points() -> int:
+	var points := 0
+	for row in talent_rows_open():
+		if talent_on(row) == null:
+			points += 1
+	return points
 
 
 func skill_rank(skill: SkillDef) -> int:
@@ -87,7 +137,7 @@ func to_dict() -> Dictionary:
 		def = def.resource_path, recruited = recruited, xp = xp, stress = stress,
 		weapon_rank = weapon_rank, armor_rank = armor_rank, skill_ranks = skill_ranks, known = known,
 		equipped = equipped, wounded = wounded, activity = activity, away_weeks = away_weeks,
-		next_mission = next_mission, trinkets = Trinkets.to_paths(trinkets),
+		next_mission = next_mission, trinkets = Trinkets.to_paths(trinkets), talents = talents,
 	}
 
 
@@ -127,4 +177,9 @@ static func from_dict(data: Dictionary) -> HeroRecord:
 		for perk: String in data.next_mission:
 			record.next_mission[StringName(perk)] = float(data.next_mission[perk])
 	record.trinkets = Trinkets.from_paths(data.get("trinkets", []))
+	# Only talents still on their row; saves from before talents have none.
+	for id: String in data.get("talents", []):
+		var row := record.talents.size()
+		var known := record.talent_row(row).any(func(talent: TalentDef) -> bool: return talent.id == StringName(id))
+		record.talents.append(StringName(id) if known else &"")
 	return record

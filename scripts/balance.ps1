@@ -1,15 +1,17 @@
 # Plays many whole missions with random parties, spread over parallel Godot
 # processes, and prints how often each mission length is finished, overall and
 # for parties with each class. Per-fight numbers: tools/balance_probe.gd.
-#   powershell -File scripts/balance.ps1 [-Tier 0] [-Level 0] [-Runs 240] [-Jobs 5]
-# Tier: 0 Apprentice, 1 Veteran, 2 Champion. Level: the heroes' level.
+#   powershell -File scripts/balance.ps1 [-Tier 0] [-Level 0] [-Runs 240] [-Jobs 5] [-NoTalents]
+# Tier: 0 Apprentice, 1 Veteran, 2 Champion. Level: the heroes' level; they spend
+# their talent points at random unless -NoTalents.
 # Runs: missions per length. Jobs: Godot processes per length.
 param(
     [int]$Tier = 0,
     [int]$Level = 0,
     [int]$Runs = 240,
     [int]$Jobs = 5,
-    [int]$TimeoutSeconds = 300
+    [int]$TimeoutSeconds = 300,
+    [switch]$NoTalents
 )
 $ErrorActionPreference = "Stop"
 $godot = $env:GODOT
@@ -28,10 +30,11 @@ $processes = @()
 foreach ($length in 0, 1, 2) {
     for ($job = 0; $job -lt $Jobs; $job++) {
         $log = Join-Path $out "$length-$job.log"
+        $probeArgs = @('--headless', '--path', $root, '--script', 'res://tools/mission_probe.gd', '--',
+            "--length=$length", "--tier=$Tier", "--level=$Level", "--runs=$perJob", "--first-seed=$($job * $perJob)")
+        if ($NoTalents) { $probeArgs += '--no-talents' }
         $processes += Start-Process -FilePath $godot -NoNewWindow -PassThru -RedirectStandardOutput $log `
-            -RedirectStandardError "$log.err" -ArgumentList @('--headless', '--path', $root, '--script',
-            'res://tools/mission_probe.gd', '--', "--length=$length", "--tier=$Tier", "--level=$Level",
-            "--runs=$perJob", "--first-seed=$($job * $perJob)")
+            -RedirectStandardError "$log.err" -ArgumentList $probeArgs
     }
 }
 foreach ($process in $processes) {
@@ -40,8 +43,8 @@ foreach ($process in $processes) {
 
 $names = "Short", "Medium", "Long"
 $tiers = "Apprentice", "Veteran", "Champion"
-Write-Output ("{0} missions, level {1} heroes, {2} runs per length, {3:N0}s" -f $tiers[$Tier], $Level,
-    ($perJob * $Jobs), ((Get-Date) - $started).TotalSeconds)
+Write-Output ("{0} missions, level {1} heroes{4}, {2} runs per length, {3:N0}s" -f $tiers[$Tier], $Level,
+    ($perJob * $Jobs), ((Get-Date) - $started).TotalSeconds, $(if ($NoTalents) { " without talents" } else { "" }))
 foreach ($length in 0, 1, 2) {
     $totals = @{ runs = 0; completed = 0; depth = 0; fights = 0; clear_shares = 0 }
     $classes = [ordered]@{}

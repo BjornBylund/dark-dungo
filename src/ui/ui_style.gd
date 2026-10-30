@@ -274,7 +274,8 @@ static func mission_summary(summary: Dictionary, campaign: Campaign) -> Array:
 	if summary.xp > 0:
 		lines.append("XP +%d" % summary.xp)
 	for hero: HeroRecord in summary.level_ups:
-		lines.append("%s reaches level %d!" % [hero.display_name, hero.level()])
+		lines.append("%s reaches level %d!%s" % [hero.display_name, hero.level(),
+				"  A talent to choose on their sheet." if hero.talent_points() > 0 else ""])
 	for line: String in summary.bonds:
 		lines.append(line)
 	if not summary.bonds.is_empty():
@@ -342,15 +343,18 @@ const _TRIGGER_NAMES := {
 }
 
 
-## A trinket's lines, each [text, upside]: stats, conditional stats, triggers.
-static func trinket_effects(trinket: TrinketDef) -> Array[Array]:
+## A trinket's or talent's lines, each [text, upside]: stats, conditional
+## stats, triggers. Skills are named from `hero`'s class (a hero trinket's own
+## class when none is given).
+static func perk_effects(perk: Perk, hero: UnitDef = null) -> Array[Array]:
+	var owner: UnitDef = hero if hero else (perk.hero if perk is TrinketDef else null)
 	var result: Array[Array] = []
-	for stat: StringName in trinket.stats:
-		result.append([trinket_stat_text(stat, trinket.stats[stat]), _upside(stat, trinket.stats[stat])])
-	for bonus in trinket.bonuses:
+	for stat: StringName in perk.stats:
+		result.append([trinket_stat_text(stat, perk.stats[stat]), _upside(stat, perk.stats[stat])])
+	for bonus in perk.bonuses:
 		var conditions: Array[String] = []
 		if not bonus.if_skills.is_empty():
-			conditions.append(_skill_names(bonus.if_skills, trinket.hero))
+			conditions.append(_skill_names(bonus.if_skills, owner))
 		if bonus.if_token != &"":
 			conditions.append("If %s%s" % ["no " if bonus.lacks else "", token_name(bonus.if_token)])
 		if bonus.if_target != &"":
@@ -359,8 +363,8 @@ static func trinket_effects(trinket: TrinketDef) -> Array[Array]:
 			conditions.append("If HP < %s" % percent(bonus.if_hp_below))
 		result.append(["%s: %s" % [", ".join(conditions), trinket_stat_text(bonus.stat, bonus.amount)],
 				_upside(bonus.stat, bonus.amount)])
-	for trigger in trinket.triggers:
-		result.append([_trigger_text(trigger, trinket.hero), not trigger.malus])
+	for trigger in perk.triggers:
+		result.append([_trigger_text(trigger, owner), not trigger.malus])
 	return result
 
 
@@ -484,8 +488,8 @@ static func _skill_names(ids: Array[StringName], hero: UnitDef = null) -> String
 
 
 ## The effects coloured: upsides pale green, drawbacks red, joined by `separator`.
-static func trinket_bbcode(trinket: TrinketDef, separator: String = ", ") -> String:
-	return separator.join(trinket_effects(trinket).map(func(effect: Array) -> String:
+static func perk_bbcode(perk: Perk, separator: String = ", ", hero: UnitDef = null) -> String:
+	return separator.join(perk_effects(perk, hero).map(func(effect: Array) -> String:
 		return "[color=#%s]%s[/color]" % [(PALE_GREEN if effect[1] else DAMAGE.lightened(0.2)).to_html(false), effect[0]]))
 
 

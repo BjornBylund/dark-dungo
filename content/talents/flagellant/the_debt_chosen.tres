@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vnyjm"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_8t0si"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_lrhc1"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_dd7ng"]
+
+[sub_resource type="Resource" id="Resource_eoc5j"]
+script = ExtResource("4_dd7ng")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_j1kx8"]
+script = ExtResource("3_lrhc1")
+when = 0
+to = 3
+effects = Array[ExtResource("4_dd7ng")]([SubResource("Resource_eoc5j")])
+
+[resource]
+script = ExtResource("2_8t0si")
+id = &"the_debt_chosen"
+display_name = "The Debt Chosen"
+flavour = "Bleeding, so the ones beside need not."
+triggers = Array[ExtResource("3_lrhc1")]([SubResource("Resource_j1kx8")])

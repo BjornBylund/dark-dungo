@@ -49,6 +49,11 @@ extends Resource
 ## Extra scale on top of the automatic fit, for art that should stand taller or shorter.
 @export_range(0.25, 2.0, 0.05) var sprite_scale: float = 1.0
 
+@export_group("Talents")
+## A hero's talents, row by row: three for each of CampaignRules.TALENT_LEVELS,
+## the first three for the first. Empty for enemies.
+@export var talents: Array[TalentDef] = []
+
 @export_group("Story")
 ## A hero's dialogue script, content/dialogue/<class>.txt: their joining and
 ## level-up scenes (see src/campaign/dialogue.gd).

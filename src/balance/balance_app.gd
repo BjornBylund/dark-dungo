@@ -507,7 +507,7 @@ func _trinket_rows() -> Array[Dictionary]:
 	for trinket in library.trinkets:
 		if not _matches(trinket):
 			continue
-		var effects := "; ".join(UiStyle.trinket_effects(trinket).map(func(line: Array) -> String: return line[0]))
+		var effects := "; ".join(UiStyle.perk_effects(trinket).map(func(line: Array) -> String: return line[0]))
 		var listed := trinket in library.campaign.trinkets
 		var cells: Array = [_name_cell(trinket)]
 		cells.append_array(_found.trinket_cells(trinket))

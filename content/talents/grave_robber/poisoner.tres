@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_3mnpx"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_yw8xk"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_o7kix"]
+
+[resource]
+script = ExtResource("2_yw8xk")
+id = &"poisoner"
+display_name = "Poisoner"
+stats = Dictionary[StringName, float]({
+&"dot_dealt_blight": 1.0
+})

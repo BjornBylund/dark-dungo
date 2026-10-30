@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_yy6nq"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_u78ri"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_2an7j"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_uowgm"]
+
+[sub_resource type="Resource" id="Resource_1j2t6"]
+script = ExtResource("4_uowgm")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_0sfkq"]
+script = ExtResource("3_2an7j")
+when = 0
+to = 2
+effects = Array[ExtResource("4_uowgm")]([SubResource("Resource_1j2t6")])
+
+[resource]
+script = ExtResource("2_u78ri")
+id = &"standard_bearer"
+display_name = "Standard Bearer"
+triggers = Array[ExtResource("3_2an7j")]([SubResource("Resource_0sfkq")])

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_ih6nq"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_re12j"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_70jl6"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_16rpx"]
+
+[sub_resource type="Resource" id="Resource_1rinf"]
+script = ExtResource("4_16rpx")
+token = &"dodge"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_yrvvu"]
+script = ExtResource("3_70jl6")
+when = 8
+effects = Array[ExtResource("4_16rpx")]([SubResource("Resource_1rinf")])
+
+[resource]
+script = ExtResource("2_re12j")
+id = &"slippery"
+display_name = "Slippery"
+triggers = Array[ExtResource("3_70jl6")]([SubResource("Resource_yrvvu")])

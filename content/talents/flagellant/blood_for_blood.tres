@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_lc6du"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_aongy"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_p5123"]
+
+[sub_resource type="Resource" id="Resource_w8bxb"]
+script = ExtResource("1_lc6du")
+stat = &"damage"
+amount = 0.3
+if_hp_below = 0.5
+
+[resource]
+script = ExtResource("2_aongy")
+id = &"blood_for_blood"
+display_name = "Blood for Blood"
+bonuses = Array[ExtResource("1_lc6du")]([SubResource("Resource_w8bxb")])

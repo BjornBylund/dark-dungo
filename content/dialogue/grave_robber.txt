@@ -29,6 +29,27 @@ Grave Robber: I know the work. I know whose work. I taught them half of it.
 Ancestor: The trade takes from everyone, in the end. Even from those who practise it.
 
 == level 6
+Grave Robber: Marta ran with us before Corwin. Steady hands, no nerve. I found her in the capital, selling rings off a cart.
+Grave Robber: My mother's ring was on the cart. Marta didn't know whose it was. I believed that. Mostly.
+Ancestor: And you paid for it, I suspect. A thief buying back what was stolen. The world has a sense of humour.
+
+== level 7
+Ancestor: Two strangers asked about the thief at the tavern tonight. Fine boots. Poor manners.
+Grave Robber: The collector's men. They found me, then. I wondered when.
+Grave Robber: I'll handle it. Quietly. You won't find them in your graveyard, if that's what you're asking.
+Ancestor: I was asking nothing. I own a great many graves; two more would go unnoticed.
+
+== level 8
+Grave Robber: I opened my father's grave tonight. My own hands, my own spade. First honest dig in twenty years.
+Grave Robber: Put the ring back on him and filled it in. First time I've ever left anything in a grave.
+Ancestor: There. Now you know what the sexton knew. Some things are worth more buried.
+
+== level 9
+Grave Robber: I used to see a churchyard and count what was in it. Now I walk past and know the names.
+Grave Robber: That's a dangerous thing for a thief. You start caring who you're robbing.
+Ancestor: Then perhaps you are something else now. The word escapes me. It will come.
+
+== level 10
 Grave Robber: I used to think the only thing worth keeping was what you could carry out.
 Grave Robber: Now I keep this lot breathing and call it my cut. Don't tell the others. They'll want a share.
 Ancestor: A thief who found something worth stealing back at last: your own life.

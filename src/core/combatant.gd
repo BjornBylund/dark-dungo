@@ -11,6 +11,7 @@ enum BuffExpiry {
 	DEATHS_DOOR,   ## Removed when the unit leaves Death's Door.
 	BOND,          ## From the hero's bonds with the party; the campaign sets them between fights.
 	TRINKET,       ## From the hero's trinkets, for as long as they're worn.
+	TALENT,        ## From the hero's talents.
 }
 
 static var _next_uid := 1
@@ -37,8 +38,11 @@ var regens: Array[Dictionary] = []
 ## Resolute instead of Meltdown), "heal_received" (more or less from healing
 ## skills) and "heal_power" (the unit's healing skills heal more or less).
 var buffs: Array[Dictionary] = []
-## Trinket lines that fire on combat events; the battle runs them.
+## Trinket and talent lines that fire on combat events; the battle runs them.
 var triggers: Array[TrinketTrigger] = []
+## The trinkets and talents a hero brought, for showing; their stats and
+## triggers are already in buffs and triggers.
+var perks: Array[Perk] = []
 ## Skill id -> turns until usable again.
 var cooldowns: Dictionary[StringName, int] = {}
 ## Skill id -> uses this battle.
@@ -336,4 +340,5 @@ func clear_battle_state() -> void:
 	uses.clear()
 	speed_bonus_next_round = false
 	buffs.assign(buffs.filter(func(buff: Dictionary) -> bool:
-		return buff.expiry in [BuffExpiry.RUN, BuffExpiry.DEATHS_DOOR, BuffExpiry.BOND, BuffExpiry.TRINKET]))
+		return buff.expiry in [BuffExpiry.RUN, BuffExpiry.DEATHS_DOOR, BuffExpiry.BOND, BuffExpiry.TRINKET,
+				BuffExpiry.TALENT]))

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_o5mtq"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_nml5h"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_nvqtn"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_e4bpc"]
+
+[sub_resource type="Resource" id="Resource_ywpt4"]
+script = ExtResource("4_e4bpc")
+token = &"pain"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_o0l3p"]
+script = ExtResource("3_nvqtn")
+when = 8
+effects = Array[ExtResource("4_e4bpc")]([SubResource("Resource_ywpt4")])
+
+[resource]
+script = ExtResource("2_nml5h")
+id = &"martyr"
+display_name = "Martyr"
+triggers = Array[ExtResource("3_nvqtn")]([SubResource("Resource_o0l3p")])

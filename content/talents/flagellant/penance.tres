@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_s2jl5"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_4brg5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_0fxbv"]
+
+[resource]
+script = ExtResource("2_4brg5")
+id = &"penance"
+display_name = "Penance"
+flavour = "Every stroke a payment."
+stats = Dictionary[StringName, float]({
+&"resist_stress": 0.15
+})

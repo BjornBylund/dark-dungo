@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_w3ic4"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_dxa3l"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_v21yc"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_j41gm"]
+
+[sub_resource type="Resource" id="Resource_86thx"]
+script = ExtResource("4_j41gm")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_o6raw"]
+script = ExtResource("3_v21yc")
+when = 15
+to = 1
+effects = Array[ExtResource("4_j41gm")]([SubResource("Resource_86thx")])
+if_skills = Array[StringName]([&"encore"])
+
+[resource]
+script = ExtResource("2_dxa3l")
+id = &"encore"
+display_name = "Encore!"
+triggers = Array[ExtResource("3_v21yc")]([SubResource("Resource_o6raw")])

@@ -22,8 +22,9 @@ const BOSS_PROGRESS := [25, 35, 50]
 const BOSS_PROGRESS_FULL := 100
 const BOSS_HEIRLOOM_MULTIPLIER := 2
 
-# Missions, indexed [tier] or [length].
-const TIER_LEVELS := [1, 3, 5]
+# Missions, indexed [tier] or [length]. The three tiers spread over hero
+# levels 1-10: Apprentice for 1-3, Veteran for 4-6, Champion for 7-10.
+const TIER_LEVELS := [1, 4, 7]
 ## Half a mission's gold divided by this is the fight share, paid for every fight won.
 ## About the shares a full clear earns from fights, elites, caches and events
 ## (scripts/balance.ps1 measures it).
@@ -33,7 +34,7 @@ const TIER_GOLD_MULTIPLIER := [1.0, 1.5, 2.0]
 const XP := [2, 3, 4]
 const TIER_XP_MULTIPLIER := [1, 2, 4]
 ## A hero must reach this level before Veteran / Champion missions show up.
-const TIER_UNLOCK_LEVEL := [0, 2, 4]
+const TIER_UNLOCK_LEVEL := [0, 3, 6]
 
 # Mission maps, indexed [length] or [tier].
 ## Columns of rooms, counting the final room. Medium is about a Slay the Spire
@@ -62,15 +63,25 @@ const RARE_HEIRLOOM_AMOUNT := [[2, 2, 4], [2, 3, 6], [3, 5, 9]]
 const COMMON_HEIRLOOM_AMOUNT := [[3, 5, 9], [4, 6, 12], [6, 9, 18]]
 
 # Heroes.
-## Total XP needed for levels 1-6.
-const LEVEL_XP := [2, 8, 14, 24, 36, 48]
-const MAX_LEVEL := 6
-## Heroes this many levels or more above a mission's level refuse it.
-const WILL_NOT_GO_GAP := 2
+## Total XP needed for levels 1-10. Level 10 takes the XP level 6 took when
+## that was the most, so the campaign keeps its length.
+const LEVEL_XP := [2, 5, 8, 12, 17, 22, 28, 34, 41, 48]
+const MAX_LEVEL := 10
+## Heroes this many levels or more above a mission's level refuse it, except
+## Champion missions, which any hero will take.
+const WILL_NOT_GO_GAP := 3
 const UNDERLEVEL_STRESS := 2
 const RETREAT_STRESS := 2
 const IDLE_STRESS_RELIEF := 1
-const LEVEL_RESIST_BONUS := 0.1
+## Resistances gained per level: +60% at level 10, as at the old level 6.
+const LEVEL_RESIST_BONUS := 0.06
+
+# Talents: a point at each of these levels, spent on one of the row's three.
+const TALENT_LEVELS := [2, 4, 6, 8, 10]
+const TALENTS_PER_ROW := 3
+## Gold to clear a hero's talents at the Guild, so the points can go elsewhere,
+## times the service multiplier by level.
+const TALENT_RESET_PRICE := 1000
 
 # Bonds between heroes, after DD2's relationships, indexed by Bonds.Level.
 const BOND_NAMES := ["Strangers", "Friendly", "Respected", "Partners"]
@@ -98,15 +109,17 @@ const SKILL_LEARN_PRICE := 500
 const MAX_RANK := 5
 const GEAR_COST := [750, 1750, 3000, 6000]
 const SKILL_COST := [250, 750, 1250, 2500]
-const RANK_HERO_LEVEL := [1, 2, 3, 5]
+const RANK_HERO_LEVEL := [1, 3, 5, 8]
 const WEAPON_DAMAGE_PER_RANK := 0.1
 const WEAPON_CRIT_PER_RANK := 0.01
 const WEAPON_SPEED_RANKS := [3, 5]
 const ARMOR_HP_PER_RANK := 0.2
 
-# Enemy difficulty, indexed [tier].
-const ENEMY_HP_BONUS := [0.0, 0.25, 0.5]
-const ENEMY_DAMAGE_BONUS := [0.0, 0.25, 0.5]
+# Enemy difficulty, indexed [tier]. Champion enemies are tough enough that heroes
+# with their talents finish missions about as often as before talents, plus a
+# little (scripts/balance.ps1 compares with -NoTalents).
+const ENEMY_HP_BONUS := [0.0, 0.25, 0.9]
+const ENEMY_DAMAGE_BONUS := [0.0, 0.25, 0.75]
 const ENEMY_CRIT_BONUS := [0.0, 0.0, 0.05]
 
 # Stress relief in town: DD1's Abbey (safe) and Tavern (with side effects).
@@ -216,11 +229,12 @@ static func level_for_xp(xp: int) -> int:
 	return level
 
 
-## Price multiplier for services by hero level: x1.4 at levels 3-4, x1.8 at 5-6.
+## Price multiplier for services by hero level, by the tier the level is for:
+## x1.4 at levels 4-6 (Veteran), x1.8 at 7-10 (Champion).
 static func service_multiplier(level: int) -> float:
-	if level >= 5:
+	if level >= TIER_LEVELS[Tier.CHAMPION]:
 		return 1.8
-	if level >= 3:
+	if level >= TIER_LEVELS[Tier.VETERAN]:
 		return 1.4
 	return 1.0
 

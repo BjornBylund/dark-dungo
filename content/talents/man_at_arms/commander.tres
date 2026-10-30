@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_qfy07"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_8nhtv"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_e3tfa"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_xyq4b"]
+
+[sub_resource type="Resource" id="Resource_1gplo"]
+script = ExtResource("4_xyq4b")
+token = &"strength"
+
+[sub_resource type="Resource" id="Resource_6dfaa"]
+script = ExtResource("3_e3tfa")
+when = 15
+to = 1
+effects = Array[ExtResource("4_xyq4b")]([SubResource("Resource_1gplo")])
+if_skills = Array[StringName]([&"command"])
+
+[resource]
+script = ExtResource("2_8nhtv")
+id = &"commander"
+display_name = "Commander"
+triggers = Array[ExtResource("3_e3tfa")]([SubResource("Resource_6dfaa")])

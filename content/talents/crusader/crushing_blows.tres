@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_x30ff"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_w03on"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_1s0yh"]
+
+[sub_resource type="Resource" id="Resource_0w8n3"]
+script = ExtResource("1_x30ff")
+stat = &"crit"
+amount = 0.1
+if_skills = Array[StringName]([&"smite", &"stunning_blow"])
+
+[resource]
+script = ExtResource("2_w03on")
+id = &"crushing_blows"
+display_name = "Crushing Blows"
+bonuses = Array[ExtResource("1_x30ff")]([SubResource("Resource_0w8n3")])

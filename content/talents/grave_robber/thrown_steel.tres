@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_y6wq7"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_xm3tm"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_tdc7q"]
+
+[sub_resource type="Resource" id="Resource_26xfh"]
+script = ExtResource("1_y6wq7")
+stat = &"damage"
+amount = 0.2
+if_skills = Array[StringName]([&"thrown_dagger", &"flashing_daggers"])
+
+[resource]
+script = ExtResource("2_xm3tm")
+id = &"thrown_steel"
+display_name = "Thrown Steel"
+bonuses = Array[ExtResource("1_y6wq7")]([SubResource("Resource_26xfh")])

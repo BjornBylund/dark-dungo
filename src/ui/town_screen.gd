@@ -56,6 +56,10 @@ var _rebuild_window: Callable
 var _selected: HeroRecord
 ## The skill whose details show on the open hero sheet.
 var _sheet_skill: SkillDef
+## The hero sheet shows the talent rows instead of the hero.
+var _showing_talents := false
+## The talent clicked on the Talents tab, waiting for Choose.
+var _pending_talent: TalentDef
 var _skill_title: Label
 var _skill_state: Label
 var _skill_pips: RankPips
@@ -408,9 +412,12 @@ func _banner_region(id: StringName, size_now: Vector2, picture: Texture2D) -> Re
 	return Rect2(corner, Vector2(width, height))
 
 
+## The hero's sheet, on the Talents tab when a talent point is waiting.
 func _open_hero(hero: HeroRecord) -> void:
 	_selected = hero
 	_sheet_skill = null
+	_pending_talent = null
+	_showing_talents = hero.talent_points() > 0
 	_open(hero.display_name, _build_hero_sheet)
 
 
@@ -467,6 +474,7 @@ func _build_guild() -> void:
 		return
 	var hero := _selected
 	right.add_child(_hero_header(hero))
+	_guild_talents(right, hero)
 	right.add_child(_heading("Skills", "%d / %d equipped" % [hero.equipped.size(), CampaignRules.SKILL_SLOTS]))
 	var grid := GridContainer.new()
 	grid.columns = 6
@@ -486,6 +494,26 @@ func _build_guild() -> void:
 		box.add_child(_label("Choose a skill to learn, train or equip it.", 17, UiStyle.TEXT_DIM))
 		return
 	_guild_skill(box, hero, skill)
+
+
+## The hero's talents at the Guild, which clears them for gold so the points
+## can be spent again on the hero sheet.
+func _guild_talents(parent: Control, hero: HeroRecord) -> void:
+	var campaign := _campaign()
+	var box := _card(parent)
+	var chosen := hero.chosen_talents()
+	var note := "%d chosen" % chosen.size() + (", %d to choose" % hero.talent_points() if hero.talent_points() > 0 else "")
+	var now := ", ".join(chosen.map(func(talent: TalentDef) -> String: return talent.display_name)) \
+			if not chosen.is_empty() else "None yet: the first comes at level %d." % CampaignRules.TALENT_LEVELS[0]
+	var header := _card_header(box, "Talents", note, now)
+	if chosen.is_empty():
+		return
+	var reason := campaign.can_reset_talents(hero)
+	var clear := _action("Clear talents  %s gold" % UiStyle.gold_text(campaign.talent_reset_price(hero)),
+			func() -> void: _after(campaign.reset_talents(hero)))
+	clear.disabled = reason != ""
+	clear.tooltip_text = reason if reason != "" else "Frees every talent point, to choose again on the hero sheet."
+	header.add_child(clear)
 
 
 ## A skill at the Guild: what it does, and the buttons that apply: learn it,
@@ -729,7 +757,7 @@ func _trinket_row(trinket: TrinketDef, actions: Array) -> Control:
 	effects.scroll_active = false
 	effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	effects.add_theme_font_size_override("normal_font_size", 16)
-	effects.text = UiStyle.trinket_bbcode(trinket, "\n")
+	effects.text = UiStyle.perk_bbcode(trinket, "\n")
 	text.add_child(effects)
 	row.add_child(text)
 	for action: Control in actions:
@@ -923,8 +951,25 @@ func _line_next(line: StringName, level: int) -> String:
 ## class's skills as an icon grid; and the trinket slots with the estate's
 ## trinkets the hero could wear. Click a skill to equip or unequip it and hover
 ## it for what it does; on touch screens a tap shows it, with a button to equip.
+## The Talents tab shows the talent rows instead.
 func _build_hero_sheet() -> void:
 	var hero := _selected
+	var tabs := HBoxContainer.new()
+	_window_body.add_child(tabs)
+	var points := hero.talent_points()
+	for tab: Array in [[false, "Hero"], [true, "Talents" + ("  (%d to choose)" % points if points > 0 else "")]]:
+		var button := _action(tab[1], func() -> void:
+			_showing_talents = tab[0]
+			_pending_talent = null
+			_rebuild_window.call())
+		button.toggle_mode = true
+		button.button_pressed = _showing_talents == tab[0]
+		if tab[0] and points > 0:
+			button.add_theme_color_override("font_color", UiStyle.GOLD)
+		tabs.add_child(button)
+	if _showing_talents:
+		_build_talents(hero)
+		return
 	var parts: BoxContainer = VBoxContainer.new() if Device.phone else HBoxContainer.new()
 	parts.add_theme_constant_override("separation", 22 if Device.phone else 34)
 	_window_body.add_child(parts)
@@ -1162,7 +1207,7 @@ func _sheet_gear(hero: HeroRecord) -> Control:
 		effects.scroll_active = false
 		effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		effects.add_theme_font_size_override("normal_font_size", 15)
-		effects.text = UiStyle.trinket_bbcode(worn, "\n")
+		effects.text = UiStyle.perk_bbcode(worn, "\n")
 		slot.add_child(effects)
 	if not hero.trinkets.is_empty():
 		column.add_child(_label("Click a worn trinket to take it off.", 15, UiStyle.TEXT_DIM))
@@ -1181,6 +1226,86 @@ func _sheet_gear(hero: HeroRecord) -> Control:
 		put_on.tooltip_text = reason
 		rows.add_child(_trinket_row(trinket, [put_on]))
 	return column
+
+
+## The Talents tab: a row of three for each talent level, the chosen one lit in
+## gold. On an open row with no talent yet, click one and then Choose; the
+## Guild clears them all for gold.
+func _build_talents(hero: HeroRecord) -> void:
+	var intro := _label("A point at levels %s buys one talent of that row. Choosing is for good, unless the Guild clears them all (%s gold now)."
+			% [", ".join(CampaignRules.TALENT_LEVELS.map(func(at: int) -> String: return str(at))),
+			UiStyle.gold_text(_campaign().talent_reset_price(hero))], 16, UiStyle.TEXT_DIM)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_window_body.add_child(intro)
+	for row in CampaignRules.TALENT_LEVELS.size():
+		var open := row < hero.talent_rows_open()
+		var chosen := hero.talent_on(row)
+		var line: BoxContainer = VBoxContainer.new() if Device.phone else HBoxContainer.new()
+		line.add_theme_constant_override("separation", 8 if Device.phone else 18)
+		_window_body.add_child(line)
+		var side := VBoxContainer.new()
+		side.custom_minimum_size = Vector2(0.0 if Device.phone else 150.0, 0)
+		side.add_theme_constant_override("separation", 0)
+		line.add_child(side)
+		side.add_child(_label("Level %d" % CampaignRules.TALENT_LEVELS[row], 26, UiStyle.GOLD if open else UiStyle.TEXT_DIM,
+				UiStyle.DISPLAY_FONT))
+		var state := "Locked" if not open else ("Chosen" if chosen else "Choose one")
+		side.add_child(_label(state, 15, UiStyle.GOLD if open and chosen == null else UiStyle.TEXT_DIM))
+		var cards := HBoxContainer.new()
+		cards.add_theme_constant_override("separation", 12)
+		cards.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_child(cards)
+		for talent in hero.talent_row(row):
+			cards.add_child(_talent_card(hero, talent, open, chosen))
+
+
+## One talent: its name, what it does and its flavour. Lit gold when chosen,
+## dimmed beside a chosen one or on a locked row; on an open row a click picks
+## it and a Choose button confirms.
+func _talent_card(hero: HeroRecord, talent: TalentDef, open: bool, chosen: TalentDef) -> Control:
+	var picking := open and chosen == null
+	var tint := Color(1.9, 1.5, 1.05) if talent == chosen or talent == _pending_talent else Color.WHITE
+	var style := UiStyle.card(tint)
+	style.set_content_margin_all(12)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", style)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.custom_minimum_size = Vector2(0, 120 if Device.phone else 130)
+	if not open or (chosen and talent != chosen):
+		card.modulate = Color(1, 1, 1, 0.45)
+	if picking:
+		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		card.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				_pending_talent = talent
+				_rebuild_window.call())
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(box)
+	var name := _label(talent.display_name, 22, UiStyle.GOLD if talent == chosen else UiStyle.TEXT, UiStyle.DISPLAY_FONT)
+	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(name)
+	var effects := RichTextLabel.new()
+	effects.bbcode_enabled = true
+	effects.fit_content = true
+	effects.scroll_active = false
+	effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effects.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	effects.add_theme_font_size_override("normal_font_size", 15)
+	effects.text = UiStyle.perk_bbcode(talent, "\n", hero.def)
+	box.add_child(effects)
+	if talent.flavour != "":
+		var flavour := _label(talent.flavour, 14, UiStyle.TEXT_DIM)
+		flavour.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		flavour.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(flavour)
+	if picking and talent == _pending_talent:
+		var choose := _action("Choose " + talent.display_name, func() -> void:
+			_pending_talent = null
+			_after(_campaign().choose_talent(hero, talent)))
+		box.add_child(choose)
+	return card
 
 
 ## A section title in gold with a dim note beside it.

@@ -28,6 +28,27 @@ Plague Doctor: For the first time I do not want to understand something. I only 
 Ancestor: Welcome to my condition, doctor. Curiosity brought me here, too.
 
 == level 6
+Plague Doctor: I opened one of the things from below tonight. Its blood is the same colour as the soil in the fields.
+Plague Doctor: Not a creature with a sickness. A sickness that grew a creature. The distinction matters more than I would like.
+Ancestor: You have found what I found, doctor. I did not stop digging either.
+
+== level 7
+Ancestor: A rider from the academy came today. The doctor read the letter twice and put it in the fire.
+Plague Doctor: The plague is back in the capital. They want my methods. Again. They do not want me.
+Plague Doctor: I have sent them the notes. Every page. The dying do not care whose name is on the cure.
+Ancestor: Generous. Or proud. With physicians it is hard to tell the two apart.
+
+== level 8
+Plague Doctor: I have finished Master Orrell's tincture. The one that killed him. It works now.
+Plague Doctor: Twenty years late for him. In time for a fever case in the hamlet this morning.
+Ancestor: The dead teach slowly, but they teach well. You were a good student, in the end.
+
+== level 9
+Plague Doctor: I have stopped writing down the ones I save. Only the ones I lose.
+Plague Doctor: The list is shorter than it used to be. I check it every night to make sure.
+Ancestor: A ledger of debts, kept honestly. You may yet balance it.
+
+== level 10
 Plague Doctor: Master Orrell used to say a physician's first duty is to do no harm. I have done a great deal of harm.
 Plague Doctor: So I keep these fools alive, one wound at a time, and call each one a payment. The debt is large. I am patient.
 Ancestor: Pay it down, then. Few of us ever get the chance.

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_8m1hp"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_yc8we"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_sys4f"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_vkaih"]
+
+[sub_resource type="Resource" id="Resource_3v0i8"]
+script = ExtResource("4_vkaih")
+kind = 1
+dot = &"bleed"
+amount = 2
+
+[sub_resource type="Resource" id="Resource_fr241"]
+script = ExtResource("3_sys4f")
+when = 5
+to = 1
+effects = Array[ExtResource("4_vkaih")]([SubResource("Resource_3v0i8")])
+if_skills = Array[StringName]([&"harvest", &"slice_off"])
+
+[resource]
+script = ExtResource("2_yc8we")
+id = &"harvest_moon"
+display_name = "Harvest Moon"
+triggers = Array[ExtResource("3_sys4f")]([SubResource("Resource_fr241")])

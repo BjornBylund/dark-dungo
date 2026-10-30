@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_x5t6v"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_qg878"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_eawsi"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_8ltpd"]
+
+[sub_resource type="Resource" id="Resource_ucnsk"]
+script = ExtResource("4_8ltpd")
+token = &"weak"
+chance = 0.33
+
+[sub_resource type="Resource" id="Resource_3d430"]
+script = ExtResource("3_eawsi")
+when = 5
+to = 1
+effects = Array[ExtResource("4_8ltpd")]([SubResource("Resource_ucnsk")])
+if_skills = Array[StringName]([&"crush"])
+
+[resource]
+script = ExtResource("2_qg878")
+id = &"crushing_weight"
+display_name = "Crushing Weight"
+triggers = Array[ExtResource("3_eawsi")]([SubResource("Resource_3d430")])

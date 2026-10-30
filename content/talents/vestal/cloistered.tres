@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_xcqti"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_enm4n"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_hoaqx"]
+
+[resource]
+script = ExtResource("2_enm4n")
+id = &"cloistered"
+display_name = "Cloistered"
+stats = Dictionary[StringName, float]({
+&"resist_debuff": 0.25,
+&"resist_stun": 0.15
+})

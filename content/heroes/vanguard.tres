@@ -15,6 +15,22 @@
 [ext_resource type="Texture2D" path="res://art/skills/inspiring_cry.svg" id="10_clhwt"]
 [ext_resource type="Texture2D" path="res://art/skills/radiance.svg" id="13_t2j34"]
 [ext_resource type="Texture2D" path="res://art/skills/tenacity.svg" id="14_7vaou"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="16_shn1e"]
+[ext_resource type="Resource" path="res://content/talents/crusader/zealot.tres" id="17_j23ab"]
+[ext_resource type="Resource" path="res://content/talents/crusader/steadfast.tres" id="18_rreud"]
+[ext_resource type="Resource" path="res://content/talents/crusader/shepherd.tres" id="19_b27jm"]
+[ext_resource type="Resource" path="res://content/talents/crusader/crushing_blows.tres" id="20_v3upy"]
+[ext_resource type="Resource" path="res://content/talents/crusader/lesson_of_hesperon.tres" id="21_8o2nr"]
+[ext_resource type="Resource" path="res://content/talents/crusader/litany.tres" id="22_0dv46"]
+[ext_resource type="Resource" path="res://content/talents/crusader/bulwark.tres" id="23_iaxom"]
+[ext_resource type="Resource" path="res://content/talents/crusader/unbowed.tres" id="24_wbe06"]
+[ext_resource type="Resource" path="res://content/talents/crusader/tobins_prayer.tres" id="25_sr85y"]
+[ext_resource type="Resource" path="res://content/talents/crusader/radiant_lance.tres" id="26_fqrib"]
+[ext_resource type="Resource" path="res://content/talents/crusader/rallying_banner.tres" id="27_nww6s"]
+[ext_resource type="Resource" path="res://content/talents/crusader/vengeful.tres" id="28_tyssd"]
+[ext_resource type="Resource" path="res://content/talents/crusader/champion_of_the_light.tres" id="29_e5rmv"]
+[ext_resource type="Resource" path="res://content/talents/crusader/unbreakable_faith.tres" id="30_xn32j"]
+[ext_resource type="Resource" path="res://content/talents/crusader/crusade.tres" id="31_u67uw"]
 
 [sub_resource type="Resource" id="Resource_ap6p3"]
 script = ExtResource("2_rnt5r")
@@ -229,4 +245,5 @@ resist_move = 0.3
 resist_debuff = 0.2
 skills = Array[ExtResource("2_rnt5r")]([SubResource("Resource_ap6p3"), SubResource("Resource_0blai"), SubResource("Resource_xts1a"), SubResource("Resource_mh0n7"), SubResource("Resource_274wl"), SubResource("Resource_460ad"), SubResource("Resource_shn1e"), SubResource("Resource_v3upy"), SubResource("Resource_0dv46"), SubResource("Resource_fqrib"), SubResource("Resource_tyssd")])
 sprite = ExtResource("9_sprite")
+talents = Array[ExtResource("16_shn1e")]([ExtResource("17_j23ab"), ExtResource("18_rreud"), ExtResource("19_b27jm"), ExtResource("20_v3upy"), ExtResource("21_8o2nr"), ExtResource("22_0dv46"), ExtResource("23_iaxom"), ExtResource("24_wbe06"), ExtResource("25_sr85y"), ExtResource("26_fqrib"), ExtResource("27_nww6s"), ExtResource("28_tyssd"), ExtResource("29_e5rmv"), ExtResource("30_xn32j"), ExtResource("31_u67uw")])
 dialogue = "res://content/dialogue/crusader.txt"

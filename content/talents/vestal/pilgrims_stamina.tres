@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_pku8s"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_vvt4s"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_y6ooy"]
+
+[resource]
+script = ExtResource("2_vvt4s")
+id = &"pilgrims_stamina"
+display_name = "Pilgrim's Stamina"
+flavour = "Twenty years behind walls, and then the road."
+stats = Dictionary[StringName, float]({
+&"max_hp": 0.1,
+&"resist_stress": 0.1
+})

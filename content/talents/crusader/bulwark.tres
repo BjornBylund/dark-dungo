@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_u5rlx"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_fd535"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_xxjj2"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_tyafa"]
+
+[sub_resource type="Resource" id="Resource_cf42k"]
+script = ExtResource("4_tyafa")
+token = &"block_plus"
+
+[sub_resource type="Resource" id="Resource_8bjki"]
+script = ExtResource("3_xxjj2")
+when = 0
+effects = Array[ExtResource("4_tyafa")]([SubResource("Resource_cf42k")])
+
+[resource]
+script = ExtResource("2_fd535")
+id = &"bulwark"
+display_name = "Bulwark"
+triggers = Array[ExtResource("3_xxjj2")]([SubResource("Resource_8bjki")])

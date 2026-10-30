@@ -15,6 +15,22 @@
 [ext_resource type="Texture2D" path="res://art/skills/battle_ballad.svg" id="10_6tkaq"]
 [ext_resource type="Texture2D" path="res://art/skills/echoing_march.svg" id="11_2fx16"]
 [ext_resource type="Texture2D" path="res://art/skills/encore.svg" id="14_smws5"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="16_tcio1"]
+[ext_resource type="Resource" path="res://content/talents/jester/quick_fingers.tres" id="17_7ta33"]
+[ext_resource type="Resource" path="res://content/talents/jester/sharp_wit.tres" id="18_pws1t"]
+[ext_resource type="Resource" path="res://content/talents/jester/troupe_stamina.tres" id="19_x8tx3"]
+[ext_resource type="Resource" path="res://content/talents/jester/razors_edge.tres" id="20_yt0gj"]
+[ext_resource type="Resource" path="res://content/talents/jester/rousing_tune.tres" id="21_mh4lj"]
+[ext_resource type="Resource" path="res://content/talents/jester/battle_hymn.tres" id="22_g1gpe"]
+[ext_resource type="Resource" path="res://content/talents/jester/escape_artist.tres" id="23_mi7ca"]
+[ext_resource type="Resource" path="res://content/talents/jester/keep_the_tempo.tres" id="24_hggrd"]
+[ext_resource type="Resource" path="res://content/talents/jester/tumbler.tres" id="25_5g3yf"]
+[ext_resource type="Resource" path="res://content/talents/jester/grand_finale.tres" id="26_db1d5"]
+[ext_resource type="Resource" path="res://content/talents/jester/encore.tres" id="27_w1ssr"]
+[ext_resource type="Resource" path="res://content/talents/jester/harvest_moon.tres" id="28_2qju4"]
+[ext_resource type="Resource" path="res://content/talents/jester/hallorans_fool.tres" id="29_pkm0u"]
+[ext_resource type="Resource" path="res://content/talents/jester/the_last_verse.tres" id="30_5t2sr"]
+[ext_resource type="Resource" path="res://content/talents/jester/showstopper.tres" id="31_r6abr"]
 
 [sub_resource type="Resource" id="Resource_1uqnj"]
 script = ExtResource("3_sqyoy")
@@ -257,4 +273,5 @@ resist_debuff = 0.2
 skills = Array[ExtResource("2_tmaee")]([SubResource("Resource_qgntd"), SubResource("Resource_i454e"), SubResource("Resource_4enkl"), SubResource("Resource_ttmqv"), SubResource("Resource_kycys"), SubResource("Resource_pws1t"), SubResource("Resource_mh4lj"), SubResource("Resource_hggrd"), SubResource("Resource_w1ssr"), SubResource("Resource_r6abr"), SubResource("Resource_xeabb")])
 swap_offsets = Array[int]([-3, -2, -1, 1, 2, 3])
 sprite = ExtResource("9_gb7rb")
+talents = Array[ExtResource("16_tcio1")]([ExtResource("17_7ta33"), ExtResource("18_pws1t"), ExtResource("19_x8tx3"), ExtResource("20_yt0gj"), ExtResource("21_mh4lj"), ExtResource("22_g1gpe"), ExtResource("23_mi7ca"), ExtResource("24_hggrd"), ExtResource("25_5g3yf"), ExtResource("26_db1d5"), ExtResource("27_w1ssr"), ExtResource("28_2qju4"), ExtResource("29_pkm0u"), ExtResource("30_5t2sr"), ExtResource("31_r6abr")])
 dialogue = "res://content/dialogue/jester.txt"

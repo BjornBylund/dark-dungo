@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_qqyqm"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_siqi6"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_f1g4r"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_1ts56"]
+
+[sub_resource type="Resource" id="Resource_ua7i1"]
+script = ExtResource("4_1ts56")
+token = &"block"
+
+[sub_resource type="Resource" id="Resource_nssi7"]
+script = ExtResource("3_f1g4r")
+when = 15
+to = 1
+effects = Array[ExtResource("4_1ts56")]([SubResource("Resource_ua7i1")])
+if_skills = Array[StringName]([&"sanctuary"])
+
+[resource]
+script = ExtResource("2_siqi6")
+id = &"sanctuarys_ward"
+display_name = "Sanctuary's Ward"
+triggers = Array[ExtResource("3_f1g4r")]([SubResource("Resource_nssi7")])

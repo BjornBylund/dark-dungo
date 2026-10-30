@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_7hyrn"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_vmtki"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_kp3nu"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_uusp6"]
+
+[sub_resource type="Resource" id="Resource_i8pil"]
+script = ExtResource("4_uusp6")
+kind = 15
+stat_amount = 0.15
+
+[sub_resource type="Resource" id="Resource_ddekm"]
+script = ExtResource("3_kp3nu")
+when = 10
+effects = Array[ExtResource("4_uusp6")]([SubResource("Resource_i8pil")])
+
+[resource]
+script = ExtResource("2_vmtki")
+id = &"tobins_prayer"
+display_name = "Tobin's Prayer"
+flavour = "Prayed every night since. No answer yet."
+triggers = Array[ExtResource("3_kp3nu")]([SubResource("Resource_ddekm")])

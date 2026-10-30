@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_yimt7"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_px4d5"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_b3ogh"]
+
+[resource]
+script = ExtResource("2_px4d5")
+id = &"inoculated"
+display_name = "Inoculated"
+stats = Dictionary[StringName, float]({
+&"resist_bleed": 0.2,
+&"resist_blight": 0.3
+})

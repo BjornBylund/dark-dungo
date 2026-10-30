@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_ce5oi"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_j14la"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_idvbx"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_56w7l"]
+
+[sub_resource type="Resource" id="Resource_8twus"]
+script = ExtResource("4_56w7l")
+kind = 13
+amount = -1
+
+[sub_resource type="Resource" id="Resource_d4ihv"]
+script = ExtResource("3_idvbx")
+when = 15
+to = 1
+effects = Array[ExtResource("4_56w7l")]([SubResource("Resource_8twus")])
+if_skills = Array[StringName]([&"divine_grace", &"divine_comfort"])
+
+[resource]
+script = ExtResource("2_j14la")
+id = &"hand_of_mercy"
+display_name = "Hand of Mercy"
+triggers = Array[ExtResource("3_idvbx")]([SubResource("Resource_d4ihv")])

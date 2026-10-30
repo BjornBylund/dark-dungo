@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_vs80l"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_ou2vq"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_xbn4j"]
+
+[sub_resource type="Resource" id="Resource_8jvp4"]
+script = ExtResource("1_vs80l")
+stat = &"crit"
+amount = 0.1
+if_token = &"stealth"
+
+[resource]
+script = ExtResource("2_ou2vq")
+id = &"dead_of_night"
+display_name = "Dead of Night"
+bonuses = Array[ExtResource("1_vs80l")]([SubResource("Resource_8jvp4")])

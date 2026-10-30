@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_g2481"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_3e4dl"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_mttt3"]
+
+[sub_resource type="Resource" id="Resource_wctib"]
+script = ExtResource("1_g2481")
+stat = &"damage"
+amount = 0.3
+if_skills = Array[StringName]([&"judgement"])
+
+[resource]
+script = ExtResource("2_3e4dl")
+id = &"the_heretics_question"
+display_name = "The Heretic's Question"
+flavour = "God does not live in the gold."
+bonuses = Array[ExtResource("1_g2481")]([SubResource("Resource_wctib")])

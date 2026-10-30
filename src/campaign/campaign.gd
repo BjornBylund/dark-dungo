@@ -104,7 +104,7 @@ func eligibility(hero: HeroRecord, mission: Mission) -> Eligibility:
 		return Eligibility.WOUNDED
 	if hero.is_busy():
 		return Eligibility.BUSY
-	if hero.level() >= mission.level() + CampaignRules.WILL_NOT_GO_GAP:
+	if mission.tier != CampaignRules.Tier.CHAMPION and hero.level() >= mission.level() + CampaignRules.WILL_NOT_GO_GAP:
 		return Eligibility.WILL_NOT_GO
 	if levels_short(hero, mission) > 0:
 		return Eligibility.UNDERLEVELED
@@ -112,7 +112,7 @@ func eligibility(hero: HeroRecord, mission: Mission) -> Eligibility:
 
 
 ## How far a hero is below the level a mission expects: one under its level
-## (0 for Apprentice, 2 for Veteran, 4 for Champion).
+## (0 for Apprentice, 3 for Veteran, 6 for Champion).
 func levels_short(hero: HeroRecord, mission: Mission) -> int:
 	return maxi(0, mission.level() - 1 - hero.level())
 
@@ -275,6 +275,58 @@ func unequip(hero: HeroRecord, skill: SkillDef) -> String:
 func _refit(hero: HeroRecord) -> void:
 	if run and hero in run.party:
 		run.combatants[run.party.find(hero)].skills = hero.equipped_skills()
+
+
+# --- Talents ---
+
+## A talent can be chosen on a row the hero's level has opened and that has
+## none chosen yet.
+func can_choose_talent(hero: HeroRecord, talent: TalentDef) -> String:
+	if not hero.recruited:
+		return "Not in the roster."
+	var row := hero.row_of(talent)
+	if row < 0:
+		return "Not one of the %s's talents." % hero.display_name
+	if row >= hero.talent_rows_open():
+		return "Opens at level %d." % CampaignRules.TALENT_LEVELS[row]
+	if hero.talent_on(row):
+		return "This row's talent is chosen. Clear the hero's talents at the Guild to choose again."
+	return ""
+
+
+## Spends the row's point on `talent`.
+func choose_talent(hero: HeroRecord, talent: TalentDef) -> String:
+	var reason := can_choose_talent(hero, talent)
+	if reason == "":
+		var row := hero.row_of(talent)
+		while hero.talents.size() <= row:
+			hero.talents.append(&"")
+		hero.talents[row] = talent.id
+	return reason
+
+
+## Gold to clear a hero's talents, by the hero's level as with other services.
+func talent_reset_price(hero: HeroRecord) -> int:
+	return roundi(CampaignRules.TALENT_RESET_PRICE * CampaignRules.service_multiplier(hero.level()))
+
+
+func can_reset_talents(hero: HeroRecord) -> String:
+	if not hero.recruited:
+		return "Not in the roster."
+	if hero.chosen_talents().is_empty():
+		return "No talents chosen yet."
+	if gold < talent_reset_price(hero):
+		return "Not enough gold."
+	return ""
+
+
+## Clears every talent the hero chose, at the Guild, so the points can go elsewhere.
+func reset_talents(hero: HeroRecord) -> String:
+	var reason := can_reset_talents(hero)
+	if reason == "":
+		gold -= talent_reset_price(hero)
+		hero.talents.clear()
+	return reason
 
 
 ## Rank r + 1 needs the upgrade line at level r, the hero at the rank's level, and the gold.

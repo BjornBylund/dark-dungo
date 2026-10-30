@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_qmnea"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_qggtr"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_vqhcp"]
+
+[resource]
+script = ExtResource("2_qggtr")
+id = &"razors_edge"
+display_name = "Razor's Edge"
+stats = Dictionary[StringName, float]({
+&"dot_dealt_bleed": 1.0
+})

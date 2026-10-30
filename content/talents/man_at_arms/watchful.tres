@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_x3hbq"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_n6nca"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_by2h2"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_t2aml"]
+
+[sub_resource type="Resource" id="Resource_o72tl"]
+script = ExtResource("4_t2aml")
+token = &"riposte"
+
+[sub_resource type="Resource" id="Resource_djy43"]
+script = ExtResource("3_by2h2")
+when = 0
+effects = Array[ExtResource("4_t2aml")]([SubResource("Resource_o72tl")])
+
+[resource]
+script = ExtResource("2_n6nca")
+id = &"watchful"
+display_name = "Watchful"
+triggers = Array[ExtResource("3_by2h2")]([SubResource("Resource_djy43")])

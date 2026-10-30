@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/defs/trinket_bonus.gd" id="1_bfojo"]
+[ext_resource type="Script" path="res://src/core/defs/talent_def.gd" id="2_wwmeg"]
+[ext_resource type="Script" path="res://src/core/defs/trinket_trigger.gd" id="3_uxlfk"]
+[ext_resource type="Script" path="res://src/core/defs/effect_def.gd" id="4_50fkb"]
+
+[sub_resource type="Resource" id="Resource_c6ud3"]
+script = ExtResource("4_50fkb")
+token = &"block"
+chance = 0.25
+
+[sub_resource type="Resource" id="Resource_c166r"]
+script = ExtResource("3_uxlfk")
+when = 8
+effects = Array[ExtResource("4_50fkb")]([SubResource("Resource_c6ud3")])
+
+[resource]
+script = ExtResource("2_wwmeg")
+id = &"hold_fast"
+display_name = "Hold Fast"
+triggers = Array[ExtResource("3_uxlfk")]([SubResource("Resource_c166r")])

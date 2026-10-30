@@ -13,7 +13,7 @@
 ## The Ancestor's script (CampaignDef.dialogue) has "opening", played as a
 ## campaign starts, and "homecoming", which greets a party home before its
 ## heroes' level-up scenes. A hero's script (UnitDef.dialogue) has "join" (for
-## a recruit), "level 1" to "level 6" (their story, a part per level) and
+## a recruit), "level 1" to "level 10" (their story, a part per level) and
 ## "reflect", where they look back on the mission before the level's part.
 ##
 ## Conditions, about the mission just finished:
