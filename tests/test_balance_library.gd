@@ -19,7 +19,24 @@ func test_loads_every_content_file() -> void:
 	assert_eq(library.enemies.size(), _count_files("res://content/enemies"))
 	assert_eq(library.encounters.size(), _count_files("res://content/encounters"))
 	assert_eq(library.trinkets.size(), _count_files("res://content/trinkets"))
+	var talent_files := 0
+	for folder in DirAccess.get_directories_at("res://content/talents"):
+		talent_files += _count_files("res://content/talents".path_join(folder))
+	assert_eq(library.talents.size(), talent_files)
 	assert_true(library.unsaved().is_empty(), "nothing unsaved after loading")
+
+
+func test_talents_know_their_hero_and_row() -> void:
+	var library := BalanceLibrary.new()
+	var hero := library.heroes[0]
+	assert_eq(library.talents.slice(0, hero.talents.size()), hero.talents, "in the heroes' order")
+	assert_eq(library.hero_of(hero.talents[4]), hero)
+	assert_eq(library.talent_level(hero.talents[4]), CampaignRules.TALENT_LEVELS[1])
+	assert_eq(library.kind_of(hero.talents[0]), BalanceLibrary.Kind.TALENT)
+	var talent := hero.talents[0]
+	library.set_value(talent, talent, &"flavour", "Changed")
+	assert_eq(library.unsaved(), [talent] as Array[Resource], "a talent saves on its own")
+	_undo_all(library)
 
 
 func test_an_edit_marks_its_file_unsaved_until_undone() -> void:

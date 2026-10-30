@@ -1,6 +1,6 @@
 ## The balance tool's result columns: what the last sweep found, beside the
 ## numbers on paper. A cell is flagged when an encounter misses its target or
-## a hero, skill or trinket stands out, greyed when edits have made the
+## a hero, skill, trinket or talent stands out, greyed when edits have made the
 ## results out of date, and the last column compares with the pinned run.
 class_name BalanceResultColumns
 extends RefCounted
@@ -14,6 +14,7 @@ var pinned: BalanceSweep.Results
 var stale := false
 var _middle_skills := {}
 var _middle_trinkets := {}
+var _middle_talents := {}
 
 
 func _init(content: BalanceLibrary, now: BalanceSweep.Results, pin: BalanceSweep.Results) -> void:
@@ -27,6 +28,7 @@ func _init(content: BalanceLibrary, now: BalanceSweep.Results, pin: BalanceSweep
 			skills.append_array(hero.skills)
 		_middle_skills = BalanceFlags.middle_worth(now, skills)
 		_middle_trinkets = BalanceFlags.middle_worth(now, content.trinkets)
+		_middle_talents = BalanceFlags.middle_worth(now, content.talents)
 
 
 # --- Heroes ---
@@ -173,6 +175,30 @@ func trinket_cells(trinket: TrinketDef) -> Array:
 				signed(_middle_trinkets.lost, 1)], flagged),
 		_pin(pair.lost, func(old: BalanceSweep.Results) -> Variant:
 			return old.pairs[trinket].lost if old.pairs.has(trinket) else null, 1),
+	]
+
+
+# --- Talents ---
+
+static func talent_columns() -> Array[Dictionary]:
+	return [
+		{title = "±Win", width = 62, tip = "Wins with it against another talent of its row, on its hero"},
+		{title = "HP lost", width = 66, tip = "Party HP lost with it against another of its row; below 0 is better"},
+		{title = "vs pin", width = 60, tip = PIN_TIP + ": HP-lost difference"},
+	]
+
+
+func talent_cells(talent: TalentDef) -> Array:
+	var pair: Dictionary = results.pairs.get(talent, {}) if results else {}
+	if pair.is_empty():
+		return [null, null, null]
+	var flagged := BalanceFlags.stands_out(results, talent, _middle_talents, library.targets)
+	return [
+		_cell(pair.win, signed(pair.win), "±%s over %d pairs" % [_points(pair.win_margin), pair.n], flagged),
+		_cell(pair.lost, signed(pair.lost, 1), "±%s; talents' middle %s" % [_points(pair.lost_margin, 1),
+				signed(_middle_talents.lost, 1)], flagged),
+		_pin(pair.lost, func(old: BalanceSweep.Results) -> Variant:
+			return old.pairs[talent].lost if old.pairs.has(talent) else null, 1),
 	]
 
 

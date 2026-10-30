@@ -1,7 +1,8 @@
 ## A form for any content resource, built from its exported fields, so a new
 ## field or a new kind of item gets an editor with no extra work: numbers,
 ## switches, text, enums, colours, art, rank pickers, lists, key-value tables,
-## links to other content files (an encounter's enemies, a trinket's class)
+## links to other content files (an encounter's enemies, a trinket's class, a
+## hero's talents)
 ## and nested resources (a unit's skills and their effects). @export_group
 ## groups fold away, opening by themselves when they hold a changed field.
 ## Fields changed from their default are named in gold, with the script's ##
@@ -14,7 +15,7 @@ const LABEL_WIDTH := 200
 const INDENT := 18
 ## Classes that are content files of their own: a field holding one links to
 ## a file instead of holding a copy.
-const LINKED: Array[StringName] = [&"UnitDef", &"EncounterDef", &"TrinketDef", &"RegionDef"]
+const LINKED: Array[StringName] = [&"UnitDef", &"EncounterDef", &"TrinketDef", &"TalentDef", &"RegionDef"]
 
 ## Script -> {field name: its ## comment}.
 static var _docs := {}
@@ -270,6 +271,10 @@ func _item_title(item: Resource) -> String:
 		return UiStyle.trinket_stat_text(item.stat, item.amount)
 	if item is TrinketTrigger:
 		return "%s → %s" % [TrinketTrigger.When.keys()[item.when].capitalize(), TrinketTrigger.To.keys()[item.to].capitalize()]
+	if item is TalentDef:
+		var hero := library.hero_of(item)
+		return "%s (%s)" % [item.display_name, "%s, level %d" % [hero.display_name, library.talent_level(item)] if hero
+				else "on no hero"]
 	if item.has_method(&"describe"):
 		return item.describe()
 	for field: StringName in [&"display_name", &"name", &"id", &"title"]:
@@ -424,6 +429,8 @@ func _choices(class_title: StringName, field: StringName) -> Array:
 			return library.encounters
 		&"TrinketDef":
 			return library.trinkets
+		&"TalentDef":
+			return library.talents
 		&"RegionDef":
 			return library.campaign.regions
 	return []

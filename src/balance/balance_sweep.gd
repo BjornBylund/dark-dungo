@@ -2,12 +2,14 @@
 ## or not (from a copy taken at the start), played by AutoPlayer.best at one
 ## preset.
 ##  - The sweep: random parties of four, each hero with five random skills
-##    (and at presets with trinkets, two random trinkets they may wear), against
-##    every encounter. Parties stand in order of where their skills reach from.
-##  - Paired fights for every hero skill and trinket, on random elites, finales
-##    and bosses: the same party, seed and encounter twice, once with it and once
-##    without (the skill swapped for another of the hero's, the trinket taken
-##    off). The difference between the two is what it is worth.
+##    (and at presets with trinkets, two random trinkets they may wear; with
+##    talents, a random one on each row their level opens), against every
+##    encounter. Parties stand in order of where their skills reach from.
+##  - Paired fights for every hero skill, trinket and talent, on random elites,
+##    finales and bosses: the same party, seed and encounter twice, once with it
+##    and once without (the skill swapped for another of the hero's, the trinket
+##    taken off, the talent swapped for another of its row). The difference
+##    between the two is what it is worth.
 ## Each fight's seed comes from what it measures and its number, so runs of
 ## the same content share their dice, and differences come from the changes.
 ##
@@ -22,9 +24,9 @@ extends RefCounted
 enum Size { QUICK, THOROUGH }
 
 const MAX_ROUNDS := 60
-## At Quick: fights per encounter, and pairs per skill and per trinket.
+## At Quick: fights per encounter, and pairs per skill, trinket and talent.
 ## Thorough runs THOROUGH_SCALE times as many.
-const COUNTS := {encounter = 100, skill = 20, trinket = 16}
+const COUNTS := {encounter = 100, skill = 20, trinket = 16, talent = 16}
 const THOROUGH_SCALE := 4
 const SIZE_NAMES := ["Quick", "Thorough"]
 const RUNS_FOLDER := "user://balance_runs"
@@ -53,9 +55,11 @@ class Copy:
 	var enemies: Array[UnitDef] = []
 	var encounters: Array[EncounterDef] = []
 	var trinkets: Array[TrinketDef] = []
+	## The talents on the copied heroes' rows.
+	var talents: Array[TalentDef] = []
 	## Encounters for paired fights: the regions' elites, finales and bosses.
 	var hard: Array[EncounterDef] = []
-	## Copy (unit, skill, encounter or trinket) -> the library's original.
+	## Copy (unit, skill, encounter, trinket or talent) -> the library's original.
 	var original := {}
 	## Skill -> [side (0 heroes, 1 enemies), unit index, skill index], to write a fight down.
 	var places := {}
@@ -76,6 +80,19 @@ class Copy:
 			twin.hero = units.get(trinket.hero, trinket.hero)
 			copy.original[twin] = trinket
 			copy.trinkets.append(twin)
+		# Talents are files of their own, so the copied heroes would still hold
+		# the library's: they get copies, as edited.
+		var talent_twins := {}
+		for hero in copy.heroes:
+			var rows: Array[TalentDef] = []
+			for talent in hero.talents:
+				if not talent_twins.has(talent):
+					var twin: TalentDef = talent.duplicate_deep(Resource.DEEP_DUPLICATE_INTERNAL)
+					talent_twins[talent] = twin
+					copy.original[twin] = talent
+					copy.talents.append(twin)
+				rows.append(talent_twins[talent])
+			hero.talents = rows
 		for encounter in library.encounters:
 			var twin := EncounterDef.new()
 			twin.display_name = encounter.display_name
@@ -91,9 +108,9 @@ class Copy:
 	## The copy a run folder holds, as saved by save().
 	static func loaded(folder: String, manifest: Dictionary) -> Copy:
 		var copy := Copy.new()
-		for pair: Array in [["heroes", copy.heroes], ["enemies", copy.enemies], ["encounters", copy.encounters],
-				["trinkets", copy.trinkets]]:
-			for file: String in manifest[pair[0]]:
+		for pair: Array in [["talents", copy.talents], ["heroes", copy.heroes], ["enemies", copy.enemies],
+				["encounters", copy.encounters], ["trinkets", copy.trinkets]]:
+			for file: String in manifest.get(pair[0], []):
 				pair[1].append(load(folder.path_join(file)))
 		for index: float in manifest["hard"]:
 			copy.hard.append(copy.encounters[int(index)])
@@ -110,11 +127,12 @@ class Copy:
 					places[units[u].skills[s]] = [side, u, s]
 
 	## Saves every copied file into `folder` and returns the manifest listing
-	## them. Each gets its path there first, so encounters and trinkets refer to
-	## the copied units instead of holding copies of their own.
+	## them. Each gets its path there first, so encounters, trinkets and heroes
+	## refer to the copied units and talents instead of holding copies of their own.
 	func save(folder: String) -> Dictionary:
-		var manifest := {"heroes": [], "enemies": [], "encounters": [], "trinkets": [], "hard": []}
-		var lists := [["heroes", heroes], ["enemies", enemies], ["trinkets", trinkets], ["encounters", encounters]]
+		var manifest := {"heroes": [], "enemies": [], "encounters": [], "trinkets": [], "talents": [], "hard": []}
+		var lists := [["talents", talents], ["heroes", heroes], ["enemies", enemies], ["trinkets", trinkets],
+				["encounters", encounters]]
 		for pair: Array in lists:
 			for i in pair[1].size():
 				var resource: Resource = pair[1][i]
@@ -177,6 +195,14 @@ func _init(copy: Copy, at: BalancePreset, run_size: Size, counts: Dictionary) ->
 			var hero: UnitDef = wearers[draw.randi_range(0, wearers.size() - 1)]
 			for with in [true, false]:
 				_plan.append({group = &"trinket", subject = trinket, hero = hero, with = with, seed = seed_value})
+	for hero in _copy.heroes:
+		for talent in hero.talents:
+			if _row_of(hero, talent).size() < 2:
+				continue
+			for i in int(how_many.talent) * scale:
+				var seed_value := hash(["talent", hero.id, talent.id, i])
+				for with in [true, false]:
+					_plan.append({group = &"talent", subject = talent, hero = hero, with = with, seed = seed_value})
 	_outcomes.resize(_plan.size())
 
 
@@ -356,7 +382,8 @@ func fight(job: Dictionary) -> Dictionary:
 	var setup := _setup(job)
 	var heroes: Array[Combatant] = []
 	for i in setup.party.size():
-		heroes.append(Growth.hero_combatant(record(setup.party[i], setup.loadouts[i], setup.trinkets[i], preset)))
+		heroes.append(Growth.hero_combatant(record(setup.party[i], setup.loadouts[i], setup.trinkets[i], preset,
+				setup.talents[i])))
 	var enemies: Array[Combatant] = []
 	for enemy: UnitDef in setup.encounter.enemies:
 		enemies.append(Growth.enemy_combatant(enemy, preset.tier))
@@ -424,6 +451,7 @@ func _setup(job: Dictionary) -> Dictionary:
 			party.append(pick)
 	var loadouts: Array = []
 	var trinkets: Array = []
+	var talents: Array = []
 	var stand_in: SkillDef = null
 	for hero in party:
 		var pool := hero.skills.duplicate()
@@ -460,12 +488,45 @@ func _setup(job: Dictionary) -> Dictionary:
 			if job.with:
 				worn.push_front(job.subject)
 		trinkets.append(worn)
+		talents.append(_draw_talents(hero, job))
 	# The line-up comes from the loadouts with the measured skill, so both fights stand alike.
-	_order(party, loadouts, trinkets)
+	_order(party, [loadouts, trinkets, talents])
 	if job.group == &"skill" and not job.with and stand_in:
 		var loadout: Array[SkillDef] = loadouts[party.find(job.hero)]
 		loadout[loadout.find(job.subject)] = stand_in
-	return {party = party, loadouts = loadouts, trinkets = trinkets, encounter = encounter}
+	return {party = party, loadouts = loadouts, trinkets = trinkets, talents = talents, encounter = encounter}
+
+
+## A random talent on each row `hero`'s level opens at the preset (none if it
+## takes no talents). In a talent's paired fights its hero also has its row:
+## with it, or with another of the row. Drawn with dice of their own, so the
+## party, skills and trinkets draw as they would without talents.
+func _draw_talents(hero: UnitDef, job: Dictionary) -> Array[TalentDef]:
+	var dice := RandomNumberGenerator.new()
+	dice.seed = hash([job.seed, "talents", hero.id])
+	var rows: Array[Array] = []
+	for row in hero.talents.size() / CampaignRules.TALENTS_PER_ROW:
+		rows.append(hero.talents.slice(row * CampaignRules.TALENTS_PER_ROW, (row + 1) * CampaignRules.TALENTS_PER_ROW))
+	var picks: Array = rows.map(func(row: Array) -> TalentDef: return row[dice.randi_range(0, row.size() - 1)])
+	var open := CampaignRules.TALENT_LEVELS.filter(func(at: int) -> bool: return preset.level >= at).size() \
+			if preset.talents else 0
+	var chosen: Array[TalentDef] = []
+	for row in rows.size():
+		if row < open:
+			chosen.append(picks[row])
+	if job.group == &"talent" and hero == job.hero:
+		var row := hero.talents.find(job.subject) / CampaignRules.TALENTS_PER_ROW
+		var others := _row_of(hero, job.subject).filter(func(talent: TalentDef) -> bool: return talent != job.subject)
+		var stand_in: TalentDef = others[dice.randi_range(0, others.size() - 1)]
+		chosen = chosen.filter(func(talent: TalentDef) -> bool: return talent not in rows[row])
+		chosen.append(job.subject if job.with else stand_in)
+	return chosen
+
+
+## The talents on the row that holds `talent`, it included.
+static func _row_of(hero: UnitDef, talent: TalentDef) -> Array:
+	var row := hero.talents.find(talent) / CampaignRules.TALENTS_PER_ROW
+	return hero.talents.slice(row * CampaignRules.TALENTS_PER_ROW, (row + 1) * CampaignRules.TALENTS_PER_ROW)
 
 
 ## Gives a loadout without an attack the first one from `spare`, in place of its
@@ -502,8 +563,10 @@ func _draw_trinket(hero: UnitDef, taken: Array, rng: RandomNumberGenerator) -> T
 	return choices[rng.randi_range(0, choices.size() - 1)] if not choices.is_empty() else null
 
 
-## Lines the party up by the average rank their skills are used from, front first.
-func _order(party: Array[UnitDef], loadouts: Array, trinkets: Array) -> void:
+## Lines the party up by the average rank their skills are used from, front
+## first, and `alongside` (each an array per hero, the loadouts first) with it.
+func _order(party: Array[UnitDef], alongside: Array) -> void:
+	var loadouts: Array = alongside[0]
 	var slots := range(party.size())
 	var reach := func(i: int) -> float:
 		var total := 0.0
@@ -517,15 +580,18 @@ func _order(party: Array[UnitDef], loadouts: Array, trinkets: Array) -> void:
 		var x: float = reach.call(a)
 		var y: float = reach.call(b)
 		return x < y if x != y else a < b)
-	var sorted := [party.duplicate(), loadouts.duplicate(), trinkets.duplicate()]
+	var before := party.duplicate()
+	var lists: Array = alongside.map(func(list: Array) -> Array: return list.duplicate())
 	for i in slots.size():
-		party[i] = sorted[0][slots[i]]
-		loadouts[i] = sorted[1][slots[i]]
-		trinkets[i] = sorted[2][slots[i]]
+		party[i] = before[slots[i]]
+		for l in alongside.size():
+			alongside[l][i] = lists[l][slots[i]]
 
 
-## A hero at `at`'s level, gear and skill ranks, taking `loadout` and wearing `worn`.
-static func record(hero: UnitDef, loadout: Array[SkillDef], worn: Array[TrinketDef], at: BalancePreset) -> HeroRecord:
+## A hero at `at`'s level, gear and skill ranks, taking `loadout`, wearing
+## `worn` and with `chosen` talents (each on its own row, whatever the level).
+static func record(hero: UnitDef, loadout: Array[SkillDef], worn: Array[TrinketDef], at: BalancePreset,
+		chosen: Array = []) -> HeroRecord:
 	var result := HeroRecord.new(hero)
 	result.xp = CampaignRules.LEVEL_XP[at.level - 1] if at.level > 0 else 0
 	result.weapon_rank = at.gear_rank
@@ -536,6 +602,13 @@ static func record(hero: UnitDef, loadout: Array[SkillDef], worn: Array[TrinketD
 	result.known.assign(loadout.map(func(skill: SkillDef) -> StringName: return skill.id))
 	result.equipped = result.known.duplicate()
 	result.trinkets = worn
+	for talent: TalentDef in chosen:
+		var row := hero.talents.find(talent) / CampaignRules.TALENTS_PER_ROW
+		if row < 0:
+			continue
+		while result.talents.size() <= row:
+			result.talents.append(&"")
+		result.talents[row] = talent.id
 	return result
 
 
@@ -568,7 +641,7 @@ class Results:
 	var enemies := {}
 	## Skill -> {uses, turns}: how often it was picked when it could be, from the sweep.
 	var usage := {}
-	## Skill or trinket -> {n, win, win_margin, lost, lost_margin}: with minus without.
+	## Skill, trinket or talent -> {n, win, win_margin, lost, lost_margin}: with minus without.
 	var pairs := {}
 	## The sweep's overall win rate and the average hero's.
 	var win := 0.0
@@ -625,7 +698,7 @@ func results() -> Results:
 					for skill: SkillDef in outcome.loadouts[p]:
 						_add(result.usage, original[skill], {uses = outcome.uses.get(skill, 0),
 								turns = outcome.turns.get(hero, 0)})
-			&"skill", &"trinket":
+			&"skill", &"trinket", &"talent":
 				if not job.with or _outcomes[i + 1] == null or _outcomes[i + 1].is_empty():
 					continue
 				var other: Dictionary = _outcomes[i + 1]

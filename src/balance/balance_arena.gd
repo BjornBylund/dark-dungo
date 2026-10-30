@@ -1,6 +1,6 @@
 ## The balance tool's Arena: one hand-picked fight played over and over with
 ## different dice by AutoPlayer.best. Up to four heroes stand in rank order,
-## each with their loadout and trinkets, against an encounter at a preset,
+## each with their loadout, trinkets and talents, against an encounter at a preset,
 ## starting at a share of their HP and some stress. step() plays a few fights
 ## at a time so the tool stays responsive; restart() starts over, as the tool
 ## does whenever anything changes. The combat screen can play it too (Watch),
@@ -14,7 +14,8 @@ const FIGHTS := 200
 const MORE := 1000
 const SAVE_PATH := "user://balance_arena.json"
 
-## Up to four, rank 1 first: {hero: UnitDef, skills: Array[SkillDef], trinkets: Array[TrinketDef]}.
+## Up to four, rank 1 first: {hero: UnitDef, skills: Array[SkillDef], trinkets: Array[TrinketDef],
+## talents: Array[TalentDef] (at most one per row, any row whatever the preset's level)}.
 var slots: Array[Dictionary] = []
 var encounter: EncounterDef
 var preset: BalancePreset
@@ -49,7 +50,7 @@ static func loaded(library: BalanceLibrary, path: String = SAVE_PATH) -> Balance
 	if arena.slots.is_empty():
 		var cast := library.campaign.starting_heroes if not library.campaign.starting_heroes.is_empty() else library.heroes
 		for hero in cast.slice(0, 4):
-			arena.slots.append({hero = hero, skills = hero.skills.slice(0, Rules.SKILL_SLOTS), trinkets = []})
+			arena.slots.append({hero = hero, skills = hero.skills.slice(0, Rules.SKILL_SLOTS), trinkets = [], talents = []})
 	if arena.encounter == null and not library.encounters.is_empty():
 		var regions := library.campaign.regions
 		arena.encounter = regions[0].boss if not regions.is_empty() and regions[0].boss else library.encounters[0]
@@ -72,7 +73,9 @@ func _read(library: BalanceLibrary, data: Dictionary) -> void:
 		skills.assign(hero.skills.filter(func(s: SkillDef) -> bool: return String(s.id) in entry.get("skills", [])))
 		var trinkets: Array[TrinketDef] = []
 		trinkets.assign(library.trinkets.filter(func(t: TrinketDef) -> bool: return String(t.id) in entry.get("trinkets", [])))
-		slots.append({hero = hero, skills = skills, trinkets = trinkets})
+		var talents: Array[TalentDef] = []
+		talents.assign(hero.talents.filter(func(t: TalentDef) -> bool: return String(t.id) in entry.get("talents", [])))
+		slots.append({hero = hero, skills = skills, trinkets = trinkets, talents = talents})
 
 
 func save_setup(path: String = SAVE_PATH) -> void:
@@ -83,6 +86,7 @@ func save_setup(path: String = SAVE_PATH) -> void:
 				hero = String(slot.hero.id),
 				skills = slot.skills.map(func(s: SkillDef) -> String: return String(s.id)),
 				trinkets = slot.trinkets.map(func(t: TrinketDef) -> String: return String(t.id)),
+				talents = slot.get("talents", []).map(func(t: TalentDef) -> String: return String(t.id)),
 			}),
 	}
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -143,7 +147,7 @@ func battle(seed_value: int) -> Battle:
 			loadout.assign(hero.skills.slice(0, Rules.SKILL_SLOTS))
 		var worn: Array[TrinketDef] = []
 		worn.assign(slot.trinkets)
-		var unit := Growth.hero_combatant(BalanceSweep.record(hero, loadout, worn, preset))
+		var unit := Growth.hero_combatant(BalanceSweep.record(hero, loadout, worn, preset, slot.get("talents", [])))
 		unit.hp = maxi(1, roundi(unit.max_hp * hp))
 		unit.stress = stress
 		party.append(unit)

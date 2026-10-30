@@ -1,9 +1,9 @@
 ## The balance tool's sweep from the terminal: random parties against every
-## encounter, and every hero skill and trinket measured with and without, at
-## one preset. Prints encounters (flagging missed targets), heroes, and the
-## skills and trinkets that stand out.
+## encounter, and every hero skill, trinket and talent measured with and
+## without, at one preset. Prints encounters (flagging missed targets), heroes,
+## and the skills, trinkets and talents that stand out.
 ## Run: godot --headless --path . --script res://tools/balance_probe.gd -- [--preset=Base] [--thorough] [--all]
-## --all lists every skill and trinket, not just the ones that stand out.
+## --all lists every skill, trinket and talent, not just the ones that stand out.
 extends SceneTree
 
 
@@ -32,6 +32,7 @@ func _initialize() -> void:
 	_print_heroes(library, results)
 	_print_worth(library, results, "Skills", _hero_skills(library), everything)
 	_print_worth(library, results, "Trinkets", library.trinkets, everything)
+	_print_worth(library, results, "Talents", library.talents, everything)
 	quit()
 
 
@@ -76,7 +77,7 @@ func _hero_skills(library: BalanceLibrary) -> Array:
 	return skills
 
 
-## Each skill or trinket's win and HP-lost difference with against without, best first.
+## Each skill, trinket or talent's win and HP-lost difference with against without, best first.
 func _print_worth(library: BalanceLibrary, results: BalanceSweep.Results, title: String, subjects: Array,
 		everything: bool) -> void:
 	var middle := BalanceFlags.middle_worth(results, subjects)
@@ -94,6 +95,8 @@ func _print_worth(library: BalanceLibrary, results: BalanceSweep.Results, title:
 			for hero in library.heroes:
 				if subject in hero.skills:
 					owner = hero.display_name + ": "
+		elif subject is TalentDef and library.hero_of(subject):
+			owner = "%s %d: " % [library.hero_of(subject).display_name, library.talent_level(subject)]
 		print("  %-36s win %+4.0f%% ±%2.0f   HP lost %+5.1f%% ±%3.1f%s" % [(owner + subject.display_name).left(36),
 				pair.win * 100, pair.win_margin * 100, pair.lost * 100, pair.lost_margin * 100,
 				"  FLAG" if flagged else ""])

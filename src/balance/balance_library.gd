@@ -1,5 +1,5 @@
-## The content the balance tool edits: every hero, enemy, encounter and
-## trinket file, and the campaign and regions that list them. Every change
+## The content the balance tool edits: every hero, enemy, encounter, trinket
+## and talent file, and the campaign and regions that list them. Every change
 ## goes through here so it can be undone, and marks the file it belongs to
 ## (its root) as unsaved until save() writes it.
 class_name BalanceLibrary
@@ -9,7 +9,7 @@ extends RefCounted
 ## when forms showing the roots must rebuild.
 signal edited(roots: Array[Resource], from_history: bool)
 
-enum Kind { HERO, ENEMY, ENCOUNTER, TRINKET, OTHER }
+enum Kind { HERO, ENEMY, ENCOUNTER, TRINKET, TALENT, OTHER }
 
 const CAMPAIGN_PATH := "res://content/campaign.tres"
 const SANDBOX_PATH := "res://content/sandbox.tres"
@@ -24,6 +24,7 @@ var folders: Dictionary[Kind, String] = {
 	Kind.ENEMY: "res://content/enemies",
 	Kind.ENCOUNTER: "res://content/encounters",
 	Kind.TRINKET: "res://content/trinkets",
+	Kind.TALENT: "res://content/talents",
 }
 var campaign: CampaignDef
 var sandbox: SandboxDef
@@ -33,6 +34,9 @@ var heroes: Array[UnitDef] = []
 var enemies: Array[UnitDef] = []
 var encounters: Array[EncounterDef] = []
 var trinkets: Array[TrinketDef] = []
+## Every talent file (content/talents/<class>/): the heroes' talents in their
+## order, row by row, then any no hero lists.
+var talents: Array[TalentDef] = []
 var history := UndoRedo.new()
 var _relay := Relay.new()
 
@@ -78,6 +82,7 @@ func _init() -> void:
 	enemies.assign(_load_all(folders[Kind.ENEMY]))
 	encounters.assign(_load_all(folders[Kind.ENCOUNTER]))
 	trinkets.assign(_load_all(folders[Kind.TRINKET]))
+	_load_talents()
 	for root in roots():
 		_remember_on_disk(root)
 
@@ -98,6 +103,40 @@ func _load_all(folder: String) -> Array[Resource]:
 	return result
 
 
+## The talents, in the heroes' order and then the files' (one folder per class).
+func _load_talents() -> void:
+	for hero in heroes:
+		for talent in hero.talents:
+			if talent not in talents:
+				talents.append(talent)
+	var root := folders[Kind.TALENT]
+	if not DirAccess.dir_exists_absolute(root):
+		return
+	var classes := Array(DirAccess.get_directories_at(root))
+	classes.sort()
+	for folder: String in classes:
+		for talent: TalentDef in _load_all(root.path_join(folder)):
+			if talent not in talents:
+				talents.append(talent)
+
+
+## The hero whose talent rows hold `talent`, or null.
+func hero_of(talent: TalentDef) -> UnitDef:
+	for hero in heroes:
+		if talent in hero.talents:
+			return hero
+	return null
+
+
+## The level whose row holds `talent` on its hero, or 0 if no hero has it.
+func talent_level(talent: TalentDef) -> int:
+	var hero := hero_of(talent)
+	if hero == null:
+		return 0
+	var row := hero.talents.find(talent) / CampaignRules.TALENTS_PER_ROW
+	return CampaignRules.TALENT_LEVELS[row] if row < CampaignRules.TALENT_LEVELS.size() else 0
+
+
 ## Everything that can be edited and saved: the content files, the campaign
 ## and its regions, and the tool's targets.
 func roots() -> Array[Resource]:
@@ -106,6 +145,7 @@ func roots() -> Array[Resource]:
 	result.append_array(enemies)
 	result.append_array(encounters)
 	result.append_array(trinkets)
+	result.append_array(talents)
 	result.append(campaign)
 	result.append_array(campaign.regions)
 	result.append(targets)
@@ -122,6 +162,8 @@ func list_of(kind: Kind) -> Array:
 			return encounters
 		Kind.TRINKET:
 			return trinkets
+		Kind.TALENT:
+			return talents
 	return []
 
 
@@ -132,6 +174,8 @@ func kind_of(root: Resource) -> Kind:
 		return Kind.ENCOUNTER
 	if root is TrinketDef and root in trinkets:
 		return Kind.TRINKET
+	if root is TalentDef and root in talents:
+		return Kind.TALENT
 	return Kind.OTHER
 
 

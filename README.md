@@ -104,20 +104,20 @@ Other art, all replaceable:
 
 ## Add content
 
-The **balance tool** edits heroes, enemies, encounters and trinkets with their numbers on paper beside them: `godot --path . -- --balance`, or Balance Tool on the title screen.
-- **Tables:** one per kind. Click a column title to sort. Green and red cells rank strong and weak within their group; hover one for its rank. A hero or enemy expands into its skills.
-- **Editing:** the form edits the selected row. Fields changed from their default are named in gold; hover a name for what it does.
-- **New content:** **Duplicate** makes a new one from a copy. **List in campaign** decides where the game uses it.
-- **Simulating:** pick a preset (Base, Apprentice, Veteran, Champion) and Quick (about 15 s) or Thorough (about a minute), then **▶ Run**. It simulates what's on screen, saved or not.
-  - **The sweep:** random parties of four with random loadouts fight every encounter.
-  - **Paired fights:** every hero skill and trinket is measured with and without it.
+The **balance tool** edits heroes, enemies, encounters, trinkets and talents with their numbers on paper beside them: `godot --path . -- --balance`, or Balance Tool on the title screen.
+- **Tables:** one per kind. Click a column title to sort. Green and red cells rank strong and weak within their group; hover one for its rank. A hero or enemy expands into its skills. The Talents table lists every class's talents with their level and effects.
+- **Editing:** the form edits the selected row. Fields changed from their default are named in gold; hover a name for what it does. A hero's **Talents** list picks which talent files sit on its rows, three per row.
+- **New content:** **Duplicate** makes a new one from a copy (not talents, which come three to a row). **List in campaign** decides where the game uses it.
+- **Simulating:** pick a preset (Base, Apprentice, Veteran, Champion) and Quick (about 25 s) or Thorough (about a minute and a half), then **▶ Run**. It simulates what's on screen, saved or not.
+  - **The sweep:** random parties of four with random loadouts fight every encounter. At presets with trinkets they wear random ones, and they take a random talent on each row their level opens.
+  - **Paired fights:** every hero skill and trinket is measured with and without it, and every talent against another of its row.
   - **Result columns:** what the run found, beside the numbers on paper. Hover a cell for its margin of error.
-  - **Flags:** amber marks an encounter that misses its target, or a hero, skill or trinket that stands out.
+  - **Flags:** amber marks an encounter that misses its target, or a hero, skill, trinket or talent that stands out.
   - **Out of date:** results grey out after an edit, and come back if you undo it.
   - **Pin:** keeps a run to compare later ones with, in the **vs pin** column.
   - **Targets:** opens the presets and targets (`content/balance_targets.tres`).
 - **Arena tab:** one fight of your choosing, played 200 times again after every change.
-  - **Setup:** pick four heroes in rank order, the skills they take (click to toggle, five at most) and their trinkets, an encounter, a preset, and the party's starting HP and stress.
+  - **Setup:** pick four heroes in rank order, the skills they take (click to toggle, five at most), their trinkets and a talent per row (any row, whatever the preset's level), an encounter, a preset, and the party's starting HP and stress.
   - **Results:** the win rate, HP lost, deaths and rounds, each hero's HP lost and deaths, and how often each skill was used, with a comparison to before your last change.
   - **Edit** beside a hero or the encounter opens it in the form; changes there re-run the fight.
   - **▶ Watch** plays the fight in the real combat screen with the bot, and **Play it** lets you play it. R plays it again; Esc goes back (once any unit's details are closed and no skill is chosen).
@@ -135,7 +135,7 @@ The files can also be edited by hand or in the Godot inspector:
 - **Campaign numbers** (rewards, prices, XP, upgrade costs, map size, room odds and bonds) are constants in `src/campaign/campaign_rules.gd`.
 - **Balance checks:**
   - `powershell -File scripts/balance.ps1` plays whole missions with random parties on parallel Godot processes (about 5 seconds). It prints how often each length is finished, how far parties get, the fight shares a full clear earns, and finish rates by class. `-Tier 0|1|2` and `-Level N` pick the missions and the heroes' level, and `-Runs N` the sample size. Heroes spend their talent points at random; `-NoTalents` leaves them unspent, to see what talents add.
-  - `godot --headless --path . --script res://tools/balance_probe.gd -- --preset=Base` runs the balance tool's sweep from the terminal. It prints every encounter against its targets, every hero against the cast's average, and the skills and trinkets that stand out (`--all` for every one). `--thorough` plays 4 times as many fights.
+  - `godot --headless --path . --script res://tools/balance_probe.gd -- --preset=Base` runs the balance tool's sweep from the terminal. It prints every encounter against its targets, every hero against the cast's average, and the skills, trinkets and talents that stand out (`--all` for every one). `--thorough` plays 4 times as many fights.
 
 ## Test it
 

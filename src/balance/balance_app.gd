@@ -1,19 +1,19 @@
-## The balance tool: tables of every hero, enemy, encounter and trinket with
-## their numbers on paper and what the last sweep of simulated fights found,
-## and a form to edit the selected one. Opened with `-- --balance`, or from the
-## title screen when running from the project folder. Ctrl+S saves, Ctrl+Z and
-## Ctrl+Y undo and redo.
+## The balance tool: tables of every hero, enemy, encounter, trinket and talent
+## with their numbers on paper and what the last sweep of simulated fights
+## found, and a form to edit the selected one. Opened with `-- --balance`, or
+## from the title screen when running from the project folder. Ctrl+S saves,
+## Ctrl+Z and Ctrl+Y undo and redo.
 extends Control
 
-enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS, ARENA }
+enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS, TALENTS, ARENA }
 
-const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets", "Arena"]
+const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets", "Talents", "Arena"]
 const TAB_KINDS := [BalanceLibrary.Kind.HERO, BalanceLibrary.Kind.ENEMY, BalanceLibrary.Kind.ENCOUNTER,
-		BalanceLibrary.Kind.TRINKET]
+		BalanceLibrary.Kind.TRINKET, BalanceLibrary.Kind.TALENT]
 const KIND_NAMES := {
 	BalanceLibrary.Kind.HERO: "Hero", BalanceLibrary.Kind.ENEMY: "Enemy",
 	BalanceLibrary.Kind.ENCOUNTER: "Encounter", BalanceLibrary.Kind.TRINKET: "Trinket",
-	BalanceLibrary.Kind.OTHER: "Settings",
+	BalanceLibrary.Kind.TALENT: "Talent", BalanceLibrary.Kind.OTHER: "Settings",
 }
 ## Encounter filter: [label, the end of the role it matches ("" for all, "-" for none)].
 const ROLE_FILTERS := [["All", ""], ["Fights", "fights"], ["Elites", "elites"], ["Finales", "finales"],
@@ -175,7 +175,7 @@ func _make_sweep_controls() -> Control:
 	_progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_progress)
 	_preset_pick = OptionButton.new()
-	_preset_pick.tooltip_text = "The heroes' level, gear, skill ranks and trinkets, and the enemies' tier"
+	_preset_pick.tooltip_text = "The heroes' level, gear, skill ranks, trinkets and talents, and the enemies' tier"
 	_preset_pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_preset_pick)
 	_size_pick = OptionButton.new()
@@ -316,6 +316,8 @@ func _refresh() -> void:
 			_table.show_rows(_encounter_rows())
 		Tab.TRINKETS:
 			_table.show_rows(_trinket_rows())
+		Tab.TALENTS:
+			_table.show_rows(_talent_rows())
 	_refresh_header()
 	_refresh_toolbar()
 
@@ -334,6 +336,8 @@ func _columns() -> Array[Dictionary]:
 			columns.append_array(BalanceResultColumns.encounter_columns())
 		Tab.TRINKETS:
 			columns.append_array(BalanceResultColumns.trinket_columns())
+		Tab.TALENTS:
+			columns.append_array(BalanceResultColumns.talent_columns())
 	match _tab:
 		Tab.HEROES, Tab.ENEMIES:
 			columns.append_array([
@@ -380,6 +384,13 @@ func _columns() -> Array[Dictionary]:
 				{title = "Listed", width = 60, tip = "In the campaign's trinket list"},
 				{title = "Effects", width = 400, expand = true},
 			])
+		Tab.TALENTS:
+			columns.append_array([
+				{title = "Class", width = 110},
+				{title = "Level", width = 56, tip = "The level whose row holds it"},
+				{title = "Effects", width = 400, expand = true},
+				{title = "Flavour", width = 260},
+			])
 	return columns
 
 
@@ -393,6 +404,9 @@ func _matches(resource: Resource) -> bool:
 		return resource.skills.any(func(skill: SkillDef) -> bool: return text in skill.display_name.to_lower())
 	if resource is EncounterDef:
 		return resource.enemies.any(func(enemy: UnitDef) -> bool: return text in enemy.display_name.to_lower())
+	if resource is TalentDef:
+		var hero := library.hero_of(resource)
+		return hero != null and text in hero.display_name.to_lower()
 	return false
 
 
@@ -521,6 +535,27 @@ func _trinket_rows() -> Array[Dictionary]:
 	return rows
 
 
+## Every talent, class by class and row by row; those on no hero's rows dimmed.
+func _talent_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for talent in library.talents:
+		if not _matches(talent):
+			continue
+		var hero := library.hero_of(talent)
+		var effects := "; ".join(UiStyle.perk_effects(talent, hero).map(func(line: Array) -> String: return line[0]))
+		var level := library.talent_level(talent)
+		var cells: Array = [_name_cell(talent)]
+		cells.append_array(_found.talent_cells(talent))
+		cells.append_array([
+			_text(hero.display_name if hero else "none"),
+			{value = float(level), text = str(level) if level > 0 else "", center = true},
+			{value = effects, text = effects, tip = effects.replace("; ", "\n")},
+			{value = talent.flavour, text = talent.flavour, tip = talent.flavour},
+		])
+		rows.append({resource = talent, children = [], dim = hero == null, cells = cells})
+	return rows
+
+
 func _name_cell(resource: Resource) -> Dictionary:
 	var name: String = resource.get(&"display_name")
 	var mark := "● " if library.is_unsaved(resource) else ""
@@ -603,6 +638,10 @@ func _refresh_header() -> void:
 	if kind == BalanceLibrary.Kind.ENEMY:
 		var places := library.encounters_with(_current).map(func(e: EncounterDef) -> String: return e.display_name)
 		lines.append("In: " + (", ".join(places) if not places.is_empty() else "no encounter yet"))
+	elif kind == BalanceLibrary.Kind.TALENT:
+		var hero := library.hero_of(_current)
+		lines.append("On: %s's level %d row" % [hero.display_name, library.talent_level(_current)] if hero
+				else "[color=#%s]On no hero's rows, so the game doesn't use it[/color]" % UiStyle.AMBER.to_html(false))
 	elif not listings.is_empty():
 		var on := listings.filter(func(l: Dictionary) -> bool: return l.on).map(func(l: Dictionary) -> String:
 			return l.label)
@@ -611,7 +650,8 @@ func _refresh_header() -> void:
 		lines.append("Listed in: " + (", ".join(on) if not on.is_empty()
 				else "[color=#%s]nowhere, so the game doesn't use it[/color]" % UiStyle.AMBER.to_html(false)))
 	_info.text = "\n".join(lines)
-	_duplicate.disabled = kind == BalanceLibrary.Kind.OTHER
+	# A talent belongs on a row of three: change one, or a hero's Talents list, instead.
+	_duplicate.disabled = kind == BalanceLibrary.Kind.OTHER or kind == BalanceLibrary.Kind.TALENT
 	_listing.visible = not listings.is_empty()
 	var popup := _listing.get_popup()
 	popup.clear()

@@ -1,5 +1,5 @@
 ## The balance tool's Arena tab: picks one fight (up to four heroes in rank
-## order with their loadouts and trinkets, an encounter, a preset, the party's
+## order with their loadouts, trinkets and talents, an encounter, a preset, the party's
 ## starting HP and stress) and shows what many plays of it come to. It plays
 ## it again a moment after anything changes, the content included, a few
 ## fights each frame. Watch and Play open it in the real combat screen.
@@ -150,7 +150,8 @@ func _build() -> void:
 
 ## Fills the picks and the four slots from the arena and the library, first
 ## dropping what the content no longer has: a deleted encounter, skills gone
-## from a hero's kit, trinkets gone or no longer theirs to wear.
+## from a hero's kit, trinkets gone or no longer theirs to wear, talents gone
+## from their rows.
 func _rebuild() -> void:
 	_stale = false
 	if arena.encounter not in library.encounters:
@@ -162,6 +163,7 @@ func _rebuild() -> void:
 		slot.skills = slot.skills.filter(func(skill: SkillDef) -> bool: return skill in hero.skills)
 		slot.trinkets = slot.trinkets.filter(func(trinket: TrinketDef) -> bool:
 			return trinket in library.trinkets and (trinket.hero == null or trinket.hero == hero))
+		slot.talents = slot.get("talents", []).filter(func(talent: TalentDef) -> bool: return talent in hero.talents)
 	_encounter_pick.clear()
 	for encounter in library.encounters:
 		var roles := library.roles_of(encounter)
@@ -176,7 +178,7 @@ func _rebuild() -> void:
 	_stress_slider.set_value_no_signal(arena.stress)
 	_stress_label.text = str(arena.stress)
 	while arena.slots.size() < 4:
-		arena.slots.append({hero = null, skills = [], trinkets = []})
+		arena.slots.append({hero = null, skills = [], trinkets = [], talents = []})
 	for child in _slots_box.get_children():
 		_slots_box.remove_child(child)
 		child.queue_free()
@@ -186,7 +188,8 @@ func _rebuild() -> void:
 	_show_results()
 
 
-## One rank of the party: its hero, the skills they take (five at most) and two trinkets.
+## One rank of the party: its hero, the skills they take (five at most), two
+## trinkets and a talent per row.
 func _slot_panel(index: int) -> Control:
 	var slot: Dictionary = arena.slots[index]
 	var panel := PanelContainer.new()
@@ -206,7 +209,8 @@ func _slot_panel(index: int) -> Control:
 	hero_pick.select(library.heroes.find(slot.hero) + 1)
 	hero_pick.item_selected.connect(func(choice: int) -> void:
 		var hero: UnitDef = library.heroes[choice - 1] if choice > 0 else null
-		arena.slots[index] = {hero = hero, skills = hero.skills.slice(0, Rules.SKILL_SLOTS) if hero else [], trinkets = []}
+		arena.slots[index] = {hero = hero, skills = hero.skills.slice(0, Rules.SKILL_SLOTS) if hero else [], trinkets = [],
+				talents = []}
 		_changed()
 		_rebuild.call_deferred())
 	top.add_child(hero_pick)
@@ -248,6 +252,8 @@ func _slot_panel(index: int) -> Control:
 	column.add_child(skills)
 	for t in CampaignRules.TRINKET_SLOTS:
 		column.add_child(_trinket_pick(index, t, hero))
+	for row in hero.talents.size() / CampaignRules.TALENTS_PER_ROW:
+		column.add_child(_talent_pick(index, row, hero))
 	return panel
 
 
@@ -275,6 +281,32 @@ func _trinket_pick(index: int, place: int, hero: UnitDef) -> OptionButton:
 		arena.slots[index].trinkets = picked
 		_changed()
 		_rebuild.call_deferred())
+	return pick
+
+
+## The talent on one of the hero's rows, or none. Any row can be set, whatever
+## the preset's level, to try a talent early.
+func _talent_pick(index: int, row: int, hero: UnitDef) -> OptionButton:
+	var choices := hero.talents.slice(row * CampaignRules.TALENTS_PER_ROW, (row + 1) * CampaignRules.TALENTS_PER_ROW)
+	var level: int = CampaignRules.TALENT_LEVELS[row] if row < CampaignRules.TALENT_LEVELS.size() else 0
+	var pick := OptionButton.new()
+	pick.clip_text = true
+	pick.add_item("Lv %d: (no talent)" % level)
+	for talent: TalentDef in choices:
+		pick.add_item("Lv %d: %s" % [level, talent.display_name])
+		pick.set_item_tooltip(pick.item_count - 1, UiStyle.plain(UiStyle.perk_bbcode(talent, "\n", hero)))
+	var taken: Array = arena.slots[index].get("talents", [])
+	var current := taken.filter(func(talent: TalentDef) -> bool: return talent in choices)
+	pick.select(choices.find(current[0]) + 1 if not current.is_empty() else 0)
+	if level > arena.preset.level:
+		pick.tooltip_text = "Opens at level %d, above the preset's %d; still applied here." % [level, arena.preset.level]
+	pick.item_selected.connect(func(choice: int) -> void:
+		var kept: Array = arena.slots[index].get("talents", []).filter(func(talent: TalentDef) -> bool:
+			return talent not in choices)
+		if choice > 0:
+			kept.append(choices[choice - 1])
+		arena.slots[index].talents = kept
+		_changed())
 	return pick
 
 

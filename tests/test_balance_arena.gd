@@ -42,6 +42,17 @@ func test_the_fight_uses_the_setup() -> void:
 	assert_eq(battle.enemies.size(), arena.encounter.enemies.size())
 
 
+func test_the_heroes_talents_come_along() -> void:
+	var arena: BalanceArena = _arena()[1]
+	var hero: UnitDef = arena.slots[0].hero
+	var steadfast: TalentDef = hero.talents.filter(func(t: TalentDef) -> bool: return t.stats.has(&"max_hp"))[0]
+	var plain := arena.battle(3).heroes[0].max_hp
+	arena.slots[0].talents = [steadfast]
+	var unit := arena.battle(3).heroes[0]
+	assert_eq(unit.max_hp, plain + roundi(hero.max_hp * steadfast.stats[&"max_hp"]), "at Base, though level 0")
+	assert_true(steadfast in unit.perks)
+
+
 func test_plays_up_to_its_goal_and_keeps_the_last_finished_run() -> void:
 	var arena: BalanceArena = _arena()[1]
 	arena.restart(6)
@@ -75,7 +86,8 @@ func test_the_setup_is_kept_between_sessions() -> void:
 	var library: BalanceLibrary = made[0]
 	var arena: BalanceArena = made[1]
 	var hero: UnitDef = library.heroes[3]
-	arena.slots[1] = {hero = hero, skills = [hero.skills[2], hero.skills[7]], trinkets = []}
+	arena.slots[1] = {hero = hero, skills = [hero.skills[2], hero.skills[7]], trinkets = [],
+			talents = [hero.talents[1], hero.talents[5]]}
 	arena.encounter = library.encounters[2]
 	arena.preset = library.targets.preset_named("Champion")
 	arena.hp = 0.35
@@ -85,6 +97,7 @@ func test_the_setup_is_kept_between_sessions() -> void:
 	DirAccess.remove_absolute(TEMP_SAVE)
 	assert_eq(again.slots[1].hero, hero)
 	assert_eq(again.slots[1].skills, [hero.skills[2], hero.skills[7]] as Array[SkillDef])
+	assert_eq(again.slots[1].talents, [hero.talents[1], hero.talents[5]] as Array[TalentDef])
 	assert_eq(again.encounter, library.encounters[2])
 	assert_eq(again.preset.name, "Champion")
 	assert_almost_eq(again.hp, 0.35)

@@ -41,7 +41,7 @@ static func hero_flagged(results: BalanceSweep.Results, hero: UnitDef, targets: 
 	return results.heroes.has(hero) and absf(hero_lead(results, hero)) > targets.hero_spread
 
 
-## {win, lost}: the middle differences of `subjects` (skills or trinkets) that were measured.
+## {win, lost}: the middle differences of `subjects` (skills, trinkets or talents) that were measured.
 static func middle_worth(results: BalanceSweep.Results, subjects: Array) -> Dictionary:
 	var middle := {win = 0.0, lost = 0.0}
 	for key: String in ["win", "lost"]:
@@ -57,7 +57,7 @@ static func middle_worth(results: BalanceSweep.Results, subjects: Array) -> Dict
 	return middle
 
 
-## Whether a skill or trinket's win or HP-lost difference is further than its
+## Whether a skill, trinket or talent's win or HP-lost difference is further than its
 ## standout from the group's `middle`, and further than its margin of error.
 static func stands_out(results: BalanceSweep.Results, subject: Resource, middle: Dictionary,
 		targets: BalanceTargets) -> bool:
