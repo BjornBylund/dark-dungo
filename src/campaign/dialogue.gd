@@ -43,10 +43,12 @@ const CALM := 1
 static var _scripts := {}
 ## "the" starting a line or a sentence, as a placeholder leaves it.
 static var _sentence_case := RegEx.create_from_string("(^|[.!?] )the ")
+static var _placeholder := RegEx.create_from_string("\\{(\\w*)\\}")
 
 
 ## The parsed script at `path` (empty for no path): section name -> variants,
-## each {conditions: Array[String], lines: [[speaker, text], ...]}.
+## each {conditions: Array[String], at: its first line, lines: [[speaker, text,
+## line], ...]}, line numbers counting from 0.
 static func script_at(path: String) -> Dictionary:
 	if path == "":
 		return {}
@@ -55,11 +57,17 @@ static func script_at(path: String) -> Dictionary:
 	return _scripts[path]
 
 
+## Drops the parsed script at `path`, so the next script_at() reads the file again.
+static func forget(path: String) -> void:
+	_scripts.erase(path)
+
+
 static func parse(text: String) -> Dictionary:
 	var sections := {}
 	var variants := []
-	for raw: String in text.split("\n"):
-		var line := raw.strip_edges()
+	var raw_lines := text.split("\n")
+	for i in raw_lines.size():
+		var line := raw_lines[i].strip_edges()
 		if line == "" or line.begins_with("#"):
 			continue
 		if line.begins_with("=="):
@@ -70,13 +78,108 @@ static func parse(text: String) -> Dictionary:
 			for condition: String in line.trim_prefix("?").split(",", false):
 				if condition.strip_edges() != "":
 					conditions.append(condition.strip_edges())
-			variants.append({conditions = conditions, lines = []})
+			variants.append({conditions = conditions, at = i, lines = []})
 		else:
 			if variants.is_empty():
-				variants.append({conditions = [] as Array[String], lines = []})
+				variants.append({conditions = [] as Array[String], at = i, lines = []})
 			var colon := line.find(":")
-			variants.back().lines.append([line.left(colon).strip_edges(), line.substr(colon + 1).strip_edges()])
+			variants.back().lines.append([line.left(colon).strip_edges(), line.substr(colon + 1).strip_edges(), i])
 	return sections
+
+
+## What's wrong with a script, as {line (from 0, or -1 for the whole script),
+## text}, in line order. `context`: {own: the hero's class name ("" for the
+## Ancestor's script), cast: every hero's class name, starting: the starting
+## heroes', regions: region ids, sections: the sections it must have, each with
+## lines that always play}. A hero's lines are theirs and the Ancestor's, plus
+## whoever a "with" condition brings; the opening is the starting heroes'.
+## Placeholders need the condition that gives them a value.
+static func problems(text: String, context: Dictionary) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	var raw_lines := text.split("\n")
+	var in_section := false
+	for i in raw_lines.size():
+		var line := raw_lines[i].strip_edges()
+		if line == "" or line.begins_with("#"):
+			continue
+		if line.begins_with("=="):
+			in_section = true
+		elif not in_section:
+			found.append({line = i, text = "Outside any section: add a \"== name\" line above it."})
+		elif not line.begins_with("?") and line.find(":") < 0:
+			found.append({line = i, text = "No speaker: write \"Speaker: text\"."})
+	var script := parse(text)
+	for section: String in context.get("sections", []):
+		if not script.get(section, []).any(func(variant: Dictionary) -> bool: return variant.conditions.is_empty()):
+			found.append({line = -1, text = "Needs \"== %s\" with lines that always play (before any \"?\")." % section})
+	for section: String in script:
+		for variant: Dictionary in script[section]:
+			var present: Array[String] = []
+			for condition: String in variant.conditions:
+				var word := condition.get_slice(" ", 0)
+				var argument := condition.substr(word.length()).strip_edges()
+				if word not in CONDITIONS:
+					found.append({line = variant.at, text = "Unknown condition \"%s\"." % condition})
+				elif word == "with":
+					if argument not in context.get("cast", []) or argument == context.get("own", ""):
+						found.append({line = variant.at, text = "\"with %s\": no other hero by that name." % argument})
+					else:
+						present.append(argument)
+				elif word == "region" and argument not in context.get("regions", []):
+					found.append({line = variant.at, text = "\"region %s\": no region with that id." % argument})
+			if variant.lines.is_empty():
+				found.append({line = variant.at, text = "A variant with no lines."})
+			for line: Array in variant.lines:
+				var speaker: String = line[0]
+				if not (speaker == NARRATOR or speaker == context.get("own", "") or speaker in present
+						or (section == "opening" and speaker in context.get("starting", []))):
+					found.append({line = line[2], text = _who_may_speak(speaker, context)})
+				var marks := _placeholder.search_all(line[1])
+				if marks.size() != String(line[1]).count("{") or marks.size() != String(line[1]).count("}"):
+					found.append({line = line[2], text = "A brace without its pair: placeholders look like {region}."})
+				for mark in marks:
+					var key := mark.get_string(1)
+					if not PLACEHOLDERS.has(key):
+						found.append({line = line[2], text = "Unknown placeholder {%s}." % key})
+					elif PLACEHOLDERS[key] != "" and PLACEHOLDERS[key] not in variant.conditions.map(
+							func(condition: String) -> String: return condition.get_slice(" ", 0)):
+						found.append({line = line[2], text = "{%s} needs \"? %s\" on its variant." % [key, PLACEHOLDERS[key]]})
+	found.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.line < b.line)
+	return found
+
+
+## What problems() checks `hero`'s script against (null for the Ancestor's),
+## from `campaign` and the heroes in `cast`: a starting hero's script needs
+## "reflect" and "level 1" to the top level, a recruit's "join" and from
+## "level 2", the Ancestor's "opening" and "homecoming".
+static func context_for(campaign: CampaignDef, hero: UnitDef, cast: Array) -> Dictionary:
+	var sections: Array[String] = ["opening", "homecoming"]
+	if hero:
+		var recruit := hero in campaign.recruits
+		sections.assign(["reflect", "join"] if recruit else ["reflect"])
+		for level in range(2 if recruit else 1, CampaignRules.MAX_LEVEL + 1):
+			sections.append("level %d" % level)
+	var name_of := func(unit: UnitDef) -> String: return unit.display_name
+	return {
+		own = hero.display_name if hero else "", cast = cast.map(name_of),
+		starting = campaign.starting_heroes.map(name_of),
+		regions = campaign.regions.map(func(region: RegionDef) -> String: return String(region.id)),
+		sections = sections,
+	}
+
+
+## Why `speaker` can't say a line here.
+static func _who_may_speak(speaker: String, context: Dictionary) -> String:
+	var who := "%s can't speak here" % (speaker if speaker != "" else "Nobody")
+	if context.get("own", "") != "":
+		return who + ": only the %s, the %s, and heroes a \"? with\" brings." % [NARRATOR, context.own]
+	return who + ": only the %s, and the starting heroes in \"== opening\"." % NARRATOR
+
+
+## `text` with its placeholders filled from `values`, a "the" that begins a
+## sentence capitalised.
+static func fill(text: String, values: Dictionary) -> String:
+	return _sentence_case.sub(text.format(values), "$1The ", true)
 
 
 ## The scene that opens a campaign, as the starting heroes arrive. Null without one.
@@ -161,7 +264,7 @@ static func _add(scene: DialogueScene, variants: Array, hero: HeroRecord, facts:
 			if record == null:
 				continue
 			speaker = record.def
-		scene.add_line(speaker, _sentence_case.sub(String(line[1]).format(values), "$1The ", true))
+		scene.add_line(speaker, fill(line[1], values))
 
 
 static func _holds(condition: String, hero: HeroRecord, facts: Dictionary) -> bool:
@@ -205,16 +308,17 @@ static func _values(hero: HeroRecord, facts: Dictionary) -> Dictionary:
 	var region: RegionDef = facts.region
 	var partner := _partner(hero, facts)
 	return {
-		"region": _mid_sentence(region.display_name) if region else "",
-		"boss": _mid_sentence(region.boss.display_name) if region and region.boss else "",
+		"region": mid_sentence(region.display_name) if region else "",
+		"boss": mid_sentence(region.boss.display_name) if region and region.boss else "",
 		"week": str(facts.week),
-		"opened": _mid_sentence(facts.opened),
+		"opened": mid_sentence(facts.opened),
 		"fallen": facts.fallen[0].display_name if not facts.fallen.is_empty() else "",
 		"partner": partner.display_name if partner else "",
 	}
 
 
-static func _mid_sentence(name: String) -> String:
+## "The Burrows" as it reads mid-sentence: "the Burrows".
+static func mid_sentence(name: String) -> String:
 	return "the " + name.trim_prefix("The ") if name.begins_with("The ") else name
 
 

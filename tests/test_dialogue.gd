@@ -3,7 +3,6 @@
 extends TestCase
 
 const CAMPAIGN: CampaignDef = preload("res://content/campaign.tres")
-const PLACEHOLDER := "\\{(\\w*)\\}"
 
 
 func _cast() -> Array[UnitDef]:
@@ -28,67 +27,39 @@ func _said(variant: Dictionary) -> String:
 
 # --- The scripts ---
 
-func test_every_hero_has_a_story_part_for_each_level_and_a_fallback_to_reflect() -> void:
-	for unit in _cast():
-		var script := Dialogue.script_at(unit.dialogue)
-		assert_false(script.is_empty(), "%s has a script" % unit.display_name)
-		var recruit := unit in CAMPAIGN.recruits
-		var sections := ["reflect"]
-		if recruit:
-			sections.append("join")
-		# Recruits join at level 1; the starting heroes start at 0.
-		for level in range(2 if recruit else 1, CampaignRules.MAX_LEVEL + 1):
-			sections.append("level %d" % level)
-		for section: String in sections:
-			var variants: Array = script.get(section, [])
-			assert_true(variants.any(func(variant: Dictionary) -> bool: return variant.conditions.is_empty()),
-					"%s's %s has lines that always play" % [unit.display_name, section])
-	var ancestor := Dialogue.script_at(CAMPAIGN.dialogue)
-	for section: String in ["opening", "homecoming"]:
-		assert_true(ancestor.get(section, []).any(func(variant: Dictionary) -> bool: return variant.conditions.is_empty()),
-				"the Ancestor's %s" % section)
+## Every script holds what it needs (a story part for each level, lines that
+## always play), and uses only known speakers, conditions and placeholders.
+func test_every_script_passes_its_checks() -> void:
+	for hero: UnitDef in [null] + _cast():
+		var path: String = hero.dialogue if hero else CAMPAIGN.dialogue
+		assert_true(FileAccess.file_exists(path), "%s has a script" % (hero.display_name if hero else "the Ancestor"))
+		var found := Dialogue.problems(FileAccess.get_file_as_string(path), Dialogue.context_for(CAMPAIGN, hero, _cast()))
+		for problem in found:
+			assert_true(false, "%s line %d: %s" % [path.get_file(), problem.line + 1, problem.text])
 
 
-func test_scripts_use_only_known_speakers_conditions_and_placeholders() -> void:
-	_check_script(CAMPAIGN.dialogue, "")
-	for unit in _cast():
-		_check_script(unit.dialogue, unit.display_name)
-
-
-## A hero's lines are theirs and the Ancestor's, plus whoever a "with" condition
-## brings; the opening is the starting heroes'. Placeholders need the condition
-## that gives them a value.
-func _check_script(path: String, own_name: String) -> void:
-	var names := _names(_cast())
-	var starting := _names(CAMPAIGN.starting_heroes)
-	var regions := CAMPAIGN.regions.map(func(region: RegionDef) -> String: return String(region.id))
-	var placeholder := RegEx.create_from_string(PLACEHOLDER)
-	var script := Dialogue.script_at(path)
-	for section: String in script:
-		for variant: Dictionary in script[section]:
-			var where := "%s, %s ? %s" % [path.get_file(), section, ", ".join(variant.conditions)]
-			var present := []
-			for condition: String in variant.conditions:
-				var word := condition.get_slice(" ", 0)
-				var argument := condition.substr(word.length()).strip_edges()
-				assert_true(word in Dialogue.CONDITIONS, "%s: unknown condition" % where)
-				if word == "with":
-					assert_true(argument in names and argument != own_name, "%s: nobody to be with" % where)
-					present.append(argument)
-				if word == "region":
-					assert_true(argument in regions, "%s: no such region" % where)
-			assert_false(variant.lines.is_empty(), "%s: has lines" % where)
-			for line: Array in variant.lines:
-				var speaker: String = line[0]
-				assert_true(speaker == Dialogue.NARRATOR or speaker == own_name or speaker in present
-						or (section == "opening" and speaker in starting), "%s: %s can't speak here" % [where, speaker])
-				var found := placeholder.search_all(line[1])
-				assert_eq(found.size(), String(line[1]).count("{"), "%s: a stray brace" % where)
-				for match_result in found:
-					var key := match_result.get_string(1)
-					assert_true(Dialogue.PLACEHOLDERS.has(key), "%s: unknown {%s}" % [where, key])
-					var needs: String = Dialogue.PLACEHOLDERS.get(key, "")
-					assert_true(needs == "" or needs in variant.conditions, "%s: {%s} needs ? %s" % [where, key, needs])
+func test_the_checks_name_each_mistake_and_its_line() -> void:
+	var crusader: UnitDef = load("res://content/heroes/vanguard.tres")
+	var context := Dialogue.context_for(CAMPAIGN, crusader, _cast())
+	var text := "\n".join([
+		"Ancestor: a line before any section",
+		"== level 1",
+		"Crusader: fine",
+		"Vestal: not here without a with",
+		"Crusader {partner} without its condition",
+		"? boss, sunset",
+		"Crusader: the {nowhere} and a { brace",
+	])
+	var found := Dialogue.problems(text, context)
+	var lines := found.map(func(problem: Dictionary) -> int: return problem.line)
+	assert_true(0 in lines, "outside any section")
+	assert_true(3 in lines, "a speaker who can't be there")
+	assert_true(4 in lines, "no speaker")
+	assert_true(5 in lines, "an unknown condition")
+	assert_true(6 in lines, "an unknown placeholder or a stray brace")
+	assert_true(-1 in lines, "missing sections, like level 2")
+	assert_eq(Dialogue.problems("== opening\nAncestor: {region} waits.\n== homecoming\nAncestor: Home.",
+			Dialogue.context_for(CAMPAIGN, null, _cast())), [] as Array[Dictionary])
 
 
 # --- Picking lines ---
@@ -148,7 +119,7 @@ func test_a_new_campaign_opens_with_the_starting_heroes_arriving() -> void:
 	assert_true(scene.texts.any(func(text: String) -> bool: return CAMPAIGN.regions[0].display_name in text),
 			"names the first region, capitalised to start a sentence")
 	assert_false(scene.texts.any(func(text: String) -> bool: return "{" in text), "placeholders are filled in")
-	assert_eq(Dialogue._mid_sentence("The Burrows"), "the Burrows")
+	assert_eq(Dialogue.mid_sentence("The Burrows"), "the Burrows")
 
 
 func test_a_recruit_joins_with_their_own_scene() -> void:

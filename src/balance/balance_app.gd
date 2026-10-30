@@ -1,19 +1,28 @@
 ## The balance tool: tables of every hero, enemy, encounter, trinket and talent
 ## with their numbers on paper and what the last sweep of simulated fights
-## found, and a form to edit the selected one. Opened with `-- --balance`, or
-## from the title screen when running from the project folder. Ctrl+S saves,
-## Ctrl+Z and Ctrl+Y undo and redo.
+## found, and a form to edit the selected one; the dialogue scripts as text.
+## Opened with `-- --balance`, or from the title screen when running from the
+## project folder. Ctrl+S saves, Ctrl+Z and Ctrl+Y undo and redo.
 extends Control
 
-enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS, TALENTS, ARENA }
+enum Tab { HEROES, ENEMIES, ENCOUNTERS, TRINKETS, TALENTS, DIALOGUE, ARENA }
 
-const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets", "Talents", "Arena"]
+const TAB_NAMES := ["Heroes", "Enemies", "Encounters", "Trinkets", "Talents", "Dialogue", "Arena"]
 const TAB_KINDS := [BalanceLibrary.Kind.HERO, BalanceLibrary.Kind.ENEMY, BalanceLibrary.Kind.ENCOUNTER,
-		BalanceLibrary.Kind.TRINKET, BalanceLibrary.Kind.TALENT]
+		BalanceLibrary.Kind.TRINKET, BalanceLibrary.Kind.TALENT, BalanceLibrary.Kind.DIALOGUE]
 const KIND_NAMES := {
 	BalanceLibrary.Kind.HERO: "Hero", BalanceLibrary.Kind.ENEMY: "Enemy",
 	BalanceLibrary.Kind.ENCOUNTER: "Encounter", BalanceLibrary.Kind.TRINKET: "Trinket",
-	BalanceLibrary.Kind.TALENT: "Talent", BalanceLibrary.Kind.OTHER: "Settings",
+	BalanceLibrary.Kind.TALENT: "Talent", BalanceLibrary.Kind.DIALOGUE: "Dialogue",
+	BalanceLibrary.Kind.OTHER: "Settings",
+}
+## What the Dialogue tab's reference says each condition means.
+const CONDITION_HELP := {
+	"boss": "the mission's boss fell", "long": "it was a long mission",
+	"opened": "the boss win opened a new region ({opened})", "fallen": "a hero in the party fell ({fallen})",
+	"region <id>": "it was in that region", "with <class>": "that hero was in the party, and may speak",
+	"partner": "fought beside someone Respected or Partners ({partner})",
+	"stressed": "the hero's stress is 6 or more", "calm": "the hero's stress is 1 or less",
 }
 ## Encounter filter: [label, the end of the role it matches ("" for all, "-" for none)].
 const ROLE_FILTERS := [["All", ""], ["Fights", "fights"], ["Elites", "elites"], ["Finales", "finales"],
@@ -28,6 +37,9 @@ const NOTES := "Numbers on paper: base heroes (level 0, rank-1 skills, the first
 		+ "against Apprentice enemies, over a %d-round fight. Resisted effects use the other side's average " \
 		+ "resistance; effects that need a token (like Stun vs Combo) don't count; per-round heal and stress " \
 		+ "assume every turn goes to it. Hover a cell for its rank. Ctrl+S saves, Ctrl+Z / Ctrl+Y undo and redo."
+const DIALOGUE_NOTES := "Scripts are plain text in content/dialogue; the problems below the editor are the same " \
+		+ "checks the tests run. Dialogue changes no fight, so results stay current while you write. Ctrl+S saves, " \
+		+ "Ctrl+Z / Ctrl+Y undo and redo."
 ## How often the progress of a running sweep is read, in seconds.
 const POLL_EVERY := 0.25
 
@@ -36,6 +48,7 @@ var _tab := Tab.HEROES
 var _table: BalanceTable
 var _filters: Control
 var _arena: BalanceArenaPanel
+var _dialogue: BalanceDialoguePanel
 var _search: LineEdit
 var _role_filter: OptionButton
 var _form_scroll: ScrollContainer
@@ -242,6 +255,11 @@ func _make_table_side() -> Control:
 	_arena.watch.connect(_open_watch)
 	_arena.hide()
 	side.add_child(_arena)
+	_dialogue = BalanceDialoguePanel.new(library)
+	_dialogue.show_resource.connect(_show)
+	_dialogue.play.connect(_open_preview)
+	_dialogue.hide()
+	side.add_child(_dialogue)
 	return side
 
 
@@ -285,9 +303,17 @@ func _make_detail_side() -> Control:
 
 func _switch_tab(tab: Tab) -> void:
 	_tab = tab
-	_filters.visible = tab != Tab.ARENA
-	_table.visible = tab != Tab.ARENA
+	_filters.visible = tab != Tab.ARENA and tab != Tab.DIALOGUE
+	_table.visible = tab != Tab.ARENA and tab != Tab.DIALOGUE
 	_arena.visible = tab == Tab.ARENA
+	_dialogue.visible = tab == Tab.DIALOGUE
+	if tab == Tab.DIALOGUE:
+		var chosen: Resource = _selected.get(tab)
+		if chosen == null and not library.dialogues.is_empty():
+			chosen = library.dialogues[0]
+		_show(chosen)
+		_refresh()
+		return
 	if tab == Tab.ARENA:
 		_refresh()
 		var first := _arena.arena.slots.filter(func(slot: Dictionary) -> bool: return slot.hero != null)
@@ -591,7 +617,9 @@ func _pct_or_blank(value: float) -> Variant:
 
 # --- The selected file ---
 
-## Shows `resource` in the form: a content file, or a skill (in its unit's form).
+## Shows `resource` in the form: a content file, or a skill (in its unit's
+## form). A dialogue script goes to the Dialogue tab's editor, with the format's
+## reference where the form goes.
 func _show(resource: Resource) -> void:
 	var nested: Resource = null
 	if resource is SkillDef:
@@ -601,11 +629,17 @@ func _show(resource: Resource) -> void:
 		return
 	if library.kind_of(resource) != BalanceLibrary.Kind.OTHER:
 		_selected[_tab] = nested if nested else resource
+	if resource is DialogueFile:
+		_current = resource
+		_form = null
+		_clear_form_side()
+		_form_scroll.add_child(_dialogue_reference(resource))
+		_dialogue.show_script(resource)
+		_refresh_header()
+		return
 	if resource != _current or _form == null:
 		_current = resource
-		if _form:
-			_form_scroll.remove_child(_form)
-			_form.queue_free()
+		_clear_form_side()
 		_form = ResourceForm.new(library, resource, _open.get_or_add(resource.get_instance_id(), {}))
 		_form_scroll.add_child(_form)
 	_refresh_header()
@@ -616,6 +650,54 @@ func _show(resource: Resource) -> void:
 			await get_tree().process_frame
 			if is_instance_valid(section):
 				_form_scroll.ensure_control_visible(section)
+
+
+func _clear_form_side() -> void:
+	for child in _form_scroll.get_children():
+		_form_scroll.remove_child(child)
+		child.queue_free()
+
+
+## The format at a glance, beside a script: what it must hold, who may speak,
+## the conditions and the placeholders.
+func _dialogue_reference(script: DialogueFile) -> Control:
+	var context := library.dialogue_context(script)
+	var dim := UiStyle.TEXT_DIM.to_html(false)
+	var gold := UiStyle.GOLD.to_html(false)
+	var lines: Array[String] = []
+	lines.append("[color=#%s]== name[/color] starts a section. [color=#%s]? a, b[/color] starts a variant that plays only when its conditions all hold; of those that hold, the one with the most wins. Lines before any [color=#%s]?[/color] always play. Each line is [b]Speaker: text[/b]; [color=#%s]#[/color] starts a comment." % [gold, gold, gold, dim])
+	var needs: Array = context.sections
+	lines.append("\n[color=#%s]This script needs[/color]" % gold)
+	lines.append(", ".join(needs) if not needs.is_empty() else "Nothing names it, so nothing in particular.")
+	lines.append("\n[color=#%s]Who may speak[/color]" % gold)
+	if context.own != "":
+		lines.append("The %s and the %s; another hero only in a variant with \"? with <class>\"." % [Dialogue.NARRATOR, context.own])
+	else:
+		lines.append("The %s; in \"== opening\", the starting heroes: %s." % [Dialogue.NARRATOR, ", ".join(context.starting)])
+	lines.append("\n[color=#%s]Conditions[/color], about the mission just finished" % gold)
+	for condition: String in CONDITION_HELP:
+		lines.append("[b]%s[/b]: %s" % [condition, CONDITION_HELP[condition]])
+	lines.append("Regions: %s. Heroes: %s." % [", ".join(context.regions), ", ".join(context.cast)])
+	lines.append("\n[color=#%s]Placeholders[/color]" % gold)
+	lines.append("{region} and {boss}: the mission's region and its boss, or the newest open one. {week}. {opened}, {fallen} and {partner} need their condition. Names come as \"the Burrows\", so write \"the {fallen}\".")
+	lines.append("\n[color=#%s]Play shows the variant the caret is in, with example names.[/color]" % dim)
+	var text := RichTextLabel.new()
+	text.bbcode_enabled = true
+	text.fit_content = true
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_font_size_override("normal_font_size", 14)
+	text.add_theme_font_size_override("bold_font_size", 14)
+	text.text = "\n".join(lines)
+	return text
+
+
+## Plays a dialogue scene over the tool, as the town would, from the Dialogue tab's Play.
+func _open_preview(scene: DialogueScene) -> void:
+	get_viewport().gui_release_focus()
+	var view := DialogueView.new()
+	add_child(view)
+	view.play(scene, library.campaign.town_background)
+	view.finished.connect(view.queue_free)
 
 
 func _owner_of(skill: SkillDef) -> UnitDef:
@@ -631,7 +713,8 @@ func _refresh_header() -> void:
 	var kind := library.kind_of(_current)
 	_title.text = _current.get(&"display_name") if &"display_name" in _current else "Presets and targets"
 	var lines: Array[String] = []
-	var file := _current.resource_path.trim_prefix("res://") if _current.resource_path != "" else "new, not saved yet"
+	var path: String = _current.file if _current is DialogueFile else _current.resource_path
+	var file := path.trim_prefix("res://") if path != "" else "new, not saved yet"
 	lines.append("[color=#%s]%s · %s%s[/color]" % [UiStyle.TEXT_DIM.to_html(false), KIND_NAMES.get(kind, ""), file,
 			" · unsaved changes" if library.is_unsaved(_current) else ""])
 	var listings := library.listings(_current)
@@ -651,7 +734,7 @@ func _refresh_header() -> void:
 				else "[color=#%s]nowhere, so the game doesn't use it[/color]" % UiStyle.AMBER.to_html(false)))
 	_info.text = "\n".join(lines)
 	# A talent belongs on a row of three: change one, or a hero's Talents list, instead.
-	_duplicate.disabled = kind == BalanceLibrary.Kind.OTHER or kind == BalanceLibrary.Kind.TALENT
+	_duplicate.disabled = kind in [BalanceLibrary.Kind.OTHER, BalanceLibrary.Kind.TALENT, BalanceLibrary.Kind.DIALOGUE]
 	_listing.visible = not listings.is_empty()
 	var popup := _listing.get_popup()
 	popup.clear()
@@ -685,7 +768,9 @@ func _refresh_toolbar() -> void:
 	var lines: Array[String] = []
 	if _status_note != "":
 		lines.append(_status_note)
-	if _results:
+	if _tab == Tab.DIALOGUE:
+		lines.append(DIALOGUE_NOTES)
+	elif _results:
 		var run := "Results: %s at %s, %s fights in %d s." % [BalanceSweep.SIZE_NAMES[_results.size], _results.preset.name,
 				UiStyle.gold_text(_results.played), roundi(_results.seconds)]
 		if _found.stale:
@@ -695,7 +780,8 @@ func _refresh_toolbar() -> void:
 		lines.append(run)
 	elif not _sweep:
 		lines.append("Press ▶ Run to simulate fights and fill the result columns.")
-	lines.append(NOTES % BalanceStats.ROUNDS)
+	if _tab != Tab.DIALOGUE:
+		lines.append(NOTES % BalanceStats.ROUNDS)
 	_status.text = "  ".join(lines)
 
 
@@ -767,6 +853,8 @@ func _on_edited(roots: Array[Resource], from_history: bool) -> void:
 	if _current == null:
 		var list := library.list_of(TAB_KINDS[_tab]) if _tab != Tab.ARENA else library.heroes
 		_show(list[0] if not list.is_empty() else null)
+	elif _current is DialogueFile and _current in roots:
+		_refresh_header()
 	elif _current in roots and _form:
 		_form.rebuild()
 

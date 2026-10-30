@@ -47,7 +47,10 @@ func _init(content: BalanceLibrary) -> void:
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 10)
 	_build()
-	library.edited.connect(func(_roots: Array[Resource], _from_history: bool) -> void:
+	library.edited.connect(func(roots: Array[Resource], _from_history: bool) -> void:
+		# Dialogue changes no fight.
+		if roots.all(func(root: Resource) -> bool: return root is DialogueFile):
+			return
 		_stale = true
 		_schedule_restart(RESTART_DELAY))
 	arena.restart()

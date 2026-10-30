@@ -256,7 +256,7 @@ Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
   - A framed text box with the speaker's name. Text types out.
   - Click, tap, Enter or Space shows the line, then moves on. Skip or Esc ends the scene.
 - **Saving:** scenes waiting to play are saved, and a scene skipped part-way counts as seen. Quitting during one plays it again next time.
-- **Content:** plain-text scripts in `content/dialogue/`; the format is documented at the top of `src/campaign/dialogue.gd`.
+- **Content:** plain-text scripts in `content/dialogue/`; the format is documented at the top of `src/campaign/dialogue.gd`. They're written in the [balance tool](#balance-tool)'s Dialogue tab or any text editor.
 
 ### Town screen and saving
 
@@ -418,10 +418,10 @@ It replaced a "sensible" bot that only healed allies under 50%, calmed stress of
 
 ## Balance tool
 
-A dev app inside the game (`src/balance/`) for designing and balancing heroes, enemies, bosses and items. It opens with `-- --balance`, or from a title-screen button that only shows when running from the project folder, and is left out of exports. Desktop only.
+A dev app inside the game (`src/balance/`) for designing and balancing heroes, enemies, bosses and items, and writing their dialogue. It opens with `-- --balance`, or from a title-screen button that only shows when running from the project folder, and is left out of exports. Desktop only.
 
 - **Why in the game, not an editor plugin:** the Godot editor isn't part of the workflow. All of it is GDScript on the real content and combat code.
-- **What it edits:** every field of the heroes, enemies (bosses included), trinkets and talents, and every encounter's lineup. Forms are built from each resource's exported fields, so new fields, and new kinds of equipment later, get an editor without extra work. `campaign_rules.gd`, events and regions are out of scope, except listing content in the campaign.
+- **What it edits:** every field of the heroes, enemies (bosses included), trinkets and talents, every encounter's lineup, and the dialogue scripts. Forms are built from each resource's exported fields, so new fields, and new kinds of equipment later, get an editor without extra work. `campaign_rules.gd`, events and regions are out of scope, except listing content in the campaign.
 - **Editing:** a table per kind (Heroes, Enemies, Encounters with a Fight / Elite / Finale / Boss filter, Trinkets, Talents) beside a form for the selected one. A hero's form links its talent files, three per row; a talent is edited in its own form, from the Talents table. Units expand into their skills. Undo and redo cover the session; git is the long-term history. Save writes the changed `.tres` files only, and a file saved unchanged comes out byte-identical. Quitting or leaving with unsaved changes asks first.
 - **New content:** Duplicate copies a hero, enemy, encounter or trinket (not a talent, which belongs to a row of three) with its own skills and effects (art and listed units are shared) and a new id. List in campaign puts it in Starting Heroes or Recruits, a region's fights, elites, finales or boss, or the trinket list. Ids lock once saved, because saves refer to them. Deleting stays manual.
 - **Numbers on paper** (`BalanceStats`), live as you edit, sortable, tinted by rank within their group:
@@ -459,6 +459,11 @@ A dev app inside the game (`src/balance/`) for designing and balancing heroes, e
   - **Live:** 200 fights (about 5 s) play on the main thread, a few each frame, and start again 0.4 s after any change, to the setup or to the content in the form. The fights use the content as it stands, so they need no copy.
   - **Results:** win rate with its margin, HP lost, deaths, rounds and stress, each hero's HP lost and deaths, and how often the bot used each skill. A line compares with the last run that finished before the latest change. More plays 1,000 fights.
   - **Watch** opens the fight in the real combat screen, played by the bot; **Play it** lets you play it yourself. The screen opens over the tool rather than replacing it, so unsaved edits and the undo history stay. It plays the fight with new dice each time (R again), and Esc (once any unit's details are closed and no skill is chosen) or the end panel goes back. The combat screen knows the Arena only as an object with `title`, `bot_plays` and `battle(seed)`, so the game doesn't depend on the tool, which isn't exported.
+- **Dialogue** (`BalanceDialoguePanel`, the Dialogue tab): the [dialogue scripts](#dialogue-scenes) in a text editor rather than a form, since a script's shape is its sections and lines.
+  - **Checks:** `Dialogue.problems()` runs 0.3 s after typing stops, against what the script's hero needs (`Dialogue.context_for`): the sections that must always have a line, who may speak where, known conditions, regions, classes and placeholders, and placeholders only under the condition that fills them. The test runs the same function over every script, so the tool and the tests agree.
+  - **Highlighting:** sections, conditions, comments, speakers in their hero's colour and placeholders; unknown speakers and placeholders in red, and lines with a problem tinted.
+  - **Play:** the variant under the caret as a `DialogueScene`, in the real `DialogueView` over the tool, with example values: the first region and its boss, the next region opened, another hero for `{fallen}` and `{partner}`, week 4.
+  - **Undo and saving:** each script is a `DialogueFile` (path, text, whose it is) in the library, edited through the same undoable set as any field, so typing undoes in steps with the rest and Save writes the text. The library's state ignores scripts, so results don't grey out and the Arena doesn't replay while you write. The game reads each script once, and saving one clears it from that cache.
 
 ## Future features
 

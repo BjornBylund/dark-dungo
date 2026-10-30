@@ -1,7 +1,7 @@
 ## The content the balance tool edits: every hero, enemy, encounter, trinket
-## and talent file, and the campaign and regions that list them. Every change
-## goes through here so it can be undone, and marks the file it belongs to
-## (its root) as unsaved until save() writes it.
+## and talent file, the dialogue scripts, and the campaign and regions that
+## list them. Every change goes through here so it can be undone, and marks the
+## file it belongs to (its root) as unsaved until save() writes it.
 class_name BalanceLibrary
 extends RefCounted
 
@@ -9,7 +9,7 @@ extends RefCounted
 ## when forms showing the roots must rebuild.
 signal edited(roots: Array[Resource], from_history: bool)
 
-enum Kind { HERO, ENEMY, ENCOUNTER, TRINKET, TALENT, OTHER }
+enum Kind { HERO, ENEMY, ENCOUNTER, TRINKET, TALENT, DIALOGUE, OTHER }
 
 const CAMPAIGN_PATH := "res://content/campaign.tres"
 const SANDBOX_PATH := "res://content/sandbox.tres"
@@ -25,6 +25,7 @@ var folders: Dictionary[Kind, String] = {
 	Kind.ENCOUNTER: "res://content/encounters",
 	Kind.TRINKET: "res://content/trinkets",
 	Kind.TALENT: "res://content/talents",
+	Kind.DIALOGUE: "res://content/dialogue",
 }
 var campaign: CampaignDef
 var sandbox: SandboxDef
@@ -37,6 +38,9 @@ var trinkets: Array[TrinketDef] = []
 ## Every talent file (content/talents/<class>/): the heroes' talents in their
 ## order, row by row, then any no hero lists.
 var talents: Array[TalentDef] = []
+## The dialogue scripts: the Ancestor's, the heroes' in their order, then any
+## nothing names.
+var dialogues: Array[DialogueFile] = []
 var history := UndoRedo.new()
 var _relay := Relay.new()
 
@@ -83,6 +87,7 @@ func _init() -> void:
 	encounters.assign(_load_all(folders[Kind.ENCOUNTER]))
 	trinkets.assign(_load_all(folders[Kind.TRINKET]))
 	_load_talents()
+	_load_dialogues()
 	for root in roots():
 		_remember_on_disk(root)
 
@@ -120,6 +125,38 @@ func _load_talents() -> void:
 				talents.append(talent)
 
 
+func _load_dialogues() -> void:
+	var folder := folders[Kind.DIALOGUE]
+	if not DirAccess.dir_exists_absolute(folder):
+		return
+	var by_path := {}
+	for file: String in DirAccess.get_files_at(folder):
+		if file.ends_with(".txt"):
+			var script := DialogueFile.read(folder.path_join(file))
+			script.display_name = file.get_basename().capitalize()
+			by_path[script.file] = script
+	if by_path.has(campaign.dialogue):
+		by_path[campaign.dialogue].display_name = "The Ancestor"
+		dialogues.append(by_path[campaign.dialogue])
+	for hero in heroes:
+		if by_path.has(hero.dialogue) and by_path[hero.dialogue] not in dialogues:
+			by_path[hero.dialogue].display_name = hero.display_name
+			by_path[hero.dialogue].hero = hero
+			dialogues.append(by_path[hero.dialogue])
+	var rest: Array = by_path.values().filter(func(script: DialogueFile) -> bool: return script not in dialogues)
+	rest.sort_custom(func(a: DialogueFile, b: DialogueFile) -> bool: return a.file < b.file)
+	dialogues.append_array(rest)
+
+
+## What Dialogue.problems() checks a script against: the Ancestor's or its
+## hero's sections, and who may speak.
+func dialogue_context(script: DialogueFile) -> Dictionary:
+	var context := Dialogue.context_for(campaign, script.hero, heroes)
+	if script.hero == null and script.file != campaign.dialogue:
+		context.sections = [] as Array[String]
+	return context
+
+
 ## The hero whose talent rows hold `talent`, or null.
 func hero_of(talent: TalentDef) -> UnitDef:
 	for hero in heroes:
@@ -146,6 +183,7 @@ func roots() -> Array[Resource]:
 	result.append_array(encounters)
 	result.append_array(trinkets)
 	result.append_array(talents)
+	result.append_array(dialogues)
 	result.append(campaign)
 	result.append_array(campaign.regions)
 	result.append(targets)
@@ -164,6 +202,8 @@ func list_of(kind: Kind) -> Array:
 			return trinkets
 		Kind.TALENT:
 			return talents
+		Kind.DIALOGUE:
+			return dialogues
 	return []
 
 
@@ -176,6 +216,8 @@ func kind_of(root: Resource) -> Kind:
 		return Kind.TRINKET
 	if root is TalentDef and root in talents:
 		return Kind.TALENT
+	if root is DialogueFile and root in dialogues:
+		return Kind.DIALOGUE
 	return Kind.OTHER
 
 
@@ -225,9 +267,12 @@ func _announce(touched: Array[Resource]) -> void:
 
 ## Names the content's current state: it changes with every edit, and undoing
 ## back to a state gives its name back, so results can tell whether they fit.
+## Edits of dialogue scripts don't count: they change no fight.
 func state() -> int:
-	var index := history.get_current_action()
-	return _entries[index].serial if index >= 0 else _base_serial
+	for index in range(history.get_current_action(), -1, -1):
+		if _entries[index].roots.any(func(root: Resource) -> bool: return not root is DialogueFile):
+			return _entries[index].serial
+	return _base_serial
 
 
 func undo() -> void:
@@ -391,10 +436,10 @@ func encounters_with(enemy: UnitDef) -> Array[EncounterDef]:
 func save() -> Error:
 	var pending := unsaved()
 	for root in pending:
-		if root.resource_path == "":
+		if root.resource_path == "" and not root is DialogueFile:
 			root.resource_path = _new_path(root)
 	for root in pending:
-		var error := ResourceSaver.save(root, root.resource_path)
+		var error: Error = root.write() if root is DialogueFile else ResourceSaver.save(root, root.resource_path)
 		if error != OK:
 			return error
 		_saved_at[root] = _applied_serial(root)
@@ -418,7 +463,9 @@ func _new_path(root: Resource) -> String:
 ## Puts every unsaved root back as its file has it, and drops unsaved new ones.
 func discard() -> void:
 	for root in unsaved():
-		if root.resource_path == "":
+		if root is DialogueFile:
+			root.text = FileAccess.get_file_as_string(root.file)
+		elif root.resource_path == "":
 			list_of(kind_of(root)).erase(root)
 		else:
 			ResourceLoader.load(root.resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)

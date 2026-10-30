@@ -26,6 +26,47 @@ func test_loads_every_content_file() -> void:
 	assert_true(library.unsaved().is_empty(), "nothing unsaved after loading")
 
 
+func test_dialogue_scripts_load_with_whose_they_are() -> void:
+	var library := BalanceLibrary.new()
+	var files := Array(DirAccess.get_files_at("res://content/dialogue")).filter(func(f: String) -> bool:
+		return f.ends_with(".txt"))
+	assert_eq(library.dialogues.size(), files.size())
+	assert_eq(library.dialogues[0].file, library.campaign.dialogue, "the Ancestor's first")
+	assert_eq(library.dialogues[0].display_name, "The Ancestor")
+	for script in library.dialogues.slice(1):
+		if script.hero:
+			assert_eq(script.hero.dialogue, script.file)
+			assert_eq(script.display_name, script.hero.display_name)
+		assert_eq(Dialogue.problems(script.text, library.dialogue_context(script)), [] as Array[Dictionary],
+				script.display_name + " checks out")
+
+
+func test_dialogue_edits_undo_save_and_leave_results_current() -> void:
+	var library := BalanceLibrary.new()
+	var script := library.dialogues[1]
+	var original := script.text
+	var state := library.state()
+	library.set_value(script, script, &"text", original + "\n# a note")
+	assert_eq(library.unsaved(), [script] as Array[Resource])
+	assert_eq(library.state(), state, "dialogue changes no fight, so sweep results stay current")
+	library.undo()
+	assert_eq(script.text, original)
+	assert_true(library.unsaved().is_empty())
+	# Saving writes the text to its file, here a copy outside the content.
+	DirAccess.make_dir_recursive_absolute(TEMP_FOLDER)
+	var real := script.file
+	script.file = TEMP_FOLDER.path_join("script.txt")
+	library.set_value(script, script, &"text", "== level 1\nAncestor: Saved.")
+	assert_eq(library.save(), OK)
+	assert_eq(FileAccess.get_file_as_string(script.file), "== level 1\nAncestor: Saved.")
+	assert_false(library.is_unsaved(script))
+	library.set_value(script, script, &"text", "unsaved")
+	library.discard()
+	assert_eq(script.text, "== level 1\nAncestor: Saved.", "discard reads the file back")
+	DirAccess.remove_absolute(script.file)
+	script.file = real
+
+
 func test_talents_know_their_hero_and_row() -> void:
 	var library := BalanceLibrary.new()
 	var hero := library.heroes[0]
