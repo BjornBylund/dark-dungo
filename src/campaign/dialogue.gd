@@ -213,6 +213,7 @@ static func level_ups(campaign: Campaign, mission: Mission, party: Array[HeroRec
 			continue
 		for level in range(levels_before[hero] + 1, hero.level() + 1):
 			var scene := DialogueScene.new("%s reaches level %d" % [hero.display_name, level])
+			scene.sting = &"level_up"
 			if scenes.is_empty():
 				_add(scene, script_at(campaign.def.dialogue).get("homecoming", []), null, facts, campaign, campaign.week)
 			if level == levels_before[hero] + 1:

@@ -68,6 +68,7 @@ func _ready() -> void:
 	if run.has_pending_fight():
 		Game.go_to_battle.call_deferred()
 		return
+	Audio.play_music(&"map")
 	_refresh()
 	if not run.room_done:
 		_open_room()
@@ -314,6 +315,7 @@ func _enter(room: MapRoom) -> void:
 	if _walking:
 		return
 	_walking = true
+	Audio.play(&"steps")
 	var walk := create_tween()
 	walk.tween_property(_token, "position", _token_position(room), 0.45).set_trans(Tween.TRANS_SINE)\
 			.set_ease(Tween.EASE_IN_OUT)
@@ -347,6 +349,7 @@ func _open_room(entered: bool = false) -> void:
 					found += ", and a trinket: %s (%s)" % [run.just_found.display_name,
 							CampaignRules.RARITY_NAMES[run.just_found.rarity]]
 					run.just_found = null
+				Audio.play(&"treasure")
 				_show_panel("Cache", "Someone hid this well, but not well enough. You find %s." % found,
 						[["Continue", _close_panel]])
 		MapRoom.Type.REST:
@@ -365,11 +368,14 @@ func _open_room(entered: bool = false) -> void:
 				if blocked != "":
 					label += "   (%s)" % blocked
 				buttons.append([label, _choose.bind(i), blocked != ""])
+			if entered:
+				Audio.play(&"event")
 			_show_panel(event.title, event.text, buttons)
 
 
 func _rest(heal: bool) -> void:
 	_run().rest(heal)
+	Audio.play(&"heal" if heal else &"relief")
 	_show_panel("Rest", "The party heals." if heal else "The party's nerves steady.", [["Continue", _close_panel]])
 	_refresh()
 
@@ -487,6 +493,8 @@ func _on_retreat() -> void:
 		_refresh_party()
 		return
 	_run().retreat()
+	Audio.stop_music(1.0)
+	Audio.sting(&"defeat")
 	var summary := Game.campaign.finish_mission()
 	Game.save()
 	var text: Array = UiStyle.mission_summary(summary, Game.campaign)
@@ -574,7 +582,7 @@ func _build() -> void:
 	_token = PartyToken.new()
 	_stage.add_child(_token)
 
-	# Top band: week, region and mission, and a way back to the menu.
+	# Top band: week, region and mission, the settings, and a way back to the menu.
 	_band = ColorRect.new()
 	_band.color = Color(0, 0, 0, 0.75)
 	_band.size = Vector2(STAGE_SIZE.x, 64)
@@ -598,6 +606,7 @@ func _build() -> void:
 	_menu.size = _menu.custom_minimum_size
 	_menu.add_theme_font_size_override("font_size", 18 if Device.phone else 15)
 	_menu.pressed.connect(_on_quit)
+	top.add_child(SettingsWindow.button())
 	if Device.phone:
 		_ui.add_child(_menu)
 	else:

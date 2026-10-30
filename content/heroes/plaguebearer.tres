@@ -43,6 +43,7 @@ script = ExtResource("2_gryt8")
 id = &"noxious_blast"
 display_name = "Noxious Blast"
 icon = ExtResource("4_y0m3y")
+sound = 2
 launch_ranks = Array[int]([2, 3, 4])
 target_ranks = Array[int]([1, 2])
 damage_min = 2

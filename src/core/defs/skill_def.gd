@@ -19,12 +19,17 @@ enum Condition {
 	TARGET_ON_CONSECRATION,  ## Only allies standing on a consecrated rank.
 }
 enum TargetPreference { RANDOM, LOWEST_HP, HIGHEST_STRESS, HAS_COMBO }
+## How a skill sounds as it's used: a blade's swing, a shot or throw, or a spell's shimmer.
+enum Sound { FROM_RANKS, BLADE, SHOT, SPELL }
 
 @export var id: StringName
 @export var display_name: String
 ## Square icon for the skill bar. Empty shows the skill's name instead.
 @export var icon: Texture2D
 @export var kind: Kind = Kind.ACTION
+## From Ranks: a skill that isn't an attack is a spell, and an attack that
+## can't be used from rank 1 but reaches rank 3 or 4 a shot; any other a blade.
+@export var sound: Sound = Sound.FROM_RANKS
 
 @export_group("Ranks")
 @export var launch_ranks: Array[int] = [1, 2, 3, 4]

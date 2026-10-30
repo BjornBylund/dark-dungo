@@ -80,6 +80,7 @@ func _ready() -> void:
 	resized.connect(_center_stage)
 	_center_stage()
 	_refresh()
+	Audio.play_music(&"town")
 	await _play_scenes()
 	if _campaign().recruits_waiting > 0 and not _campaign().recruit_choices().is_empty():
 		_open_recruits()
@@ -141,7 +142,7 @@ func _open_recruits() -> void:
 
 ## The new hero joins, and their scene plays before the window comes back.
 func _recruit(hero: HeroRecord) -> void:
-	_after(_campaign().recruit(hero))
+	_after(_campaign().recruit(hero), &"recruit")
 	if _campaign().scenes.is_empty():
 		return
 	_close_window()
@@ -262,11 +263,14 @@ func _plate_label(text: String, font_size: int, color: Color, font: Font = null)
 	return label
 
 
-## Shows `reason` if the action was refused; otherwise saves and refreshes.
-func _after(reason: String) -> void:
+## Shows `reason` if the action was refused; otherwise plays `sound`, saves and refreshes.
+func _after(reason: String, sound := &"") -> void:
 	if reason != "":
 		_window_message.text = reason
+		Audio.play(&"deny")
 		return
+	if sound != &"":
+		Audio.play(sound)
 	_window_message.text = ""
 	Game.save()
 	_refresh()
@@ -284,6 +288,7 @@ func _open(title: String, builder: Callable) -> void:
 		builder.call()
 	_rebuild_window.call()
 	_window.show()
+	Audio.play(&"open")
 
 
 func _close_window() -> void:
@@ -451,7 +456,7 @@ func _build_blacksmith() -> void:
 		else:
 			header.add_child(_cost_chips({}, campaign.gear_cost(rank)))
 			var upgrade: Callable = piece[4]
-			var button := _action("Rank %d" % (rank + 1), func() -> void: _after(upgrade.call(hero)))
+			var button := _action("Rank %d" % (rank + 1), func() -> void: _after(upgrade.call(hero), &"anvil"))
 			button.disabled = reason != ""
 			header.add_child(button)
 		var labels: Array[String] = []
@@ -510,7 +515,7 @@ func _guild_talents(parent: Control, hero: HeroRecord) -> void:
 		return
 	var reason := campaign.can_reset_talents(hero)
 	var clear := _action("Clear talents  %s gold" % UiStyle.gold_text(campaign.talent_reset_price(hero)),
-			func() -> void: _after(campaign.reset_talents(hero)))
+			func() -> void: _after(campaign.reset_talents(hero), &"coins"))
 	clear.disabled = reason != ""
 	clear.tooltip_text = reason if reason != "" else "Frees every talent point, to choose again on the hero sheet."
 	header.add_child(clear)
@@ -544,15 +549,15 @@ func _guild_skill(box: VBoxContainer, hero: HeroRecord, skill: SkillDef) -> void
 	var reasons: Array[String] = []
 	if not hero.knows(skill):
 		var learn := _action("Learn  %s gold" % UiStyle.gold_text(campaign.learn_price(hero)),
-				func() -> void: _after(campaign.learn(hero, skill)))
+				func() -> void: _after(campaign.learn(hero, skill), &"learn"))
 		learn.disabled = campaign.can_learn(hero, skill) != ""
 		reasons.append(campaign.can_learn(hero, skill))
 		buttons.add_child(learn)
 	else:
 		if hero.is_equipped(skill):
-			buttons.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill))))
+			buttons.add_child(_action("Unequip", func() -> void: _after(campaign.unequip(hero, skill), &"page")))
 		else:
-			var equip := _action("Equip", func() -> void: _after(campaign.equip(hero, skill)))
+			var equip := _action("Equip", func() -> void: _after(campaign.equip(hero, skill), &"page"))
 			equip.disabled = hero.equipped.size() >= CampaignRules.SKILL_SLOTS
 			if equip.disabled:
 				reasons.append("All %d slots are taken: unequip a skill first." % CampaignRules.SKILL_SLOTS)
@@ -560,7 +565,7 @@ func _guild_skill(box: VBoxContainer, hero: HeroRecord, skill: SkillDef) -> void
 		var cost := campaign.skill_cost(hero, skill)
 		if cost > 0:
 			var train := _action("Train to rank %d  %s gold" % [hero.skill_rank(skill) + 1, UiStyle.gold_text(cost)],
-					func() -> void: _after(campaign.upgrade_skill(hero, skill)))
+					func() -> void: _after(campaign.upgrade_skill(hero, skill), &"learn"))
 			train.disabled = campaign.can_upgrade_skill(hero, skill) != ""
 			reasons.append(campaign.can_upgrade_skill(hero, skill))
 			buttons.add_child(train)
@@ -602,7 +607,7 @@ func _build_relief(building: StringName) -> void:
 		badge.disabled = true
 		row.add_child(badge)
 		var treat := _action("Treat  %s gold" % UiStyle.gold_text(campaign.treatment_price(hero)),
-				func() -> void: _after(campaign.treat(hero)))
+				func() -> void: _after(campaign.treat(hero), &"relief"))
 		treat.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(treat)
 
@@ -647,7 +652,7 @@ func _activity_card(parent: Control, activity: StringName) -> void:
 	var hero := _selected
 	var reason := campaign.can_send(hero, activity)
 	var send := _action("Send %s  %s gold" % [hero.display_name, UiStyle.gold_text(campaign.activity_price(hero, activity))],
-			func() -> void: _after(campaign.send(hero, activity)))
+			func() -> void: _after(campaign.send(hero, activity), &"coins"))
 	send.disabled = reason != ""
 	box.add_child(send)
 	if reason != "":
@@ -675,7 +680,7 @@ func _build_exchange() -> void:
 		row.add_child(_label("for", 16, UiStyle.TEXT_DIM))
 		row.add_child(_cost_chips(trade[1], 0, false))
 		var reason := campaign.can_exchange(index)
-		var button := _action("Trade", func() -> void: _after(campaign.exchange(index)))
+		var button := _action("Trade", func() -> void: _after(campaign.exchange(index), &"coins"))
 		button.disabled = reason != ""
 		button.tooltip_text = reason
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -695,7 +700,7 @@ func _build_wagon() -> void:
 		buying.add_child(_label("Sold out until next week.", 16, UiStyle.TEXT_DIM))
 	for trinket in campaign.wagon:
 		var buy := _action("Buy  %s gold" % UiStyle.gold_text(campaign.wagon_price(trinket)),
-				func() -> void: _after(campaign.buy(trinket)))
+				func() -> void: _after(campaign.buy(trinket), &"coins"))
 		buy.disabled = campaign.can_buy(trinket) != ""
 		buy.tooltip_text = campaign.can_buy(trinket)
 		buying.add_child(_trinket_row(trinket, [buy]))
@@ -705,7 +710,7 @@ func _build_wagon() -> void:
 				UiStyle.TEXT_DIM))
 	for trinket in campaign.trinkets:
 		var sell := _action("Sell  %s gold" % UiStyle.gold_text(campaign.sell_price(trinket)),
-				func() -> void: _after(campaign.sell(trinket)))
+				func() -> void: _after(campaign.sell(trinket), &"coins"))
 		sell.disabled = campaign.can_sell(trinket) != ""
 		sell.tooltip_text = campaign.can_sell(trinket)
 		selling.add_child(_trinket_row(trinket, [sell]))
@@ -782,7 +787,7 @@ func _upgrade_card(line: StringName) -> void:
 		header.add_child(_label("Fully upgraded", 16, UiStyle.TEXT_DIM))
 	else:
 		header.add_child(_cost_chips(campaign.upgrade_cost(line)))
-		var button := _action("Upgrade", func() -> void: _after(campaign.upgrade(line)))
+		var button := _action("Upgrade", func() -> void: _after(campaign.upgrade(line), &"anvil"))
 		button.disabled = reason != ""
 		header.add_child(button)
 	var labels: Array[String] = []
@@ -1168,7 +1173,7 @@ func _press_skill(hero: HeroRecord, skill: SkillDef) -> void:
 func _toggle_skill(hero: HeroRecord, skill: SkillDef) -> void:
 	var campaign := _campaign()
 	var reason := campaign.unequip(hero, skill) if hero.is_equipped(skill) else campaign.equip(hero, skill)
-	_after(reason)
+	_after(reason, &"page")
 	if reason != "":
 		_rebuild_window.call()
 
@@ -1197,7 +1202,7 @@ func _sheet_gear(hero: HeroRecord) -> Control:
 		if worn == null:
 			slot.add_child(_label("Empty", 16, UiStyle.TEXT_DIM))
 			continue
-		socket.pressed.connect(func() -> void: _after(campaign.take_off(hero, worn)))
+		socket.pressed.connect(func() -> void: _after(campaign.take_off(hero, worn), &"equip"))
 		var name := _label(worn.display_name, 17, UiStyle.RARITY_COLORS[worn.rarity])
 		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		slot.add_child(name)
@@ -1221,7 +1226,7 @@ func _sheet_gear(hero: HeroRecord) -> Control:
 	var rows := _trinket_list(column, "The estate's trinkets", 0.0, 330.0)
 	for trinket: TrinketDef in wearable:
 		var reason := campaign.can_wear(hero, trinket)
-		var put_on := _action("Wear", func() -> void: _after(campaign.wear(hero, trinket)))
+		var put_on := _action("Wear", func() -> void: _after(campaign.wear(hero, trinket), &"equip"))
 		put_on.disabled = reason != ""
 		put_on.tooltip_text = reason
 		rows.add_child(_trinket_row(trinket, [put_on]))
@@ -1303,7 +1308,7 @@ func _talent_card(hero: HeroRecord, talent: TalentDef, open: bool, chosen: Talen
 	if picking and talent == _pending_talent:
 		var choose := _action("Choose " + talent.display_name, func() -> void:
 			_pending_talent = null
-			_after(_campaign().choose_talent(hero, talent)))
+			_after(_campaign().choose_talent(hero, talent), &"learn"))
 		box.add_child(choose)
 	return card
 
@@ -1483,7 +1488,7 @@ func _build() -> void:
 	_plates.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.add_child(_plates)
 
-	# Top band: week, gold and heirlooms, Embark, and a way back to the menu.
+	# Top band: week, gold and heirlooms, Embark, a way back to the menu, and the settings.
 	_bar = EstateBar.new()
 	_ui.add_child(_bar)
 	var embark := _action("Embark", Game.go_to_expedition)
@@ -1499,6 +1504,7 @@ func _build() -> void:
 		Game.save()
 		Game.go_to_menu())
 	_bar.add_button(menu)
+	_bar.add_button(SettingsWindow.button())
 
 	# Roster down the right; it scrolls in the phone layout.
 	_roster_panel = PanelContainer.new()

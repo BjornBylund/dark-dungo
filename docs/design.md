@@ -18,6 +18,7 @@ Living record of agreed decisions. Anything not written here is either "do what 
 - **Combat core** (`src/core/`) is pure logic: plain GDScript classes (no nodes), a seeded RNG so any fight replays exactly from its seed, and an event stream ("X used Y on Z, crit, 7 damage, Bleed applied") as its only output.
 - **Presentation** (`src/ui/`) renders those events and sends the player's choices back to the core. It never decides outcomes.
 - **Content** (`content/`) — heroes, enemies, skills, waves — is data, stored as Godot Resources (`.tres`), not code. Edit them in the [balance tool](#balance-tool) or the Godot inspector.
+- **Sound** (`audio/`) is rendered from code, like the placeholder art is drawn: see [Music and sound](#music-and-sound).
 - Combat takes a party in and hands it back out (HP, stress, Death's Door, deaths, long-lasting buffs), so it plugs into whichever game loop is chosen later.
 
 ## Combat model
@@ -257,6 +258,25 @@ Full-screen scenes in town, in DD's voice: a hero and the Ancestor narrating.
   - Click, tap, Enter or Space shows the line, then moves on. Skip or Esc ends the scene.
 - **Saving:** scenes waiting to play are saved, and a scene skipped part-way counts as seen. Quitting during one plays it again next time.
 - **Content:** plain-text scripts in `content/dialogue/`; the format is documented at the top of `src/campaign/dialogue.gd`. They're written in the [balance tool](#balance-tool)'s Dialogue tab or any text editor.
+- **Sound:** the music dips while a scene plays, a page turns with each new line, and a level gained opens with its sting.
+
+### Music and sound
+
+Synthesized, not recorded: every sound and track is a recipe in GDScript (`tools/audio/`), rendered offline by `tools/make_audio.gd` to WAV in `audio/`. Original, with no licences to track, and as easy to change as the code. It sounds like synthesizers, not an orchestra: dark ambient strings, choir pads, bells, plucked strings and war drums.
+
+- **Music,** all in D minor, mono at 22.05 kHz (about 10 MB of WAV in the repository; Godot imports it as QOA, about a fifth of that, for the web build):
+  - **Town** (the title, the hamlet and the expedition map; 64 s): held strings under a sparse lute line, and a distant bell.
+  - **Mission map** (64 s): low drones a fifth or a tritone apart, a slow heartbeat, wind, and glass tones.
+  - **Combat** (120 BPM, 48 s): war drums, a riff of low strings, horns every four bars, and voices in the last eight.
+  - **Boss fights** (140 BPM, 48 s): a Phrygian riff, drums on every beat, choir, a tolling bell and tritone horns.
+  - **Stings** that play once: a fight won, a fight lost (or a retreat), and a level gained (at the start of its dialogue scene).
+- **Seamless loops:** a track is sequenced over its loop, rendered with the tails of its last notes, given its reverb, and the tails folded back onto the start. The WAV's sampler chunk marks the loop, which Godot's importer reads.
+- **Playback** (the `Audio` autoload): one track at a time, crossfading over 1.5 s; a screen asks for its track and the same track keeps playing across screens. Stings and dialogue dip the music by 10 dB. Fights end the music for their sting, and the next screen starts its own.
+- **Sound effects** (44.1 kHz): a sound per battle event (`CombatSounds`): the skill's swing, shot or spell, the blow landing (a crit; a clang when Block took about half), DoTs, buffs and debuffs, stress and relief, stuns, moves, Death's Door, deathblows, deaths, Meltdown and Resolute. Town actions sound by what they are (coins, the anvil, a learned skill's chime, a buckle for trinkets, a bell for a recruit) and refusals knock. The map has footsteps, caches, events and rests. Every button clicks, except in the balance tool.
+  - A skill's **Sound** is Blade, Shot or Spell, or From Ranks: not an attack is a spell, an attack that can't be used from rank 1 but reaches rank 3 or 4 a shot, any other a blade. Thirty skills say otherwise, like lunges from the back (blades) and shouts and songs (spells).
+  - Each sound has up to three variants, and plays at a pitch up to 5% off, so repeats don't drone. The same sound twice within 50 ms plays once.
+- **Volumes:** Master, Music and Effects buses, set in the settings window (the title's Settings button, or the gear on the other screens) and kept in `user://settings.cfg`. A slider's level is squared on its way to decibels, so half way sounds about half as loud.
+- **The web:** browsers hold audio back until the first click or key; the music starts again then.
 
 ### Town screen and saving
 

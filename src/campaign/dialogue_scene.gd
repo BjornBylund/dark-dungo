@@ -5,6 +5,8 @@ class_name DialogueScene
 extends RefCounted
 
 var title := ""
+## A sting that opens the scene (Audio.STINGS), like a level gained's; none if empty.
+var sting := &""
 ## The heroes on stage, in the order they first speak.
 var cast: Array[UnitDef] = []
 ## Who says each line: a cast member, or null for the Ancestor.
@@ -30,6 +32,7 @@ func is_empty() -> bool:
 func to_dict() -> Dictionary:
 	return {
 		title = title,
+		sting = String(sting),
 		cast = cast.map(func(unit: UnitDef) -> String: return unit.resource_path),
 		lines = range(texts.size()).map(func(i: int) -> Array:
 			return [speakers[i].resource_path if speakers[i] else "", texts[i]]),
@@ -39,6 +42,7 @@ func to_dict() -> Dictionary:
 ## Lines by a hero whose class has left the cast are dropped; null if none are left.
 static func from_dict(data: Dictionary) -> DialogueScene:
 	var scene := DialogueScene.new(data.title)
+	scene.sting = StringName(data.get("sting", ""))
 	for path: String in data.cast:
 		if ResourceLoader.exists(path):
 			scene.cast.append(load(path))

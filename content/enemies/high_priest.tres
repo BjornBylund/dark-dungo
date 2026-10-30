@@ -9,6 +9,7 @@
 script = ExtResource("2_rie5r")
 id = &"dread_sermon"
 display_name = "Dread Sermon"
+sound = 3
 launch_ranks = Array[int]([2, 3, 4])
 multi_target = true
 stress = 2
@@ -27,6 +28,7 @@ token = &"weak"
 script = ExtResource("2_rie5r")
 id = &"curse_of_ruin"
 display_name = "Curse of Ruin"
+sound = 3
 launch_ranks = Array[int]([2, 3, 4])
 damage_min = 6
 damage_max = 9

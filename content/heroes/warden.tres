@@ -161,6 +161,7 @@ script = ExtResource("2_cckrm")
 id = &"bellow"
 display_name = "Bellow"
 icon = ExtResource("8_24ohb")
+sound = 3
 multi_target = true
 crit_chance = 0.05
 effects = Array[ExtResource("1_gnc3r")]([SubResource("Resource_jj6cc"), SubResource("Resource_m4bpl")])

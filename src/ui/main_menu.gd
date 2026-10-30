@@ -1,5 +1,6 @@
 ## Title screen: continue or start a campaign, or open the combat sandbox, or
-## from the project folder the balance tool. Launch options skip the menu:
+## from the project folder the balance tool; and the settings, under the town's
+## music. Launch options skip the menu:
 ## `-- --sandbox`, `-- --new-campaign`, `-- --continue`, `-- --balance`.
 extends Control
 
@@ -63,17 +64,12 @@ func _ready() -> void:
 		column.add_child(button)
 	if Game.has_balance_tool():
 		column.add_child(_menu_button("Balance Tool", Game.open_balance_tool))
-	if OS.has_feature("web"):
-		var fullscreen := _menu_button("Fullscreen", _toggle_fullscreen)
-		fullscreen.theme_type_variation = &""
-		fullscreen.add_theme_font_size_override("font_size", 20)
-		column.add_child(fullscreen)
+	var settings := _menu_button("Settings", func() -> void: SettingsWindow.open(get_tree()))
+	settings.theme_type_variation = &""
+	settings.add_theme_font_size_override("font_size", 22)
+	column.add_child(settings)
+	Audio.play_music(&"town")
 	queue_redraw()
-
-
-func _toggle_fullscreen() -> void:
-	var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 func _draw() -> void:

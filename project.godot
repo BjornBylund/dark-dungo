@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 
 Mobile="*res://src/ui/mobile.gd"
 Game="*res://src/game.gd"
+Audio="*res://src/audio/audio.gd"
 
 [display]
 

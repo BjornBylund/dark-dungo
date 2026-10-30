@@ -161,11 +161,18 @@ func test_heroes_who_level_up_get_a_scene_per_level_after_the_ancestor_greets_th
 		assert_ne(scene.texts[0], first.texts[0], "the Ancestor greets them only once")
 	for scene in campaign.scenes:
 		assert_false(scene.texts.any(func(text: String) -> bool: return "{" in text), "placeholders are filled in")
+		assert_eq(scene.sting, &"level_up", "each opens with the level-up sting")
 
 
 func test_waiting_scenes_survive_saving() -> void:
 	var campaign := Campaign.create(CAMPAIGN, 1)
+	assert_eq(campaign.scenes[0].sting, &"", "the opening has no sting")
+	campaign.scenes[0].sting = &"level_up"
 	var loaded := Campaign.from_dict(JSON.parse_string(JSON.stringify(campaign.to_dict())), CAMPAIGN)
 	assert_eq(loaded.scenes.size(), 1)
 	assert_eq(loaded.scenes[0].to_dict(), campaign.scenes[0].to_dict())
 	assert_eq(loaded.scenes[0].cast, campaign.scenes[0].cast)
+	assert_eq(loaded.scenes[0].sting, &"level_up")
+	var data := campaign.scenes[0].to_dict()
+	data.erase("sting")
+	assert_eq(DialogueScene.from_dict(data).sting, &"", "saves from before stings load without one")

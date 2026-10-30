@@ -89,6 +89,9 @@ func _ready() -> void:
 	window.mode = Window.MODE_MAXIMIZED
 	window.title = "Darko Dungo: Balance"
 	get_tree().auto_accept_quit = false
+	# A quiet workshop: no music, and the buttons don't click.
+	Audio.stop_music()
+	add_to_group(Audio.QUIET_GROUP)
 	theme = _make_theme()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var background := ColorRect.new()
@@ -830,7 +833,9 @@ func _open_watch(bot_plays: bool) -> void:
 	_arena.paused = true
 	var screen: Control = load(Game.BATTLE).instantiate()
 	screen.arena = _arena.arena
-	screen.closed.connect(func() -> void: _arena.paused = false)
+	screen.closed.connect(func() -> void:
+		_arena.paused = false
+		Audio.stop_music())
 	add_child(screen)
 
 

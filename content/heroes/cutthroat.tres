@@ -163,6 +163,7 @@ script = ExtResource("2_phsca")
 id = &"lunge"
 display_name = "Lunge"
 icon = ExtResource("6_hj6tn")
+sound = 1
 launch_ranks = Array[int]([3, 4])
 target_ranks = Array[int]([1, 2, 3])
 damage_min = 5

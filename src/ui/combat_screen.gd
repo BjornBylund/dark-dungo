@@ -187,7 +187,7 @@ func _start_wave() -> void:
 	_round_label.text = ""
 	_queue.show_units([])
 	_log_line("[color=#d9b45a]== Wave %d: %s ==[/color]" % [_run.wave_index + 1, encounter.display_name])
-	_show_wave_title(encounter.display_name + "!")
+	_announce(encounter.display_name, false)
 	await _wait(1.6)
 	if generation == _generation:
 		_pump()
@@ -213,7 +213,7 @@ func _start_arena() -> void:
 	_round_label.text = ""
 	_queue.show_units([])
 	_log_line("[color=#d9b45a]== Arena: %s, seed %d ==[/color]" % [arena.title, seed_value])
-	_show_wave_title(arena.title + "!")
+	_announce(arena.title, false)
 	await _wait(1.6)
 	if generation == _generation:
 		_pump()
@@ -246,8 +246,12 @@ func _pump() -> void:
 		Battle.State.AWAITING_INPUT:
 			_begin_player_turn()
 		Battle.State.VICTORY:
+			Audio.stop_music(0.5)
+			Audio.sting(&"victory")
 			_on_victory()
 		Battle.State.DEFEAT:
+			Audio.stop_music(0.5)
+			Audio.sting(&"defeat")
 			if _mission_run:
 				_on_fight_over()
 			elif arena:
@@ -271,6 +275,13 @@ func _on_victory() -> void:
 		_show_end("Wave %d cleared" % (_run.wave_index + 1), survivors, "Next wave", _start_wave)
 	else:
 		_show_end("Victory", "Every wave is cleared.\n" + survivors, "Play again", _new_run)
+
+
+## A fight begins: its name over the field, the battle's sound, and the fight's music.
+func _announce(title: String, boss: bool) -> void:
+	_show_wave_title(title + "!")
+	Audio.play(&"battle_start")
+	Audio.play_music(&"boss" if boss else &"combat")
 
 
 func _show_end(title: String, text: String, button: String, action: Callable) -> void:
@@ -307,7 +318,7 @@ func _start_fight() -> void:
 	_round_label.text = ""
 	_queue.show_units([])
 	_log_line("[color=#d9b45a]== %s: %s ==[/color]" % [kind, encounter.display_name])
-	_show_wave_title(encounter.display_name + "!")
+	_announce(encounter.display_name, _mission_run.pending_kind == MissionRun.FightKind.FINALE and mission.boss)
 	await _wait(1.6)
 	if generation == _generation:
 		_pump()
@@ -714,9 +725,12 @@ func _play(events: Array[Dictionary]) -> void:
 		await _wait(0.2)
 
 
-## Shows one event and returns how long to linger on it, in seconds at 1x speed.
+## Shows one event, with its sound, and returns how long to linger on it, in seconds at 1x speed.
 func _apply_event(event: Dictionary) -> float:
 	var view: UnitView = _views.get(event.uid)
+	var sound := CombatSounds.of(event, _units.get(event.get("uid", -1)))
+	if sound != &"":
+		Audio.play(sound)
 	match event.type:
 		&"round_start":
 			_round_label.text = "Round %d" % event.round
@@ -1184,6 +1198,7 @@ func _build() -> void:
 		top_left.add_child(node)
 	if _mission_run == null:
 		top_left.add_child(_button("Restart (R)", _restart))
+	top_left.add_child(SettingsWindow.button())
 	_round_label = _label(28, UiStyle.GREY, UiStyle.DISPLAY_FONT)
 	_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_round_label.position = Vector2(1240, 14)

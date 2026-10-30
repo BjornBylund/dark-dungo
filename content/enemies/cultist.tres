@@ -9,6 +9,7 @@
 script = ExtResource("2_nduks")
 id = &"whisper"
 display_name = "Whisper"
+sound = 3
 launch_ranks = Array[int]([3, 4])
 stress = 2
 
@@ -20,6 +21,7 @@ token_pool = Array[StringName]([&"blind", &"weak"])
 script = ExtResource("2_nduks")
 id = &"curse"
 display_name = "Curse"
+sound = 3
 launch_ranks = Array[int]([3, 4])
 damage_min = 2
 damage_max = 4

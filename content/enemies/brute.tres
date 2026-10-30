@@ -40,6 +40,7 @@ token = &"strength"
 script = ExtResource("2_mp4kj")
 id = &"roar"
 display_name = "Roar"
+sound = 3
 multi_target = true
 stress = 1
 self_effects = Array[ExtResource("3_cpwpb")]([SubResource("Resource_qvga6")])

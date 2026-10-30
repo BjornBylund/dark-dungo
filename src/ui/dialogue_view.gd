@@ -2,7 +2,8 @@
 ## the cast standing tall with the speaker lit from below and the others in
 ## shadow, and a framed text box with the speaker's name. Text types out; a
 ## click, tap, Enter or Space shows it all, then moves on. Skip (or Esc) ends
-## the scene. Emits `finished` once it is over.
+## the scene. The music dips while it plays, a page turns with each line, and a
+## scene with a sting (a level gained) opens with it. Emits `finished` once it is over.
 class_name DialogueView
 extends Control
 
@@ -47,7 +48,15 @@ func play(scene: DialogueScene, backdrop: Texture2D, auto: bool = false) -> void
 	_layout()
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.35)
+	Audio.duck(true)
+	if scene.sting != &"":
+		Audio.sting(scene.sting)
 	_show_line(0)
+
+
+## The music comes back up even if the scene is cut short.
+func _exit_tree() -> void:
+	Audio.duck(false)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -100,6 +109,8 @@ func _show_line(index: int) -> void:
 	if index >= _scene.texts.size():
 		_finish()
 		return
+	if index > 0:
+		Audio.play(&"page", -8.0)
 	_line = index
 	var speaker := _scene.speakers[index]
 	_name.text = speaker.display_name if speaker else NARRATOR_NAME
@@ -129,6 +140,7 @@ func _finish() -> void:
 	if _done:
 		return
 	_done = true
+	Audio.duck(false)
 	var fade := create_tween()
 	fade.tween_property(self, "modulate:a", 0.0, 0.3)
 	await fade.finished

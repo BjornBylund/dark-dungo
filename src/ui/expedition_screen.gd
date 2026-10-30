@@ -49,6 +49,7 @@ func _ready() -> void:
 		_refresh_map())
 	_center_stage()
 	_refresh()
+	Audio.play_music(&"town")
 
 
 func _campaign() -> Campaign:
@@ -331,6 +332,7 @@ func _eligibility_tag(hero: HeroRecord) -> Array:
 
 func _on_embark() -> void:
 	if _campaign().embark(_mission, _party):
+		Audio.play(&"embark")
 		Game.go_to_map()
 
 
@@ -376,6 +378,7 @@ func _build() -> void:
 	back.focus_mode = Control.FOCUS_NONE
 	back.pressed.connect(Game.go_to_town)
 	_bar.add_button(back)
+	_bar.add_button(SettingsWindow.button())
 
 	# The chosen quest, top left.
 	_quest_panel = PanelContainer.new()
@@ -447,6 +450,7 @@ func _build_phone() -> void:
 	back.add_theme_font_size_override("font_size", 18)
 	back.pressed.connect(Game.go_to_town)
 	_bar.add_button(back)
+	_bar.add_button(SettingsWindow.button())
 
 	_quest_panel = PanelContainer.new()
 	_quest_panel.custom_minimum_size = Vector2(300, 0)
